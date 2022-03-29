@@ -60,7 +60,7 @@ pricing_env = env(p, prices)
 ag1 = ucb(len(p),prices)
 T = 1000
 opt = np.max([a*b for a,b in zip(p,prices)] )
-N_exp = 5
+N_exp = 500
 
 R = []
 for _ in range(N_exp):
@@ -70,7 +70,7 @@ for _ in range(N_exp):
         pulled_arm = ag1.act()
         rew = pricing_env.round(pulled_arm)
         ag1.update(pulled_arm, rew)
-        instant_regret = opt - rew
+        instant_regret.append(opt - rew)
     #cumulative_regret = np.append(cumulative_regret, instant_regret)
     cumulative_regret = np.cumsum(instant_regret)
     R.append(cumulative_regret)
