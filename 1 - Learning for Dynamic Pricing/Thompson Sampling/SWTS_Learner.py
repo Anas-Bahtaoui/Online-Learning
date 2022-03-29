@@ -1,12 +1,13 @@
 from TS_Learner import TS_Learner
 import numpy as np
 
+
 class SWTS_Learner(TS_Learner):
     def __init__(self, n_arms, window_size):
         super().__init__(n_arms)
         self.window_size = window_size
         self.pulled_arms = np.array([])
-        
+
     def update(self, pulled_arm, reward):
         self.t += 1
         self.update_observations(pulled_arm, reward)
