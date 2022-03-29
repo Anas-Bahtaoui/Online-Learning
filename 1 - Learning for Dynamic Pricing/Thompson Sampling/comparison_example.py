@@ -1,8 +1,7 @@
-import numpy as np
 import matplotlib.pyplot as plt
 from Environment import *
-from TS_Learner import *
-from Greedy_Learner import *
+from TSLearner import *
+from GreedyLearner import *
 
 n_arms = 4
 p = np.array([0.15, 0.1, 0.1, 0.35])
@@ -16,8 +15,8 @@ gr_rewards_per_experiment = []
 
 for e in range(0, n_experiment):
     env = Environment(n_arms=n_arms, probabilities=p)
-    ts_learner = TS_Learner(n_arms=n_arms)
-    gr_learner = Greedy_Learner(n_arms=n_arms)
+    ts_learner = TSLearner(n_arms=n_arms)
+    gr_learner = GreedyLearner(n_arms=n_arms)
     for t in range(0, T):
         # Thompson Sampling Learner
         pulled_arm = ts_learner.pull_arm()

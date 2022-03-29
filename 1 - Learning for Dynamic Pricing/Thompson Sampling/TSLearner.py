@@ -2,7 +2,7 @@ from Learner import *
 import numpy as np
 
 
-class TS_Learner(Learner):
+class TSLearner(Learner):
     def __init__(self, n_arms):
         super().__init__(n_arms)
         self.beta_parameters = np.ones((n_arms, 2))

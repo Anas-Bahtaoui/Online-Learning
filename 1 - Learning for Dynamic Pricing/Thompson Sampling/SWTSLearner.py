@@ -1,8 +1,8 @@
-from TS_Learner import TS_Learner
+from TSLearner import TSLearner
 import numpy as np
 
 
-class SWTS_Learner(TS_Learner):
+class SWTSLearner(TSLearner):
     def __init__(self, n_arms, window_size):
         super().__init__(n_arms)
         self.window_size = window_size

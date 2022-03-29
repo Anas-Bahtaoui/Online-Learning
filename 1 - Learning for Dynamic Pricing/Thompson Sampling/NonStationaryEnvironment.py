@@ -2,7 +2,7 @@ from Environment import Environment
 import numpy as np
 
 
-class Non_Stationary_Environment(Environment):
+class NonStationaryEnvironment(Environment):
     def __init__(self, n_arms, probabilities, horizon):
         super().__init__(n_arms, probabilities)
         self.t = 0

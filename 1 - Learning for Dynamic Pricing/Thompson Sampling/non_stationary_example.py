@@ -1,9 +1,8 @@
-from cv2 import phase
 import numpy as np
 from matplotlib import pyplot as plt
-from Non_Stationary_Environment import Non_Stationary_Environment
-from TS_Learner import TS_Learner
-from SWTS_Learner import SWTS_Learner
+from NonStationaryEnvironment import NonStationaryEnvironment
+from TSLearner import TSLearner
+from SWTSLearner import SWTSLearner
 
 n_arms = 4
 n_phases = 4
@@ -22,11 +21,11 @@ window_size = int(T ** 0.5)
 
 if __name__ == '__main__':
     for e in range(n_experiments):
-        ts_env = Non_Stationary_Environment(n_arms, probabilities=p, horizon=T)
-        ts_learner = TS_Learner(n_arms=n_arms)
+        ts_env = NonStationaryEnvironment(n_arms, probabilities=p, horizon=T)
+        ts_learner = TSLearner(n_arms=n_arms)
 
-        swts_env = Non_Stationary_Environment(n_arms, probabilities=p, horizon=T)
-        swts_learner = SWTS_Learner(n_arms=n_arms, window_size=window_size)
+        swts_env = NonStationaryEnvironment(n_arms, probabilities=p, horizon=T)
+        swts_learner = SWTSLearner(n_arms=n_arms, window_size=window_size)
 
         for t in range(T):
             pulled_arm = ts_learner.pull_arm()
