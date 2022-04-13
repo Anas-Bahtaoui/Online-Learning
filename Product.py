@@ -2,7 +2,7 @@
     This is the definition of the Product class.
     Each product has four candidate prices that are between the base price and the maximum price. They candidate prices are equaly distributed.
 '''
-from numpy import product
+from numpy import linspace, product
 
 
 class Product:
@@ -23,8 +23,7 @@ class Product:
             Generate four candidate prices that are eaully distributed between the max price and the base price.
         '''
         candidate_prices = []
-        for i in range(4):
-            candidate_prices.append(self.base_price + (self.max_price - self.base_price) * i / 3)
+        candidate_prices = linspace(self.base_price, self.max_price, 4)
         return candidate_prices    
 
 
@@ -37,6 +36,7 @@ class Product:
 '''
     Function ProductFactory is used to create a new product.
 '''
+#TODO Is this usage of a facotry method correct?
 def ProductFactory(product_config):
     return Product(product_config)
 

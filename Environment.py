@@ -37,6 +37,7 @@ class Environment:
         '''
             Every day, the value of the alpha ratios of each product will be realizations of independent Dirichlet random variables.
         '''
+        #TODO Adjust the diriichlet distribution parameters. I have no idea what to put there
         self.alpha = tuple(np.random.dirichlet([1, 1, 1, 1, 1, 1], 1))
         
     def get_current_day(self):
@@ -54,3 +55,4 @@ class Environment:
     The weights are given, they are the click probabilities.
     There cannot be loops in the graph. 
 '''
+#TODO Create the grpah class
