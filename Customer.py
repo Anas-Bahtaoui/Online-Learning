@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.stats import bernoulli
 '''
     This is the definition of the Customer class. There are three customers classes, distinguished by 2 binaray features.
     Each customer belongs to a customer class.
@@ -23,10 +24,9 @@ class Customer:
         """
         self.id = customer_config['id']
         self.class_ = customer_config['class']
-        # The reservation price is indidual each of the five products
-        #self.reservation_prices = customer_config['reservation_prices']
         self.products_clicked = []
         self.products_bought = []
+        # The reservation price is a gaussian random variable with the mean and standard deviation of the expected reservation price of the customer class.
         if self.class_ == 'A':
             self.reservation_prices = [ExpectedReservationPriceClassA[i] + np.random.normal(0, 1) for i in range(5)]
         elif self.class_ == 'B':
@@ -36,7 +36,7 @@ class Customer:
         else:
             print('Error: UserClass is not A, B, or C')
             exit()
-        self.products_clicked = []
+        self.products_clicked = [] # Used to make sure that we don't show the same product twice to the same customer.
         self.products_bought = []
 
     def get_reservation_price(self, product_id):
@@ -53,11 +53,19 @@ class Customer:
         """
         return self.class_
 
+    '''Adds a product to the list of products that the customer has clicked on.'''
     def update_products_clicked(self, product_id):
         """
         @param product_id: product id.
         """
         self.products_clicked.append(product_id)
+    
+    def clicked_on_product(self, product_id):
+        """
+        @param product_id: product id.
+        @return: True if the product has been clicked on by the customer.
+        """
+        return product_id in self.products_clicked
     
     def buy_product(self, product_id):
         """
@@ -65,6 +73,26 @@ class Customer:
         """
         self.products_bought.append(product_id)
     
+    def add_click_on_product(self, product_id):
+        """
+        @param product_id: product id.
+        """
+        self.products_clicked.append(product_id)
+  
+'''
+    CustomerFactory is used to create a new customer.
+'''
+def CustomerFactory(customer_config):
+    return Customer(customer_config)
+
+'''
+    Function that samples the buy/click probability of a given customer class.
+    The function returns the probability of buying/clicking on the product.
+    The probability is sampled from a beta distribution.
+'''
+def 
+        
+
 '''
     Test the Customer class
 '''

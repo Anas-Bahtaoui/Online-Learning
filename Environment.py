@@ -16,28 +16,39 @@ import networkx as nx
 import Product
 import Customer
 
-lambda_ = 0.1 # The value of lambda is assumed to be known in all the three project proposals
-
 class Environment:
     def __init__(self, agregate_toggle: bool = True):
         self.aggregate_toggle = agregate_toggle
         self.day = 0
+        self.products = []
         self.alpha = ()
-        self.customers = pd.DataFrame(columns=['id', 'class', 'reservation_price'])
-        self.products = pd.DataFrame(columns=['id', 'name', 'min_price', 'max_price', 'observance_probabilities'])
-        self.products = self.products.append({'id': 0, 'name': 'A', 'min_price': 1.0, 'max_price': 2.0, 'observance_probabilities': (0, 0)}, ignore_index=True)
-        self.products = self.products.append({'id': 1, 'name': 'B', 'min_price': 1.0, 'max_price': 2.0, 'observance_probabilities': (0, 0)}, ignore_index=True)
-        self.products = self.products.append({'id': 2, 'name': 'C', 'min_price': 1.0, 'max_price': 2.0, 'observance_probabilities': (0, 0)}, ignore_index=True)
-        self.products = self.products.append({'id': 3, 'name': 'D', 'min_price': 1.0, 'max_price': 2.0, 'observance_probabilities': (0, 0)}, ignore_index=True)
-        self.products = self.products.append({'id': 4, 'name': 'E', 'min_price': 1.0, 'max_price': 2.0, 'observance_probabilities': (0, 0)}, ignore_index=True)
+        self.customers = []
         self.new_day()
-        
+        self.lambda_ = 0.1 # The value of lambda is assumed to be known in all the three project proposals
+    '''
+        Function that adds products to the environment.
+    '''
+    def add_product(self, product_config):
+        self.products.append(Product.ProductFactory(product_config))
+       
+    def add_product_to_env(self, product: Product):
+        self.products.append(product) 
+    '''
+        Function that adds customers to the environment.
+    '''
+    def add_customer(self, customer_config):
+        self.customers.append(Customer.CustomerFactory(customer_config))
+    
+    '''
+        Function that increments the day and updates the alpha ratios.
+        TODO This function should also be able to udate the alpha ratios in the case of disagregation. Already included the aggregate_toggle in the environment class.
+    '''
     def new_day(self):
         self.day += 1
         '''
             Every day, the value of the alpha ratios of each product will be realizations of independent Dirichlet random variables.
+            TODO Adjust the diriichlet distribution parameters. I have no idea what to put there
         '''
-        #TODO Adjust the diriichlet distribution parameters. I have no idea what to put there
         self.alpha = tuple(np.random.dirichlet([1, 1, 1, 1, 1, 1], 1))
         
     def get_current_day(self):
@@ -46,13 +57,75 @@ class Environment:
     def reset_day(self):
         self.day = 0
     
-
+    def get_current_alpha(self):
+        return self.alpha
 
 '''
-    Definition of the directed weighted graph. 
-    It is used to store the products. 
-    Each product has two child nodes, one for the primary product and one for the secondary product. 
-    The weights are given, they are the click probabilities.
-    There cannot be loops in the graph. 
+    Definition of the fully connected directed weighted graph. 
+    It is used to store the products as nodes and the click probabilities as edges. 
 '''
-#TODO Create the grpah class
+class FullyConnectedGraph:
+    def __init__(self, environment: Environment):
+        self.environment = environment
+        self.graph = nx.DiGraph()
+        self.add_products()
+        #self.add_edges()
+        
+    def add_products(self):
+        for product in self.environment.products:
+            self.graph.add_node(product, label=product.name)
+    '''
+        Each product can be connected to its two secondary products if is has secondary products.
+        If the product has no secondary products, the function will not add any edges.
+    '''    
+    def add_edges(self):
+        for product in self.environment.products:
+            if product.secondary_products[0] != None:
+                self.graph.add_edge(product, product.secondary_products[0])
+            if product.secondary_products[1] != None:
+                self.graph.add_edge(product, product.secondary_products[1])
+                
+    '''
+        Function that adds a weight to a given edge between two products.
+        @param primary_product: primary product.
+        @param secondary_product: the secondary product.
+    '''
+    def add_weight(self, primary_product: Product, secondary_product: Product, weight: float):
+        self.graph.add_edge(primary_product.name, secondary_product.name, weight=weight)
+   
+    def get_current_graph(self):
+        return self.graph
+    
+    def visualize(self):
+        # TODO Adjust the names of the nodes and edges
+        nx.draw(self.graph, with_labels=False)
+        plt.show()
+    
+
+'''
+    Test the Environment class.
+''' 
+# Create five products
+p1 = Product.ProductFactory({'name': 'p1', 'base_price': 1, 'max_price': 10, 'production_cost': 0.1, 'secondary_products': (None, None)})
+p2 = Product.ProductFactory({'name': 'p2', 'base_price': 1, 'max_price': 10, 'production_cost': 0.1, 'secondary_products': (None, None)})
+p3 = Product.ProductFactory({'name': 'p3', 'base_price': 1, 'max_price': 10, 'production_cost': 0.1, 'secondary_products': (None, None)})
+p4 = Product.ProductFactory({'name': 'p4', 'base_price': 1, 'max_price': 10, 'production_cost': 0.1, 'secondary_products': (None, None)})
+p5 = Product.ProductFactory({'name': 'p5', 'base_price': 1, 'max_price': 10, 'production_cost': 0.1, 'secondary_products': (None, None)})
+# Assign secondary products to the products
+p1.add_secondary_products(p3, None)
+p2.add_secondary_products(p1, p4)
+p3.add_secondary_products(p2, p4)
+p4.add_secondary_products(p1, None)
+p5.add_secondary_products(None, None)
+# Create the environment
+env = Environment()
+# Add the products to the environment
+env.add_product_to_env(p1)
+env.add_product_to_env(p2)
+env.add_product_to_env(p3)
+env.add_product_to_env(p4)
+env.add_product_to_env(p5)
+# Create the graph
+graph = FullyConnectedGraph(env)
+graph.add_edges()
+graph.visualize()

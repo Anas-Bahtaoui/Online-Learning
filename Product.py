@@ -15,9 +15,9 @@ class Product:
         self.max_price = product_config['max_price']
         self.candidate_prices = self.generate_candidate_prices()
         self.production_cost = product_config['production_cost']
-        
-        self.secondary_products = (product_config['secondary_products'][0], product_config['secondary_products'][1])
-        
+        # Each product can have two secondary products. If the product has no secondary products, the value is None.
+        self.secondary_products = product_config['secondary_products']
+    
     def generate_candidate_prices(self):
         '''
             Generate four candidate prices that are eaully distributed between the max price and the base price.
@@ -26,22 +26,28 @@ class Product:
         candidate_prices = linspace(self.base_price, self.max_price, 4)
         return candidate_prices    
 
-
     def get_candidate_prices(self):
         '''
             @return: the candidate prices of the product.
         '''
         return self.candidate_prices
     
+    '''
+        Add secondary products to the product. If the product has no secondary products, the function stores None.
+    '''
+    def add_secondary_products(self, secondary_product_1, secondary_product_2):
+        self.secondary_products = (secondary_product_1, secondary_product_2)
+        
 '''
     Function ProductFactory is used to create a new product.
 '''
-#TODO Is this usage of a facotry method correct?
 def ProductFactory(product_config):
     return Product(product_config)
-
 
 '''
     Test the Product class
 '''
-myProduct = Product({'name': 'Product1', 'base_price': 1, 'max_price': 10, 'production_cost': 0.1, 'secondary_products': (0, 1)})
+# Product with no secondary products.
+prod = ProductFactory({'name': 'Product1', 'base_price': 1, 'max_price': 10, 'production_cost': 0.1, 'secondary_products': (None, None)})
+# Product with secondary products.
+prod2 = ProductFactory({'name': 'Product1', 'base_price': 1, 'max_price': 10, 'production_cost': 0.1, 'secondary_products': (prod, None)})

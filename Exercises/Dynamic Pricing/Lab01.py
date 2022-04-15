@@ -6,7 +6,7 @@ class env:
             self.prices = prices
             self.probs = probs
             
-        def  round(self, arm_pulled):
+        def round(self, arm_pulled):
             conv = np.random.binomial(n=1, p=self.probs[arm_pulled])
             reward = conv * self.prices[arm_pulled]
             return reward
