@@ -79,9 +79,10 @@ def load_function(path):
     y = xy[:, 1]
     return x, y
 
-
+"""
+    Test the FunctionBuilder class.
+"""
 if __name__ == '__main__':
-    # test
     x, y = design_function(x_interval=[0, 100],
                            y_interval=[0, 1],
                            density=1,
