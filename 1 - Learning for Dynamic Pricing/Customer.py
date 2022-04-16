@@ -36,8 +36,8 @@ class Customer:
         else:
             print('Error: UserClass is not A, B, or C')
             exit()
-        self.products_clicked = [] # Used to make sure that we don't show the same product twice to the same customer.
-        self.products_bought = []
+        #self.products_clicked = [] # Used to make sure that we don't show the same product twice to the same customer.
+        #self.products_bought = []
 
     def get_reservation_price(self, product_id):
         """
@@ -77,12 +77,6 @@ class Customer:
         :param product_id: product id.
         """
         self.products_bought.append(product_id)
-    
-    def add_click_on_product(self, product_id):
-        """
-        :param product_id: product id.
-        """
-        self.products_clicked.append(product_id)
   
 """
     CustomerFactory is used to create a new customer.

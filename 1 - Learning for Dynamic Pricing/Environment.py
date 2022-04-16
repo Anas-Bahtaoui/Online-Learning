@@ -31,8 +31,8 @@ class Environment:
         """
         self.products.append(Product.ProductFactory(product_config))
        
-    def add_product_to_env(self, product: Product):
-        self.products.append(product) 
+    #def add_product_to_env(self, product: Product):
+     #   self.products.append(product) 
     
     def add_customer(self, customer_config):
         """
