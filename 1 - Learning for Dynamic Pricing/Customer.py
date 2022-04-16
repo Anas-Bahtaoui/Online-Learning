@@ -1,26 +1,26 @@
 import numpy as np
 from scipy.stats import bernoulli
-'''
+"""
     This is the definition of the Customer class. There are three customers classes, distinguished by 2 binaray features.
     Each customer belongs to a customer class.
     Each customer has a reservation price per product.
     For each customer we keep track of the products that they have clicked on.
     For each customer we keep track of the products that they have bought.
     The users classes potentially differ for the demand curves of the 5 products, number of daily users, alpha ratios, number of products sold, and graph probabilities
-'''
+"""
 
-'''
+"""
     Each customer is belonging to one of the three customer classes. Each class an expected reservation price for each product.
     For each customers, the reservation price is a gaussian random variable with the mean and standard deviation of the expected reservation price.
-'''
+"""
 ExpectedReservationPriceClassA = [10.0, 300.0, 50.0, 1000.0, 100.0]
-ExpectedReservationPriceClassB = list(map(lambda x: x * 1.2, ExpectedReservationPriceClassA))
+ExpectedReservationPriceClassB = list(map(lambda x: x * 1.2, ExpectedReservationPriceClassA)) # "...Class B has 20% more money to spend on products compared to class A"
 ExpectedReservationPriceClassC = list(map(lambda x: x * 1.5, ExpectedReservationPriceClassA))
 
 class Customer:
     def __init__(self, customer_config):
         """
-        @param customer_config: customer configuration dictionary.
+        :param customer_config: customer configuration dictionary
         """
         self.id = customer_config['id']
         self.class_ = customer_config['class']
@@ -41,61 +41,59 @@ class Customer:
 
     def get_reservation_price(self, product_id):
         """
-        @param product_id: product id.
-        @return: the reservation price of the product.
+        Returns the reservation price of the product for the customer.
+        
+        :param product_id: product id
+        :return: the reservation price of the product
         """
         return self.reservation_prices[product_id]
     
     
     def get_class(self):
         """
-        @return: the customer class.
+        :return: the customer class.
         """
         return self.class_
 
-    '''Adds a product to the list of products that the customer has clicked on.'''
     def update_products_clicked(self, product_id):
         """
-        @param product_id: product id.
+        Adds a product to the list of products that the customer has clicked on.
+        
+        :param product_id: product id.
         """
         self.products_clicked.append(product_id)
     
     def clicked_on_product(self, product_id):
         """
-        @param product_id: product id.
-        @return: True if the product has been clicked on by the customer.
+        Returns True if the customer has clicked on the product.
+        
+        :param product_id: product id.
+        :return: True if the product has been clicked on by the customer.
         """
         return product_id in self.products_clicked
     
     def buy_product(self, product_id):
         """
-        @param product_id: product id.
+        :param product_id: product id.
         """
         self.products_bought.append(product_id)
     
     def add_click_on_product(self, product_id):
         """
-        @param product_id: product id.
+        :param product_id: product id.
         """
         self.products_clicked.append(product_id)
   
-'''
+"""
     CustomerFactory is used to create a new customer.
-'''
+"""
 def CustomerFactory(customer_config):
     return Customer(customer_config)
 
-'''
-    Function that samples the buy/click probability of a given customer class.
-    The function returns the probability of buying/clicking on the product.
-    The probability is sampled from a beta distribution.
-'''
-def 
-        
 
-'''
+"""
     Test the Customer class
-'''
+"""
 if __name__ == '__main__':
     #Create a new customers 
     customer = Customer({'id': 1, 'class': 'A'})
