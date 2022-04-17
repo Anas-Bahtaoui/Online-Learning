@@ -34,7 +34,8 @@ def design_function(x_interval, y_interval, density=1., plot_result=True):
         y_drawn = np.append(y_drawn[0], y_drawn)
         y_drawn = np.append(y_drawn, y_drawn[-1])
 
-        if plot_result: plt.plot(x_drawn, y_drawn, linestyle='--',
+        if plot_result:
+            plt.plot(x_drawn, y_drawn, linestyle='--',
                                  label=f'Original samples - {x_drawn.shape[0]} points')
 
         # creation of the interpolation function
@@ -47,9 +48,9 @@ def design_function(x_interval, y_interval, density=1., plot_result=True):
         y_new = np.where(y_new > 1, 1, y_new)
         y_new = np.where(y_new < 0, 0, y_new)
 
-        if plot_result: plt.plot(x_new, y_new, label=f'Cubic interpolation')
-
-        if plot_result: plt.show()
+        if plot_result:
+            plt.plot(x_new, y_new, label=f'Cubic interpolation')
+            plt.show()
 
         return x_new, y_new
 
@@ -78,6 +79,7 @@ def load_function(path):
     x = xy[:, 0]
     y = xy[:, 1]
     return x, y
+
 
 """
     Test the FunctionBuilder class.

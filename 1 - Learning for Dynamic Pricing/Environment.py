@@ -6,22 +6,45 @@
     In contrast, alpha_0 is the ratio of customers landing on the webpage of a competitor.
     We only consider the alpha ratios and disregard the total number of users. However, the alpha ratios will be subject to noise. That is, every day, the value of the alpha ratios will be realizations of independent Dirichlet random variables
 """
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
 
 from Product import Product, ProductConfig, linear_price_generator
-from Customer import Customer
+from Customer import Customer, CustomerClass
+
+
+def n_users_of_class_generator(class_: CustomerClass) -> int:
+    """
+    Generates the number of users of a given class
+    :param class_: the class of the users
+    :return: the number of users of the given class
+    """
+    if class_ == CustomerClass.A:
+        return np.random.poisson(5)
+    elif class_ == CustomerClass.B:
+        return np.random.poisson(10)
+    elif class_ == CustomerClass.C:
+        return np.random.poisson(20)
+
+
+def alpha_generator() -> Tuple[float, ...]:
+    return tuple(np.random.dirichlet(np.array([1, 1, 1])))
+
+
+def constant_generator() -> Tuple[float, ...]:
+    return 1 / 6, 1 / 6, 1 / 6, 1 / 6, 1 / 6, 1 / 6
 
 
 class Environment:
-    def __init__(self, aggregate_toggle: bool = True):
+    def __init__(self, alpha_generator = alpha_generator, aggregate_toggle: bool = True):
         self.aggregate_toggle = aggregate_toggle  # We first do the first 4, because this is tricky
         self.day = 0
         self.products: List[Product] = []
         self.alpha = ()
+        self.alpha_generator = alpha_generator
         self.customers: List[Customer] = []
         self.new_day()
         self.lambda_ = 0.1  # The value of lambda is assumed to be known in all the three project proposals
@@ -51,7 +74,12 @@ class Environment:
         Every day, the value of the alpha ratios of each product will be realizations of independent Dirichlet random variables.
         TODO Adjust the diriichlet distribution parameters. I have no idea what to put there
         """
-        self.alpha = tuple(np.random.dirichlet([1, 1, 1, 1, 1, 1], 1))
+        """
+        It is mentioned online that dirichlet distributions are generalized form of alpha beta distribution.
+        So, the 0th parameters is the amount of failure, and each alpha is the count of times we succeeded in selling.
+        We haven't implemented this yet, but it is a dynamic distribution, we think.
+        """
+        self.alpha = self.alpha_generator()
 
     def get_current_day(self):
         return self.day

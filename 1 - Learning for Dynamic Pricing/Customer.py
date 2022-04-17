@@ -28,6 +28,18 @@ prices = {
     CustomerClass.C: (15.0, 450.0, 75.0, 1500.0, 150.0),
 }
 
+purchase_amount = {
+    CustomerClass.A: (5, 1, 3, 1, 1),
+    CustomerClass.B: (8, 2, 6, 1, 2),
+    CustomerClass.C: (15, 4, 8, 2, 8),
+}
+
+average_customer_counts = {
+    CustomerClass.A: 50,
+    CustomerClass.B: 30,
+    CustomerClass.C: 10,
+}
+
 
 class Customer:
     def __init__(self, id_: int, class_: CustomerClass):
@@ -40,6 +52,9 @@ class Customer:
         self.products_bought = []
         # The reservation price is a gaussian random variable with the mean and standard deviation of the expected reservation price of the customer class.
         self.reservation_prices = [price + np.random.normal(0, 1) for price in prices[self.class_]]
+        self.purchase_amounts = [int(amount + np.random.normal(0, 1)) for amount in purchase_amount[self.class_]]
+        # TODO: Abstract and make better
+        ## This will be pulled from the demand curve by a variation maybe?
 
     def get_reservation_price_of(self, product_id: int) -> float:
         """
