@@ -22,13 +22,13 @@ class CustomerClass(enum.IntEnum):
     C = 2
 
 
-prices = {
+expected_prices = {
     CustomerClass.A: (10.0, 300.0, 50.0, 1000.0, 100.0),
     CustomerClass.B: (12.0, 360.0, 60.0, 1200.0, 120.0),
     CustomerClass.C: (15.0, 450.0, 75.0, 1500.0, 150.0),
 }
 
-purchase_amount = {
+expected_purchase_amount = {
     CustomerClass.A: (5, 1, 3, 1, 1),
     CustomerClass.B: (8, 2, 6, 1, 2),
     CustomerClass.C: (15, 4, 8, 2, 8),
@@ -51,8 +51,8 @@ class Customer:
         self.products_clicked = []
         self.products_bought = []
         # The reservation price is a gaussian random variable with the mean and standard deviation of the expected reservation price of the customer class.
-        self.reservation_prices = [price + np.random.normal(0, 1) for price in prices[self.class_]]
-        self.purchase_amounts = [int(amount + np.random.normal(0, 1)) for amount in purchase_amount[self.class_]]
+        self.reservation_prices = [price + np.random.normal(0, 1) for price in expected_prices[self.class_]]
+        self.purchase_amounts = [int(amount + np.random.normal(0, 1)) for amount in expected_purchase_amount[self.class_]]
         # TODO: Abstract and make better
         ## This will be pulled from the demand curve by a variation maybe?
 

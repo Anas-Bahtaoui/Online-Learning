@@ -4,7 +4,7 @@
 from operator import itemgetter
 from typing import Tuple, Annotated, Optional
 from Environment import Environment, constant_generator
-from Customer import CustomerClass, purchase_amount, prices, average_customer_counts
+from Customer import CustomerClass, expected_purchase_amount, expected_prices, average_customer_counts
 from Product import Product, ObservationProbability
 from sample import generate_sample_greedy_environment
 
@@ -47,23 +47,23 @@ class GreedyLearner:
             price_index,) + self.candidate_price_indexes[product.id + 1:]
         n_users = average_customer_counts[class_]
 
-        def emulate_path(clicked_primaries: Tuple[int, ...], probability: float, current: Product):
+        def emulate_path(clicked_primaries: Tuple[int, ...], viewing_probability: float, current: Product):
             if current.id in clicked_primaries:
                 return 0
 
             product_price = product.candidate_prices[current_price_indexes[product.id]]
-            is_purchased = prices[class_][product.id] >= product_price
+            is_purchased = expected_prices[class_][product.id] >= product_price
             if not is_purchased:
                 return 0
-            result_ = (product_price - product.production_cost) * probability * n_users * purchase_amount[class_][product.id]
+            result_ = (product_price - product.production_cost) * viewing_probability * n_users * expected_purchase_amount[class_][product.id]
             first_p: Optional[ObservationProbability]
             second_p: Optional[ObservationProbability]
             first_p, second_p = product.secondary_products
             new_primaries = clicked_primaries + (current.id,)
             if first_p is not None:
-                result_ += emulate_path(new_primaries, first_p[1] * probability * 1, first_p[0])
+                result_ += emulate_path(new_primaries, first_p[1] * viewing_probability * 1, first_p[0])
             if second_p is not None:
-                result_ += emulate_path(new_primaries, second_p[1] * probability * self.env.lambda_, second_p[0])
+                result_ += emulate_path(new_primaries, second_p[1] * viewing_probability * self.env.lambda_, second_p[0])
             return result_
 
         return emulate_path((), self.env.alpha[product.id + 1], product)
@@ -80,6 +80,7 @@ class GreedyLearner:
         new_price_indexes = x[:pulled_arm] + (x[pulled_arm] + 1,) + x[pulled_arm + 1:]
         if new_price_indexes[pulled_arm] == len(self.env.products[0].candidate_prices):
             return None
+        print("New experiment on day", self.env.day, "with price indexes", new_price_indexes)
         self.env.new_day()  # We have a new experiment, thus new day
         reward = self.calculate_total_expected_reward(new_price_indexes)
         if reward > self.current_reward:
@@ -98,6 +99,7 @@ class GreedyLearner:
             return False
         if best_reward < self.current_reward:
             return False
+        print("Better reward found", best_reward, "with price indexes", best_price_index)
         self.current_reward, self.candidate_price_indexes = best_reward, best_price_index
         return True
 

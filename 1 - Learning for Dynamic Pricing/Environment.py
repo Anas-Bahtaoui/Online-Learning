@@ -30,8 +30,11 @@ def n_users_of_class_generator(class_: CustomerClass) -> int:
         return np.random.poisson(20)
 
 
+DIRICHLET_EXPECTATIONS = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
+
+
 def alpha_generator() -> Tuple[float, ...]:
-    return tuple(np.random.dirichlet(np.array([1, 1, 1])))
+    return tuple(np.random.dirichlet(np.array(DIRICHLET_EXPECTATIONS)))
 
 
 def constant_generator() -> Tuple[float, ...]:
@@ -39,7 +42,7 @@ def constant_generator() -> Tuple[float, ...]:
 
 
 class Environment:
-    def __init__(self, alpha_generator = alpha_generator, aggregate_toggle: bool = True):
+    def __init__(self, alpha_generator=alpha_generator, aggregate_toggle: bool = True):
         self.aggregate_toggle = aggregate_toggle  # We first do the first 4, because this is tricky
         self.day = 0
         self.products: List[Product] = []
