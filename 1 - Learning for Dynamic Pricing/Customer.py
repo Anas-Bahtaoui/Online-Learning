@@ -1,5 +1,9 @@
 import enum
 import numpy as np
+import scipy.stats
+
+from Distribution import PositiveIntegerGaussian as PIG
+from Product import Product
 
 """
     This is the definition of the Customer class. There are three customers classes, distinguished by 2 binary features.
@@ -22,23 +26,33 @@ class CustomerClass(enum.IntEnum):
     C = 2
 
 
-expected_prices = {
-    CustomerClass.A: (10.0, 300.0, 50.0, 1000.0, 100.0),
-    CustomerClass.B: (12.0, 360.0, 60.0, 1200.0, 120.0),
-    CustomerClass.C: (15.0, 450.0, 75.0, 1500.0, 150.0),
+# These will come from the curve instead
+# prices = {
+#     CustomerClass.A: (10.0, 300.0, 50.0, 1000.0, 100.0),
+#     CustomerClass.B: (12.0, 360.0, 60.0, 1200.0, 120.0),
+#     CustomerClass.C: (15.0, 450.0, 75.0, 1500.0, 150.0),
+# }
+
+# TODO: is the integergaussian good for this
+purchase_amounts = {
+    CustomerClass.A: (PIG(5, 2), PIG(1, 1), PIG(3, 1), PIG(1, 1), PIG(1, 1)),
+    CustomerClass.B: (PIG(8, 3), PIG(2, 1), PIG(6, 2), PIG(1, 1), PIG(2, 1)),
+    CustomerClass.C: (PIG(15, 4), PIG(4, 1), PIG(8, 2), PIG(2, 1), PIG(8, 2)),
 }
 
-expected_purchase_amount = {
-    CustomerClass.A: (5, 1, 3, 1, 1),
-    CustomerClass.B: (8, 2, 6, 1, 2),
-    CustomerClass.C: (15, 4, 8, 2, 8),
+customer_counts = {
+    CustomerClass.A: PIG(mean=50, variance=20),
+    CustomerClass.B: PIG(mean=100, variance=20),
+    CustomerClass.C: PIG(mean=10, variance=5),
 }
 
-average_customer_counts = {
-    CustomerClass.A: 50,
-    CustomerClass.B: 30,
-    CustomerClass.C: 10,
-}
+
+def reservation_price_distribution_from_curves(customer_class: CustomerClass, product_id: int, price: float) -> PIG:
+    graph_result = np.random.uniform(0, 1)  # Read from an actual curve
+    std_norm = scipy.stats.norm.ppf(1 - graph_result)
+    sigma = 2
+    mu = price - sigma * std_norm
+    return PIG(mu, sigma)
 
 
 class Customer:
@@ -50,20 +64,20 @@ class Customer:
         self.class_ = class_
         self.products_clicked = []
         self.products_bought = []
-        # The reservation price is a gaussian random variable with the mean and standard deviation of the expected reservation price of the customer class.
-        self.reservation_prices = [price + np.random.normal(0, 1) for price in expected_prices[self.class_]]
-        self.purchase_amounts = [int(amount + np.random.normal(0, 1)) for amount in expected_purchase_amount[self.class_]]
-        # TODO: Abstract and make better
-        ## This will be pulled from the demand curve by a variation maybe?
+        self.reservation_prices = [
+            lambda price: reservation_price_distribution_from_curves(self.class_, product_id, price) for product_id in
+            range(5)]
+        self.purchase_amounts = [purchase_amounts[self.class_]]
 
-    def get_reservation_price_of(self, product_id: int) -> float:
+    def get_reservation_price_of(self, product_id: int, product_price: float) -> PIG:
         """
         Returns the reservation price of the product for the customer.
         
         :param product_id: product id
+        :param product_price: product price
         :return: the reservation price of the product
         """
-        return self.reservation_prices[product_id]
+        return self.reservation_prices[product_id](product_price)
 
     def get_class(self) -> CustomerClass:
         """

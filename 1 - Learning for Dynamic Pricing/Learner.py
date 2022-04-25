@@ -4,9 +4,10 @@
 from operator import itemgetter
 from typing import Tuple, Annotated, Optional
 from Environment import Environment, constant_generator
-from Customer import CustomerClass, expected_purchase_amount, expected_prices, average_customer_counts
+from Customer import CustomerClass, purchase_amounts, customer_counts, reservation_price_distribution_from_curves
 from Product import Product, ObservationProbability
 from sample import generate_sample_greedy_environment
+
 
 import numpy as np
 
@@ -45,17 +46,20 @@ class GreedyLearner:
     def calculate_reward_of_product(self, price_index: int, product: Product, class_: CustomerClass) -> float:
         current_price_indexes = self.candidate_price_indexes[:product.id] + (
             price_index,) + self.candidate_price_indexes[product.id + 1:]
-        n_users = average_customer_counts[class_]
+        n_users = customer_counts[class_].get_expectation()
 
         def emulate_path(clicked_primaries: Tuple[int, ...], viewing_probability: float, current: Product):
             if current.id in clicked_primaries:
                 return 0
 
             product_price = product.candidate_prices[current_price_indexes[product.id]]
-            is_purchased = expected_prices[class_][product.id] >= product_price
+            reservation_price = reservation_price_distribution_from_curves(class_, product.id, product_price).get_expectation()
+            is_purchased = reservation_price >= product_price
             if not is_purchased:
                 return 0
-            result_ = (product_price - product.production_cost) * viewing_probability * n_users * expected_purchase_amount[class_][product.id]
+            expected_purchase_count = purchase_amounts[class_][product.id].get_expectation()
+            result_ = (product_price - product.production_cost) * viewing_probability * n_users * expected_purchase_count
+            result_ = round(result_, 2) # 2 because we want cents :)
             first_p: Optional[ObservationProbability]
             second_p: Optional[ObservationProbability]
             first_p, second_p = product.secondary_products
