@@ -3,6 +3,9 @@
 """
 from operator import itemgetter
 from typing import Tuple, Annotated, Optional
+
+from matplotlib import pyplot as plt
+from sklearn.tree import plot_tree
 from Environment import Environment, constant_generator
 from Customer import CustomerClass, purchase_amounts, customer_counts, reservation_price_distribution_from_curves
 from Product import Product, ObservationProbability
@@ -114,10 +117,51 @@ if __name__ == '__main__':
     learner = GreedyLearner(env)
     running = True
     cnt = 0
+    
+    currentReward = []
+    currentCNT = []
+    p1 = []
+    p2 = []
+    p3 = []
+    p4 = []
+    p5 = []
+    
     while running:
         running = learner.iterate_once()
         print(f"iteration {cnt}:")
         print("Indexes", learner.candidate_price_indexes)
         print("Reward", learner.current_reward)
         cnt += 1
+        
+        currentCNT.append(cnt)
+        # Save the current reward
+        currentReward.append(learner.current_reward)
+        # Store the price indexes
+        p1.append(learner.candidate_price_indexes[0])
+        p2.append(learner.candidate_price_indexes[1])
+        p3.append(learner.candidate_price_indexes[2])
+        p4.append(learner.candidate_price_indexes[3])
+        p5.append(learner.candidate_price_indexes[4])        
+                
     print("Done")
+    print(p1)
+    
+    
+    # Plot the current_reward over iterations    
+    plt.plot(currentCNT, currentReward)
+    plt.xlabel("Iteration")
+    plt.ylabel("Reward")
+    plt.title("Greedy Algorithm Reward")
+    plt.show()
+    
+    # Plot the prices p1, p2, p3, p4 and p5 over the iterations
+    plt.plot(currentCNT, p1, label="p1")
+    plt.plot(currentCNT, p2, label="p2")
+    plt.plot(currentCNT, p3, label="p3")
+    plt.plot(currentCNT, p4, label="p4")
+    plt.plot(currentCNT, p5, label="p5")
+    plt.xlabel("Iteration")
+    plt.ylabel("Prices per product")
+    plt.title("Greedy Algorithm Prices")
+    plt.legend()
+    plt.show()

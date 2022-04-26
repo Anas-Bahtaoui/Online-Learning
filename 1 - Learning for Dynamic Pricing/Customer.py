@@ -54,6 +54,11 @@ def reservation_price_distribution_from_curves(customer_class: CustomerClass, pr
     mu = price - sigma * std_norm
     return PIG(mu, sigma)
 
+"""
+Function that reads from the the demand curves (.npy files) and returns the conversion probability at a given price.
+"""
+def read_conversion_probability(price: float, file) -> float:
+    return np.load(file)[price]
 
 class Customer:
     def __init__(self, id_: int, class_: CustomerClass):
@@ -108,7 +113,9 @@ class Customer:
 """
 if __name__ == '__main__':
     # Create a new customers
-    customer = Customer(1, CustomerClass.A)
-    print(customer.get_reservation_price_of(0))
-    anotherCustomer = Customer(2, CustomerClass.B)
-    print(anotherCustomer.get_reservation_price_of(0))
+    #customer = Customer(1, CustomerClass.A)
+    #print(customer.get_reservation_price_of(0))
+    #anotherCustomer = Customer(2, CustomerClass.B)
+    #print(anotherCustomer.get_reservation_price_of(0))
+
+    print(read_conversion_probability(20, 'test.npy'))

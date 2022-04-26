@@ -9,8 +9,8 @@ from numpy import linspace
 
 class ProductConfig(NamedTuple):
     """
-        This is the definition of the ProductConfig class.
-        It contains the product name, the base price, the maximum price, and the number of candidate prices.
+    This is the definition of the ProductConfig class.
+    It contains the product name, the base price, the maximum price, and the number of candidate prices.
     """
     id: int
     name: str
@@ -25,8 +25,10 @@ ObservationProbability = Tuple['Product', float]
 
 
 class Product:
-    # Each product can have two secondary products. If the product has no secondary products, the value is None.
-    # Actually they can have more, but as stated in the text, only first two is significant.
+    """
+    Each product can have two secondary products. If the product has no secondary products, the value is None.
+    Actually they can have more, but as stated in the text, only first two is significant.
+    """
     secondary_products: Tuple[Optional[ObservationProbability], Optional[ObservationProbability]]
 
     def __init__(self, product_config: ProductConfig, generator: PriceGenerator):
@@ -63,7 +65,7 @@ def linear_price_generator(base_price: float, max_price: float) -> List[float]:
 
 
 """
-    Test the Product class
+Test the Product class
 """
 # Product with no secondary products.
 prod = Product(ProductConfig(id=1, name='Product1', base_price=1, max_price=10, production_cost=0.1),
