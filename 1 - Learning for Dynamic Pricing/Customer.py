@@ -58,7 +58,7 @@ def reservation_price_distribution_from_curves(customer_class: CustomerClass, pr
 Function that reads from the the demand curves (.npy files) and returns the conversion probability at a given price.
 """
 def read_conversion_probability(price: float, file) -> float:
-    return np.load(file)[price]
+    return np.load(file)[price] # Look at main function to see how this is used
 
 class Customer:
     def __init__(self, id_: int, class_: CustomerClass):
