@@ -143,9 +143,9 @@ if __name__ == '__main__':
         p4.append(learner.candidate_price_indexes[3])
         p5.append(learner.candidate_price_indexes[4])        
                 
-    print("Done")
-    print(p1)
-    
+    print("###############################################\n")
+    print("Done!")
+    print("Identified price indexes:", learner.candidate_price_indexes)
     
     # Plot the current_reward over iterations    
     plt.plot(currentCNT, currentReward)
@@ -155,13 +155,27 @@ if __name__ == '__main__':
     plt.show()
     
     # Plot the prices p1, p2, p3, p4 and p5 over the iterations
-    plt.plot(currentCNT, p1, label="p1")
-    plt.plot(currentCNT, p2, label="p2")
-    plt.plot(currentCNT, p3, label="p3")
-    plt.plot(currentCNT, p4, label="p4")
-    plt.plot(currentCNT, p5, label="p5")
+    priceP1 = []
+    priceP2 = []
+    priceP3 = []
+    priceP4 = []
+    pricep5 = []
+    
+    for i in range(len(currentCNT)):
+        priceP1.append(env.products[0].candidate_prices[p1[i]])
+        priceP2.append(env.products[1].candidate_prices[p2[i]])
+        priceP3.append(env.products[2].candidate_prices[p3[i]])
+        priceP4.append(env.products[3].candidate_prices[p4[i]])
+        pricep5.append(env.products[4].candidate_prices[p5[i]])
+                
+    plt.plot(currentCNT, priceP1, label="p1")
+    plt.plot(currentCNT, priceP2, label="p2")
+    plt.plot(currentCNT, priceP3, label="p3")
+    plt.plot(currentCNT, priceP4, label="p4")
+    plt.plot(currentCNT, pricep5, label="p5")
+    
     plt.xlabel("Iteration")
     plt.ylabel("Prices per product")
     plt.title("Greedy Algorithm Prices")
     plt.legend()
-    plt.show()
+    plt.show()    
