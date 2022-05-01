@@ -1,5 +1,6 @@
 import enum
 from collections import defaultdict
+from functools import lru_cache
 from typing import List, Tuple, Dict, Set
 
 import numpy as np
@@ -52,17 +53,28 @@ customer_counts = {
 
 
 def reservation_price_distribution_from_curves(customer_class: CustomerClass, product_id: int, price: float) -> PIG:
-    graph_result = np.random.uniform(0, 1)  # Read from an actual curve
+    graph_result = read_conversion_probability(price, f"curves/{customer_class.name}_{product_id}.npy")
     std_norm = scipy.stats.norm.ppf(1 - graph_result)
     sigma = 2
     mu = price - sigma * std_norm
     return PIG(mu, sigma)
 
+
 """
 Function that reads from the the demand curves (.npy files) and returns the conversion probability at a given price.
 """
-def read_conversion_probability(price: float, file) -> float:
-    return np.load(file)[price] # Look at main function to see how this is used
+
+
+@lru_cache(maxsize=None)
+def load_file(file_path: str) -> np.array:
+    return np.load(file_path)
+
+
+def read_conversion_probability(price: float, file_path: str) -> float:
+    if price > 100:
+        price = 100
+    return load_file(file_path)[round(price)][1]  # TODO: Linear interpolation maybe
+
 
 class Customer:
     def __init__(self, class_: CustomerClass):
@@ -115,9 +127,9 @@ class Customer:
 """
 if __name__ == '__main__':
     # Create a new customers
-    #customer = Customer(1, CustomerClass.A)
-    #print(customer.get_reservation_price_of(0))
-    #anotherCustomer = Customer(2, CustomerClass.B)
-    #print(anotherCustomer.get_reservation_price_of(0))
+    # customer = Customer(1, CustomerClass.A)
+    # print(customer.get_reservation_price_of(0))
+    # anotherCustomer = Customer(2, CustomerClass.B)
+    # print(anotherCustomer.get_reservation_price_of(0))
 
     print(read_conversion_probability(20, 'test.npy'))
