@@ -1,7 +1,11 @@
 import enum
+from collections import defaultdict
+from typing import List, Tuple, Dict, Set
+
 import numpy as np
 import scipy.stats
 
+import Distribution
 from Distribution import PositiveIntegerGaussian as PIG
 from Product import Product
 
@@ -61,18 +65,16 @@ def read_conversion_probability(price: float, file) -> float:
     return np.load(file)[price] # Look at main function to see how this is used
 
 class Customer:
-    def __init__(self, id_: int, class_: CustomerClass):
+    def __init__(self, class_: CustomerClass):
         """
         :param customer_config: customer configuration dictionary
         """
-        self.id = id_
         self.class_ = class_
-        self.products_clicked = []
-        self.products_bought = []
-        self.reservation_prices = [
+        self.products_clicked: Set[int] = set()
+        self.products_bought: Dict[int, int] = defaultdict(int)
+        self.reservation_prices: List[Distribution] = [
             lambda price: reservation_price_distribution_from_curves(self.class_, product_id, price) for product_id in
             range(5)]
-        self.purchase_amounts = [purchase_amounts[self.class_]]
 
     def get_reservation_price_of(self, product_id: int, product_price: float) -> PIG:
         """
@@ -96,16 +98,16 @@ class Customer:
         
         :param product_id: product id.
         """
-        self.products_clicked.append(product_id)
+        self.products_clicked.add(product_id)
 
     def is_product_clicked(self, product_id):
         return product_id in self.products_clicked
 
-    def buy_product(self, product_id):
+    def buy_product(self, product_id: int, product_count: int):
         """
         :param product_id: product id.
         """
-        self.products_bought.append(product_id)
+        self.products_bought[product_id] += product_count
 
 
 """
