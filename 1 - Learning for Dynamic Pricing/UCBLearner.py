@@ -23,10 +23,7 @@ class UCBLearner(BanditLearner):
         last_selection, last_customers = self._history[-1]
         for product_id, selected_price_index in enumerate(last_selection):
             for customer in last_customers:
-                if self.are_counts_certain:
-                    reward = reward_for_certain_count(customer, product_id)
-                else:
-                    reward = reward_for_uncertain_count(customer, product_id)
+                reward = self._get_reward(customer, product_id)
                 self.rewards_per_arm_per_product[product_id][selected_price_index].append(reward)
             self.means[product_id][selected_price_index] = int(
                 np.mean(self.rewards_per_arm_per_product[product_id][selected_price_index]))
@@ -39,8 +36,18 @@ class UCBLearner(BanditLearner):
 
 if __name__ == '__main__':
     env = sample.generate_sample_greedy_environment()
-    learner = UCBLearner(env, are_counts_certain=True)
-    n_exp = 100
+    learner = UCBLearner(env, are_counts_certain=False)
+    n_exp = 4
+    prices_selected = []
+    last_prices_selected = None
+    n = 0
     for _ in range(n_exp):
-        learner.run_for(100)
+        n += 1
+        learner.run_for(400)
+        prices_selected.append(learner._history[-1][0])
+        if last_prices_selected == prices_selected[-1]:
+            break
+        last_prices_selected = prices_selected[-1]
         learner.reset()
+    print(prices_selected)
+    print(n)

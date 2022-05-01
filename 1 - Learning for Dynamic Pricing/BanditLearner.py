@@ -7,7 +7,6 @@ from Environment import Environment
 from Product import Product, ObservationProbability
 
 
-
 def reward_for_certain_count(customer: Customer, product_id: int) -> float:
     ### For step 3, 5, 6
     return customer.products_bought[product_id]
@@ -83,6 +82,12 @@ class BanditLearner:
     def reset(self):
         self.__init__(self.env, are_counts_certain=self.are_counts_certain)
 
+    def _get_reward(self, customer: Customer, product_id: int) -> float:
+        if self.are_counts_certain:
+            return reward_for_certain_count(customer, product_id)
+        else:
+            return reward_for_uncertain_count(customer, product_id)
+
     def clairvoyant_reward(self):
         selected_price_indexes = self._select_price_indexes()
         expected_total_reward = 0
@@ -99,4 +104,3 @@ class BanditLearner:
                         reward *= purchase_amounts[customer_class][product.id].get_expectation()
                     expected_total_reward += reward
         return expected_total_reward
-
