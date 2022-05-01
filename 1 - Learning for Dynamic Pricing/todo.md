@@ -13,4 +13,4 @@ Implement this.
 * In step 6, sliding-window (passive)
 * In step 6, change detection algorithm (active)
 * What is the basis for step 6? 
-* 
+* All the context generation stuff
