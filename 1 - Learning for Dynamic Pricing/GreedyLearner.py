@@ -1,13 +1,10 @@
-from collections import defaultdict
 from operator import itemgetter
-from typing import Tuple, Optional, List
+from typing import Tuple, Optional
 
-from matplotlib import pyplot as plt
-from Environment import Environment, constant_generator
+from Environment import Environment
 from Customer import CustomerClass, purchase_amounts, customer_counts, reservation_price_distribution_from_curves
 from Learner import Learner, ShallContinue, Reward, PriceIndexes
 from Product import Product, ObservationProbability
-from sample import generate_sample_greedy_environment
 
 
 class GreedyLearner(Learner):
@@ -38,7 +35,8 @@ class GreedyLearner(Learner):
                 return 0
             expected_purchase_count = purchase_amounts[class_][product.id].get_expectation()
             result_ = (
-                              product_price - product.production_cost) * viewing_probability * n_users * expected_purchase_count
+                              product_price - product.production_cost) * viewing_probability * n_users #  * expected_purchase_count
+            # TODO: Shall we also ignore counts, if we are ignoring them in the bandits?
             result_ = round(result_, 2)  # 2 because we want cents :)
             first_p: Optional[ObservationProbability]
             second_p: Optional[ObservationProbability]

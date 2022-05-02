@@ -5,6 +5,7 @@
 from typing import Tuple, List, NamedTuple, Union, Optional, Callable
 
 from numpy import linspace
+from Distribution import PositiveIntegerGaussian as PIG
 
 
 class ProductConfig(NamedTuple):
@@ -52,7 +53,7 @@ class Product:
         Add secondary products to the product. If the product has no secondary products, the function stores None.
         """
         self.secondary_products = (
-        (secondary_product_1, prob1), (secondary_product_2, prob2) if secondary_product_2 is not None else None)
+            (secondary_product_1, prob1), (secondary_product_2, prob2) if secondary_product_2 is not None else None)
 
 
 def linear_price_generator(base_price: float, max_price: float) -> List[float]:
@@ -62,6 +63,18 @@ def linear_price_generator(base_price: float, max_price: float) -> List[float]:
     :return: a list of four candidate prices that are equally distributed between the max price and the base price.
     """
     return list(linspace(base_price, max_price, 4))
+
+
+def random_price_generator(base_price: float, max_price: float) -> List[float]:
+    distr = PIG(base_price, max_price - base_price)
+
+    def sample() -> float:
+        samp = max_price
+        while samp >= max_price or samp <= base_price:
+            samp = distr.get_sample_value()
+        return samp
+
+    return sorted(sample() for _ in range(4))
 
 
 """
