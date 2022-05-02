@@ -3,7 +3,7 @@ from typing import List
 import numpy as np
 
 import sample
-from BanditLearner import BanditLearner
+from BanditLearner import BanditLearner, BanditConfiguration, step3
 from Environment import Environment
 
 
@@ -12,8 +12,8 @@ class UCBLearner(BanditLearner):
         return [np.argmax(np.array(self.means[product.id]) + np.array(self.widths[product.id])) for product in
                 self.products]
 
-    def __init__(self, env: Environment, *, are_counts_certain: bool):
-        super().__init__(env, are_counts_certain=are_counts_certain)
+    def __init__(self, env: Environment, config: BanditConfiguration):
+        super().__init__(env, config)
         self.means = [[0 for _ in product.candidate_prices] for product in self.products]
         self.widths = [[np.inf for _ in product.candidate_prices] for product in self.products]
         self.rewards_per_arm_per_product = [[[] for _ in product.candidate_prices] for product in self.products]
@@ -36,7 +36,7 @@ class UCBLearner(BanditLearner):
 
 if __name__ == '__main__':
     env = sample.generate_sample_greedy_environment()
-    learner = UCBLearner(env, are_counts_certain=False)
+    learner = UCBLearner(env, step3)
     n_exp = 4
     prices_selected = []
     last_prices_selected = None

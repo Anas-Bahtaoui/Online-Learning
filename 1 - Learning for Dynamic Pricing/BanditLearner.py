@@ -1,10 +1,39 @@
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, NamedTuple, Union
 
 import numpy as np
 
 from Customer import Customer, purchase_amounts, CustomerClass, customer_counts
 from Environment import Environment
+from Learner import Learner, ShallContinue, Reward, PriceIndexes
 from Product import Product, ObservationProbability
+
+
+class ChangeDetectionAlgorithm:
+    pass
+
+
+class ContextGenerationAlgorithm:
+    pass
+
+
+class BanditConfiguration(NamedTuple):
+    name: str
+    a_ratios_known: bool
+    n_items_sold_known: bool
+    graph_weights_known: bool
+    # Stationary, sliding window size, or change detection algorithm
+    non_stationary: Union[None, int, ChangeDetectionAlgorithm] = None
+    with_context: Optional[Tuple[int, ContextGenerationAlgorithm]] = None  # First is the amount of days
+
+
+step3 = BanditConfiguration("Step 3", True, True, True)
+step4 = BanditConfiguration("Step 4", False, False, True)
+step5 = BanditConfiguration("Step 5", True, True, False)
+# TODO: Step 6 is unclear, what will the first 3 parameters be?
+step6_sliding_window = BanditConfiguration("Step 6 with Sliding Window", False, False, False, 10)
+step6_change_detection = BanditConfiguration("Step 6 with Custom Algorithm", False, False, False,
+                                             ChangeDetectionAlgorithm())
+step7 = BanditConfiguration("Step 7", False, False, True, None, (14, ContextGenerationAlgorithm()))
 
 
 def reward_for_certain_count(customer: Customer, product_id: int) -> float:
@@ -17,11 +46,21 @@ def reward_for_uncertain_count(customer: Customer, product_id: int) -> float:
     return 1 if customer.products_bought[product_id] > 0 else 0
 
 
-class BanditLearner:
-    def __init__(self, env: Environment, *, are_counts_certain: bool):
+class BanditLearner(Learner):
+    def iterate_once(self) -> Tuple[ShallContinue, Reward, PriceIndexes]:
+        selected_price_indexes = self._run_one_day()
+        reward = 0
+        for customer in self._history[-1][1]:
+            for productId in range(5):
+                reward += self._get_reward(customer, productId)
+        return True, reward, selected_price_indexes
+
+    def __init__(self, env: Environment, config: BanditConfiguration):
         self.products = env.products
         self.env = env
-        self.are_counts_certain = are_counts_certain
+        self.name = f"{type(self).__name__} for {config.name}"
+        self.are_counts_certain = config.n_items_sold_known
+        self.config = config
         self.means = [[0 for _ in product.candidate_prices] for product in self.products]
         self.widths = [[np.inf for _ in product.candidate_prices] for product in self.products]
         self._history: List[Tuple[List[int], List[Customer]]] = []
@@ -74,13 +113,14 @@ class BanditLearner:
         selected_price_indexes = self._select_price_indexes()
         self._new_day(selected_price_indexes)
         self._update()
+        return selected_price_indexes
 
     def run_for(self, days: int):
         for _ in range(days):
             self._run_one_day()
 
     def reset(self):
-        self.__init__(self.env, are_counts_certain=self.are_counts_certain)
+        self.__init__(self.env, self.config)
 
     def _get_reward(self, customer: Customer, product_id: int) -> float:
         if self.are_counts_certain:

@@ -1,7 +1,7 @@
 from typing import List, NamedTuple
 
 import sample
-from BanditLearner import BanditLearner
+from BanditLearner import BanditLearner, BanditConfiguration, step3
 from Environment import Environment
 import numpy as np
 
@@ -12,8 +12,8 @@ class BetaParameters(NamedTuple):
 
 
 class TSLearner(BanditLearner):
-    def __init__(self, env: Environment, *, are_counts_certain: bool):
-        super().__init__(env, are_counts_certain=are_counts_certain)
+    def __init__(self, env: Environment, config: BanditConfiguration):
+        super().__init__(env, config)
         self.beta_params: List[List[BetaParameters]] = [
             [BetaParameters(alpha=1, beta=1) for _ in product.candidate_prices] for product in
             self.env.products]
@@ -51,7 +51,7 @@ class TSLearner(BanditLearner):
 
 if __name__ == '__main__':
     env = sample.generate_sample_greedy_environment()
-    learner = TSLearner(env, are_counts_certain=False)
+    learner = TSLearner(env, step3)
     n_exp = 5
     prices_selected = []
     last_prices_selected = None

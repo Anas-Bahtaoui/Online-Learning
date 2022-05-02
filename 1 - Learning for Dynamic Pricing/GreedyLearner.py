@@ -1,16 +1,21 @@
 from collections import defaultdict
 from operator import itemgetter
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 
 from matplotlib import pyplot as plt
-from sklearn.tree import plot_tree
 from Environment import Environment, constant_generator
 from Customer import CustomerClass, purchase_amounts, customer_counts, reservation_price_distribution_from_curves
+from Learner import Learner, ShallContinue, Reward, PriceIndexes
 from Product import Product, ObservationProbability
 from sample import generate_sample_greedy_environment
 
 
-class GreedyLearner:
+class GreedyLearner(Learner):
+    name = "Greedy Algorithm"
+
+    def iterate_once(self) -> Tuple[ShallContinue, Reward, PriceIndexes]:
+        return self._iterate_once(), self.current_reward, list(self.candidate_price_indexes)
+
     def __init__(self, environment: Environment):
         self.candidate_price_indexes = (0, 0, 0, 0, 0)
         self.current_reward = 0
@@ -66,7 +71,7 @@ class GreedyLearner:
         if reward > self.current_reward:
             return reward, new_price_indexes
 
-    def iterate_once(self) -> bool:
+    def _iterate_once(self) -> bool:
         """
 
         :return: Returns False if no more iterations are possible
@@ -83,50 +88,3 @@ class GreedyLearner:
         self.current_reward, self.candidate_price_indexes = best_reward, best_price_index
         return True
 
-
-if __name__ == '__main__':
-    env = generate_sample_greedy_environment()
-    env.alpha_generator = constant_generator
-    learner = GreedyLearner(env)
-    running = True
-    cnt = 0
-
-    currentReward = []
-    products = defaultdict(list)
-    while running:
-        running = learner.iterate_once()
-        print(f"iteration {cnt}:")
-        print("Indexes", learner.candidate_price_indexes)
-        print("Reward", learner.current_reward)
-        cnt += 1
-
-        # Save the current reward
-        currentReward.append(learner.current_reward)
-        # Store the price indexes
-        for product_i in range(5):
-            products[product_i].append(learner.candidate_price_indexes[product_i])
-
-    print("###############################################\n")
-    print("Done!")
-    print("Identified price indexes:", learner.candidate_price_indexes)
-
-    currentCNT = list(range(1, cnt + 1))
-    # Plot the current_reward over iterations
-    plt.plot(currentCNT, currentReward)
-    plt.xlabel("Iteration")
-    plt.ylabel("Reward")
-    plt.title("Greedy Algorithm Reward")
-    plt.show()
-
-    # Plot the prices p1, p2, p3, p4 and p5 over the iterations
-    prices = defaultdict(list)
-    for productId in range(5):
-        for i in range(cnt):
-            prices[productId].append(env.products[productId].candidate_prices[products[productId][i]])
-
-        plt.plot(currentCNT, prices[productId], label="p" + str(productId + 1))
-    plt.xlabel("Iteration")
-    plt.ylabel("Prices per product")
-    plt.title("Greedy Algorithm Prices")
-    plt.legend()
-    plt.show()
