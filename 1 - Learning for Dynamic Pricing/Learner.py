@@ -54,7 +54,7 @@ class Learner:
                 for i in range(cnt):
                     prices[productId].append(env.products[productId].candidate_prices[products[productId][i]])
 
-                plt.plot(x_iteration, prices[productId], label="p" + str(productId + 1))
+                plt.plot(x_iteration, prices[productId], label=env.products[productId].name)
             plt.xlabel("Iteration")
             plt.ylabel("Prices per product")
             plt.title(f"{self.name} Prices")

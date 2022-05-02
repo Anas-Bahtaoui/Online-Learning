@@ -14,6 +14,7 @@ import networkx as nx
 from Product import Product, ProductConfig, linear_price_generator
 from Customer import Customer, CustomerClass
 
+
 def n_users_of_class_generator(class_: CustomerClass) -> int:
     """
     Generates the number of users of a given class
@@ -30,11 +31,14 @@ def n_users_of_class_generator(class_: CustomerClass) -> int:
 
 DIRICHLET_EXPECTATIONS = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
 
+
 def alpha_generator() -> Tuple[float, ...]:
     return tuple(np.random.dirichlet(np.array(DIRICHLET_EXPECTATIONS)))
 
+
 def constant_generator() -> Tuple[float, ...]:
     return 1 / 6, 1 / 6, 1 / 6, 1 / 6, 1 / 6, 1 / 6
+
 
 class Environment:
     def __init__(self, alpha_generator=alpha_generator, aggregate_toggle: bool = True):
@@ -43,7 +47,6 @@ class Environment:
         self.products: List[Product] = []
         self.alpha = ()
         self.alpha_generator = alpha_generator
-        self.customers: List[Customer] = []
         self.new_day()
         self.lambda_ = 0.1  # The value of lambda is assumed to be known in all the three project proposals
 
@@ -52,12 +55,6 @@ class Environment:
         Function that adds products to the environment.
         """
         self.products.append(product)
-
-    def add_customer(self, customer: Customer):
-        """
-        Function that adds customers to the environment.
-        """
-        self.customers.append(customer)
 
     def new_day(self):
         """
@@ -85,10 +82,13 @@ class Environment:
     def get_current_alpha(self):
         return self.alpha
 
+
 """
 Definition of the fully connected directed weighted graph. 
 It is used to store the products as nodes and the click probabilities as edges. 
 """
+
+
 class FullyConnectedGraph:
     def __init__(self, environment: Environment):
         self.environment = environment
@@ -126,6 +126,7 @@ class FullyConnectedGraph:
         # TODO Adjust the names of the nodes and edges
         nx.draw(self.graph, with_labels=False)
         plt.show()
+
 
 """
 Test the Environment class.
