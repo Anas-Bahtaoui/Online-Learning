@@ -29,7 +29,8 @@ class BanditConfiguration(NamedTuple):
 step3 = BanditConfiguration("Step 3", True, True, True)
 step4 = BanditConfiguration("Step 4", False, False, True)
 step5 = BanditConfiguration("Step 5", True, True, False)
-# TODO: Step 6 is unclear, what will the first 3 parameters be?
+# TODO: Step 6 is unclear, what will the first 3 parameters be
+# TODO: Ask to the professor
 step6_sliding_window = BanditConfiguration("Step 6 with Sliding Window", False, False, False, 10)
 step6_change_detection = BanditConfiguration("Step 6 with Custom Algorithm", False, False, False,
                                              ChangeDetectionAlgorithm())

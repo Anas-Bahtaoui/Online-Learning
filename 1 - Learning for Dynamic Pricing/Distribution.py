@@ -47,3 +47,13 @@ class Dirichlet(AbstractDistribution):
     def get_sample_value(self) -> List[float]:
         return list(np.random.dirichlet(np.array(self.alpha)))
 
+
+@dataclass
+class Constant(AbstractDistribution):
+    def get_sample_value(self) -> float:
+        return self.value
+
+    value: float
+
+    def get_expectation(self) -> float:
+        return self.value

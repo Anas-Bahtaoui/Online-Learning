@@ -38,7 +38,9 @@ class CustomerClass(enum.IntEnum):
 #     CustomerClass.C: (15.0, 450.0, 75.0, 1500.0, 150.0),
 # }
 
-# TODO: is the integergaussian good for this
+# TODO: is the Integer Gaussian good for this
+# TODO: After we determine our products, update these values.
+
 purchase_amounts = {
     CustomerClass.A: (PIG(5, 2), PIG(1, 1), PIG(3, 1), PIG(1, 1), PIG(1, 1)),
     CustomerClass.B: (PIG(8, 3), PIG(2, 1), PIG(6, 2), PIG(1, 1), PIG(2, 1)),
@@ -71,8 +73,11 @@ def load_file(file_path: str) -> np.array:
 
 
 def read_conversion_probability(price: float, file_path: str) -> float:
+    # Prices we consider are in range 1-100
     if price > 100:
         price = 100
+    # Sample from a linear function
+    # 98.5 > look at 98 and 99 and interpolate the result in between
     return load_file(file_path)[round(price)][1]  # TODO: Linear interpolation maybe
 
 

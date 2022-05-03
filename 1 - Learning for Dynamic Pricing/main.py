@@ -14,3 +14,5 @@ if __name__ == '__main__':
     learners: List[Learner] = [GreedyLearner(env), UCBLearner(env, step3), TSLearner(env, step3)]
     for learner in learners:
         learner.run_experiment(env, 100)
+
+# TODO: Tune down the model and debug whatever is happening with the bandit algorithms

@@ -37,7 +37,8 @@ class TSLearner(BanditLearner):
             bought, not_bought = 0, 0
             for customer in last_customers:
                 if customer.products_bought[product_id] > 0:
-                    bought += 1
+                    # Shall alpha and beta update based on reward or just binary variable or product count?
+                    bought += 1 # Have the product counts here?
                 else:
                     not_bought += 1
 
