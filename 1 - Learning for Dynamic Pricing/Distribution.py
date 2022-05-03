@@ -57,3 +57,14 @@ class Constant(AbstractDistribution):
 
     def get_expectation(self) -> float:
         return self.value
+
+
+@dataclass
+class Poisson(AbstractDistribution):
+    mean: float
+
+    def get_sample_value(self) -> int:
+        return np.random.poisson(self.mean)
+
+    def get_expectation(self) -> int:
+        return round(self.mean)
