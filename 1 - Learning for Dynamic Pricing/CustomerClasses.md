@@ -1,5 +1,5 @@
 # Professional
-Athletes that train everyday, are looking for higher quality products, products suitable for intensive training and look to achieve the higher results possible when training.
+Athletes that train everyday, are looking for higher quality products, products suitable for intensive training and look to achieve the higher results possible when training. 
 
 ```
 This client will have in general higher demands for P5, P1 and P2; and the lowest demand for P3
