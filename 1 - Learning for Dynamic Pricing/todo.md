@@ -21,7 +21,7 @@ Implement this.
 * Add linear interpolation to price
 * Debug Bandits using simpler models
 * Add code to automatically generate each customer classes' demand curves
-* Visualize demand curves on demand.
+* [DONE] Visualize demand curves on demand. -> See 'FunctionPlotter.py'
 * Add the Customer classes, alpha values, product names, etc...
 * Move all the parameters to one (or two) files so that it is easier to change.
 
