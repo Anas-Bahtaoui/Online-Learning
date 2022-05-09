@@ -24,7 +24,7 @@ class UCBLearner(BanditLearner):
             for customer in last_customers:
                 reward = self._get_reward(customer, product_id)
                 self.rewards_per_arm_per_product[product_id][selected_price_index].append(reward)
-            self.means[product_id][selected_price_index] = int(
+            self.means[product_id][selected_price_index] = int( # TODO: Why cast to int? There is something fishy or?
                 np.mean(self.rewards_per_arm_per_product[product_id][selected_price_index]))
             n = len(self.rewards_per_arm_per_product[product_id][selected_price_index])
             if n > 0:
