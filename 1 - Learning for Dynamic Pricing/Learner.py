@@ -15,20 +15,25 @@ class Learner:
     def iterate_once(self) -> Tuple[ShallContinue, Reward, PriceIndexes]:
         raise NotImplementedError()
 
+    def get_product_rewards(self) -> List[float]:
+        raise NotImplementedError()
+
     def run_experiment(self, max_days: int, *, log: bool = True, plot_graphs: bool = True) -> None:
         running = True
         cnt = 0
 
         rewards = []
         products_ = defaultdict(list)
+        product_rewards = []
         while running and cnt < max_days:
             running, current_reward, candidate_price_indexes = self.iterate_once()
             if log:
                 print(f"iteration {cnt}:")
                 print("Indexes", candidate_price_indexes)
                 print("Reward", current_reward)
+                print("Product rewards", self.get_product_rewards())
             cnt += 1
-
+            product_rewards.append(self.get_product_rewards())
             # Save the current reward
             rewards.append(current_reward)
             # Store the price indexes
@@ -59,5 +64,14 @@ class Learner:
             plt.ylabel("Prices per product")
             plt.title(f"{self.name} Prices")
             plt.legend()
+            plt.show()
+            fig, axs = plt.subplots(5, sharex=True, sharey=True)
+
+            axs[0].set_title(f"{self.name} Product rewards")
+            for productId in range(5):
+                axs[productId].plot(x_iteration, [product_reward[productId] for product_reward in product_rewards], label=products[productId].name)
+                axs[productId].legend(loc="upper right")
+            plt.ylabel("Product rewards")
+            plt.xlabel("Iteration")
             plt.show()
 

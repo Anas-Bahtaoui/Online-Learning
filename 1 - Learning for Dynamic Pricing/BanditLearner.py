@@ -37,12 +37,12 @@ step6_change_detection = BanditConfiguration("Step 6 with Custom Algorithm", Fal
 step7 = BanditConfiguration("Step 7", False, False, True, None, (14, ContextGenerationAlgorithm()))
 
 
-def reward_for_certain_count(customer: Customer, product_id: int) -> float:
+def reward_multiplier_for_certain_count(customer: Customer, product_id: int) -> float:
     ### For step 3, 5, 6
     return customer.products_bought[product_id]
 
 
-def reward_for_uncertain_count(customer: Customer, product_id: int) -> float:
+def reward_multiplier_for_uncertain_count(customer: Customer, product_id: int) -> float:
     ### For step 4 and step 7 we don't know the count of products bought
     return 1 if customer.products_bought[product_id] > 0 else 0
 
@@ -53,8 +53,15 @@ class BanditLearner(Learner):
         reward = 0
         for customer in self._history[-1][1]:
             for productId in range(5):
-                reward += self._get_reward(customer, productId)
+                reward += self._get_reward_coef(customer, productId) # * selected_price_indexes[productId]
         return True, reward, selected_price_indexes
+
+    def get_product_rewards(self) -> List[float]:
+        rewards = [0 for _ in products]
+        for customer in self._history[-1][1]:
+            for productId in range(5):
+                rewards[productId] += self._get_reward_coef(customer, productId) # * self._history[-1][0][productId]
+        return rewards
 
     def __init__(self, config: BanditConfiguration):
         self.name = f"{type(self).__name__} for {config.name}"
@@ -82,7 +89,8 @@ class BanditLearner(Learner):
                     return
                 customer.click_product(product.id)
                 product_price = product.candidate_prices[selected_price_indexes[product.id]]
-                reservation_price = customer.get_reservation_price_of(product.id, product_price).get_sample_value()
+                reservation_price = round(
+                    customer.get_reservation_price_of(product.id, product_price).get_sample_value(), 2)
                 if reservation_price < product_price:
                     return
                 buy_count = purchase_amounts[customer.class_][product.id].get_sample_value()
@@ -117,11 +125,11 @@ class BanditLearner(Learner):
     def reset(self):
         self.__init__(self.config)
 
-    def _get_reward(self, customer: Customer, product_id: int) -> float:
+    def _get_reward_coef(self, customer: Customer, product_id: int) -> float:
         if self.are_counts_certain:
-            return reward_for_certain_count(customer, product_id)
+            return reward_multiplier_for_certain_count(customer, product_id)
         else:
-            return reward_for_uncertain_count(customer, product_id)
+            return reward_multiplier_for_uncertain_count(customer, product_id)
 
     def clairvoyant_reward(self):
         selected_price_indexes = self._select_price_indexes()

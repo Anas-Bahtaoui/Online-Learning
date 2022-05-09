@@ -8,11 +8,11 @@ MAX_PRICE = 100
 LAMBDA_ = 0.1
 
 product_configs: List[ProductConfig] = [
-    ProductConfig(name="Product 1", base_price=1, max_price=10, production_cost=0.1),
-    ProductConfig(name="Product 2", base_price=1, max_price=10, production_cost=0.1),
-    ProductConfig(name="Product 3", base_price=1, max_price=10, production_cost=0.1),
-    ProductConfig(name="Product 4", base_price=1, max_price=10, production_cost=0.1),
-    ProductConfig(name="Product 5", base_price=1, max_price=10, production_cost=0.1),
+    ProductConfig(name="Product 1", base_price=10, max_price=30, production_cost=1),
+    ProductConfig(name="Product 2", base_price=10, max_price=30, production_cost=1),
+    ProductConfig(name="Product 3", base_price=10, max_price=30, production_cost=1),
+    ProductConfig(name="Product 4", base_price=10, max_price=30, production_cost=1),
+    ProductConfig(name="Product 5", base_price=10, max_price=30, production_cost=1),
 ]
 
 products: List[Product] = [Product(config, random_price_generator) for config in product_configs]
@@ -42,7 +42,7 @@ purchase_amounts = {
 }
 
 customer_counts = {
-    CustomerClass.A: PIG(mean=50, variance=20),
-    CustomerClass.B: PIG(mean=100, variance=20),
-    CustomerClass.C: PIG(mean=10, variance=5),
+    CustomerClass.A: PIG(mean=50, variance=4),
+    CustomerClass.B: PIG(mean=100, variance=6),
+    CustomerClass.C: PIG(mean=10, variance=1),
 }

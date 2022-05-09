@@ -69,7 +69,8 @@ def linear_price_generator(base_price: float, max_price: float) -> List[float]:
 
 
 def random_price_generator(base_price: float, max_price: float) -> List[float]:
-    distr = PIG(base_price, max_price - base_price)
+    distr = PIG(base_price, (max_price - base_price) / 3)
+    # We want 99.7 of the prices to be between the base price and the max price.
 
     def sample() -> float:
         samp = max_price

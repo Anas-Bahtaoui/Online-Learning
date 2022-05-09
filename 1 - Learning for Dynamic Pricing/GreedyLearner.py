@@ -1,5 +1,5 @@
 from operator import itemgetter
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 
 from Customer import CustomerClass, reservation_price_distribution_from_curves
 from Learner import Learner, ShallContinue, Reward, PriceIndexes
@@ -8,6 +8,11 @@ from parameters import environment, LAMBDA_, products, purchase_amounts, custome
 
 
 class GreedyLearner(Learner):
+    def get_product_rewards(self) -> List[float]:
+        return [sum(self.calculate_reward_of_product(self.candidate_price_indexes[i], products[i], class_) for class_ in
+                    list(CustomerClass)) for i in
+                range(len(products))]
+
     name = "Greedy Algorithm"
 
     def iterate_once(self) -> Tuple[ShallContinue, Reward, PriceIndexes]:
@@ -35,7 +40,7 @@ class GreedyLearner(Learner):
             expected_purchase_count = purchase_amounts[class_][product.id].get_expectation()
             # TODO: When I added purchase amounts, all went wrong.
             result_ = (
-                              product_price - product.production_cost) * viewing_probability * n_users# * expected_purchase_count
+                              product_price - product.production_cost) * viewing_probability * n_users  # * expected_purchase_count
             # TODO: Shall we also ignore counts, if we are ignoring them in the bandits?
             result_ = round(result_, 2)  # 2 because we want cents :)
             first_p: Optional[ObservationProbability]
@@ -86,4 +91,3 @@ class GreedyLearner(Learner):
         print("Better reward found", best_reward, "with price indexes", best_price_index)
         self.current_reward, self.candidate_price_indexes = best_reward, best_price_index
         return True
-
