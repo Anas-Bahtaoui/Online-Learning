@@ -5,6 +5,7 @@ from GreedyLearner import GreedyLearner
 from Learner import Learner
 from TSLearner import TSLearner
 from UCBLearner import UCBLearner
+from GaussianThompsonLearner import GaussianTSLearner
 from parameters import environment
 
 if __name__ == '__main__':
@@ -16,6 +17,6 @@ if __name__ == '__main__':
     ]
     for learner in learners:
         environment.reset_day()
-        learner.run_experiment(1000)
+        learner.run_experiment(20)
 
 # TODO: Tune down the model and debug whatever is happening with the bandit algorithms

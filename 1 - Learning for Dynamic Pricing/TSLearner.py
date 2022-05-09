@@ -38,7 +38,7 @@ class TSLearner(BanditLearner):
             for customer in last_customers:
                 if customer.products_bought[product_id] > 0:
                     # Shall alpha and beta update based on reward or just binary variable or product count?
-                    bought += 1 # Have the product counts here?
+                    bought += 1  # Have the product counts here?
                 else:
                     not_bought += 1
 
@@ -48,4 +48,3 @@ class TSLearner(BanditLearner):
             new_beta = old_beta + not_bought
 
             self.beta_params[product_id][selected_price_index] = BetaParameters(new_alpha, new_beta)
-

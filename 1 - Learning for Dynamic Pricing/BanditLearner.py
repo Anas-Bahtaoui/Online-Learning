@@ -53,14 +53,14 @@ class BanditLearner(Learner):
         reward = 0
         for customer in self._history[-1][1]:
             for productId in range(5):
-                reward += self._get_reward_coef(customer, productId) # * selected_price_indexes[productId]
+                reward += self._get_reward_coef(customer, productId) * selected_price_indexes[productId]
         return True, reward, selected_price_indexes
 
     def get_product_rewards(self) -> List[float]:
         rewards = [0 for _ in products]
         for customer in self._history[-1][1]:
             for productId in range(5):
-                rewards[productId] += self._get_reward_coef(customer, productId) # * self._history[-1][0][productId]
+                rewards[productId] += self._get_reward_coef(customer, productId) * self._history[-1][0][productId]
         return rewards
 
     def __init__(self, config: BanditConfiguration):
