@@ -16,7 +16,7 @@ from parameters import MAX_PRICE, CustomerClass
 
 
 def reservation_price_distribution_from_curves(customer_class: CustomerClass, product_id: int, price: float) -> PIG:
-    graph_result = read_conversion_probability(price, f"curves/{customer_class.name}_{product_id}.npy")
+    graph_result = read_conversion_probability(price, f"Demand Curves/curves/{customer_class.name}_{product_id}.npy")
     std_norm = scipy.stats.norm.ppf(1 - graph_result)
     sigma = 2
     mu = price - sigma * std_norm
