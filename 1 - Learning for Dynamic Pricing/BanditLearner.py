@@ -58,7 +58,7 @@ class BanditLearner(Learner):
 
     def __init__(self, config: BanditConfiguration):
         self.name = f"{type(self).__name__} for {config.name}"
-        self.are_counts_certain = config.n_items_sold_known
+        self.are_counts_certain = False  # config.n_items_sold_known
         self.config = config
         self.means = [[0 for _ in product.candidate_prices] for product in products]
         self.widths = [[np.inf for _ in product.candidate_prices] for product in products]

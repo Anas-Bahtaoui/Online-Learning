@@ -9,9 +9,13 @@ from parameters import environment
 
 if __name__ == '__main__':
 
-    learners: List[Learner] = [GreedyLearner(), UCBLearner(step3), TSLearner(step3)]
+    learners: List[Learner] = [
+        GreedyLearner(),
+        UCBLearner(step3),
+        # TSLearner(step3)
+    ]
     for learner in learners:
         environment.reset_day()
-        learner.run_experiment(100)
+        learner.run_experiment(1000)
 
 # TODO: Tune down the model and debug whatever is happening with the bandit algorithms
