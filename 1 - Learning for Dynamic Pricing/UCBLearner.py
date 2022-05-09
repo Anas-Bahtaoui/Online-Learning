@@ -2,21 +2,20 @@ from typing import List
 
 import numpy as np
 
-import sample
-from BanditLearner import BanditLearner, BanditConfiguration, step3
-from Environment import Environment
+from BanditLearner import BanditLearner, BanditConfiguration
+from parameters import products
 
 
 class UCBLearner(BanditLearner):
     def _select_price_indexes(self) -> List[int]:
         return [np.argmax(np.array(self.means[product.id]) + np.array(self.widths[product.id])) for product in
-                self.products]
+                products]
 
-    def __init__(self, env: Environment, config: BanditConfiguration):
-        super().__init__(env, config)
-        self.means = [[0 for _ in product.candidate_prices] for product in self.products]
-        self.widths = [[np.inf for _ in product.candidate_prices] for product in self.products]
-        self.rewards_per_arm_per_product = [[[] for _ in product.candidate_prices] for product in self.products]
+    def __init__(self, config: BanditConfiguration):
+        super().__init__(config)
+        self.means = [[0 for _ in product.candidate_prices] for product in products]
+        self.widths = [[np.inf for _ in product.candidate_prices] for product in products]
+        self.rewards_per_arm_per_product = [[[] for _ in product.candidate_prices] for product in products]
 
     def _update(self):
         t = len(self._history)
@@ -25,7 +24,7 @@ class UCBLearner(BanditLearner):
             for customer in last_customers:
                 reward = self._get_reward(customer, product_id)
                 self.rewards_per_arm_per_product[product_id][selected_price_index].append(reward)
-            self.means[product_id][selected_price_index] = int(
+            self.means[product_id][selected_price_index] = int( # TODO: Why cast to int? There is something fishy or?
                 np.mean(self.rewards_per_arm_per_product[product_id][selected_price_index]))
             n = len(self.rewards_per_arm_per_product[product_id][selected_price_index])
             if n > 0:
@@ -34,20 +33,3 @@ class UCBLearner(BanditLearner):
                 self.widths[product_id][selected_price_index] = np.inf
 
 
-if __name__ == '__main__':
-    env = sample.generate_sample_greedy_environment()
-    learner = UCBLearner(env, step3)
-    n_exp = 4
-    prices_selected = []
-    last_prices_selected = None
-    n = 0
-    for _ in range(n_exp):
-        n += 1
-        learner.run_for(400)
-        prices_selected.append(learner._history[-1][0])
-        if last_prices_selected == prices_selected[-1]:
-            break
-        last_prices_selected = prices_selected[-1]
-        learner.reset()
-    print(prices_selected)
-    print(n)

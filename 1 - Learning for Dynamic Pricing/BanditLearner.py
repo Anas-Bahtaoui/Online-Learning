@@ -2,10 +2,10 @@ from typing import List, Tuple, Optional, NamedTuple, Union
 
 import numpy as np
 
-from Customer import Customer, purchase_amounts, CustomerClass, customer_counts
-from Environment import Environment
+from Customer import Customer, CustomerClass
 from Learner import Learner, ShallContinue, Reward, PriceIndexes
 from Product import Product, ObservationProbability
+from parameters import environment, products, LAMBDA_, customer_counts, purchase_amounts
 
 
 class ChangeDetectionAlgorithm:
@@ -56,14 +56,12 @@ class BanditLearner(Learner):
                 reward += self._get_reward(customer, productId)
         return True, reward, selected_price_indexes
 
-    def __init__(self, env: Environment, config: BanditConfiguration):
-        self.products = env.products
-        self.env = env
+    def __init__(self, config: BanditConfiguration):
         self.name = f"{type(self).__name__} for {config.name}"
         self.are_counts_certain = config.n_items_sold_known
         self.config = config
-        self.means = [[0 for _ in product.candidate_prices] for product in self.products]
-        self.widths = [[np.inf for _ in product.candidate_prices] for product in self.products]
+        self.means = [[0 for _ in product.candidate_prices] for product in products]
+        self.widths = [[np.inf for _ in product.candidate_prices] for product in products]
         self._history: List[Tuple[List[int], List[Customer]]] = []
 
     def _select_price_indexes(self) -> List[int]:
@@ -97,11 +95,11 @@ class BanditLearner(Learner):
                     if customer_views_first_product:
                         run_on_product(first_p[0])
                 if second_p is not None:
-                    customer_views_second_product = bool(np.random.binomial(1, second_p[1] * self.env.lambda_))
+                    customer_views_second_product = bool(np.random.binomial(1, second_p[1] * LAMBDA_))
                     if customer_views_second_product:
                         run_on_product(second_p[0])
 
-            first_product = np.random.choice([None, *self.products], p=self.env.get_current_alpha())
+            first_product = np.random.choice([None, *products], p=environment.get_current_alpha())
             if first_product is not None:
                 run_on_product(first_product)
         self._history.append((selected_price_indexes, customers))
@@ -110,18 +108,14 @@ class BanditLearner(Learner):
         raise NotImplementedError()
 
     def _run_one_day(self):
-        self.env.new_day()
+        environment.new_day()
         selected_price_indexes = self._select_price_indexes()
         self._new_day(selected_price_indexes)
         self._update()
         return selected_price_indexes
 
-    def run_for(self, days: int):
-        for _ in range(days):
-            self._run_one_day()
-
     def reset(self):
-        self.__init__(self.env, self.config)
+        self.__init__(self.config)
 
     def _get_reward(self, customer: Customer, product_id: int) -> float:
         if self.are_counts_certain:
@@ -135,7 +129,7 @@ class BanditLearner(Learner):
         for customer_class in list(CustomerClass):
             expected_customer = Customer(customer_class)
             expected_customer_count = customer_counts[customer_class].get_expectation()
-            for product in self.products:
+            for product in products:
                 expected_product_price = product.candidate_prices[selected_price_indexes[product.id]]
                 expected_customer_reservation_price = expected_customer.get_reservation_price_of(product.id,
                                                                                                  expected_product_price).get_sample_value()

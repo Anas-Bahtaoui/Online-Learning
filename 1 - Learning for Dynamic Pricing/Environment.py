@@ -8,53 +8,21 @@ We only consider the alpha ratios and disregard the total number of users. Howev
 That is, every day, the value of the alpha ratios will be realizations of independent Dirichlet random variables
 """
 from typing import List, Tuple
-import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
-from Product import Product, ProductConfig, linear_price_generator
-from Customer import Customer, CustomerClass
 
-
-def n_users_of_class_generator(class_: CustomerClass) -> int:
-    """
-    Generates the number of users of a given class
-    :param class_: the class of the users
-    :return: the number of users of the given class
-    """
-    if class_ == CustomerClass.A:
-        return np.random.poisson(5)
-    elif class_ == CustomerClass.B:
-        return np.random.poisson(10)
-    elif class_ == CustomerClass.C:
-        return np.random.poisson(20)
-
-
-DIRICHLET_EXPECTATIONS = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
-
-
-def alpha_generator() -> Tuple[float, ...]:
-    return tuple(np.random.dirichlet(np.array(DIRICHLET_EXPECTATIONS)))
-
-
-def constant_generator() -> Tuple[float, ...]:
-    return 1 / 6, 1 / 6, 1 / 6, 1 / 6, 1 / 6, 1 / 6
+import Distribution
+from Product import Product
+from parameters import products
 
 
 class Environment:
-    def __init__(self, alpha_generator=alpha_generator, aggregate_toggle: bool = True):
+    def __init__(self, alpha_distribution: Distribution, aggregate_toggle: bool = True):
         self.aggregate_toggle = aggregate_toggle  # We first do the first 4, because this is tricky
         self.day = 0
-        self.products: List[Product] = []
         self.alpha = ()
-        self.alpha_generator = alpha_generator
+        self.alpha_distribution: Distribution = alpha_distribution
         self.new_day()
-        self.lambda_ = 0.1  # The value of lambda is assumed to be known in all the three project proposals
-
-    def add_product(self, product: Product):
-        """
-        Function that adds products to the environment.
-        """
-        self.products.append(product)
 
     def new_day(self):
         """
@@ -71,7 +39,7 @@ class Environment:
         So, the 0th parameters is the amount of failure, and each alpha is the count of times we succeeded in selling.
         We haven't implemented this yet, but it is a dynamic distribution, we think.
         """
-        self.alpha = self.alpha_generator()
+        self.alpha = self.alpha_distribution.get_sample_value()
 
     def get_current_day(self):
         return self.day
@@ -96,7 +64,7 @@ class FullyConnectedGraph:
         self.add_products()
 
     def add_products(self):
-        for product in self.environment.products:
+        for product in products:
             self.graph.add_node(product, label=product.name)
 
     def add_edges(self):
@@ -104,7 +72,7 @@ class FullyConnectedGraph:
         Each product can be connected to its two secondary products if is has secondary products.
         If the product has no secondary products, the function will not add any edges.
         """
-        for product in self.environment.products:
+        for product in products:
             if product.secondary_products[0] is not None:
                 self.graph.add_edge(product, product.secondary_products[0])
             if product.secondary_products[1] is not None:
@@ -132,27 +100,8 @@ class FullyConnectedGraph:
 Test the Environment class.
 """
 if __name__ == '__main__':
-    # Create five products
-    baseConfig = ProductConfig(id=1, name="Base", base_price=1, max_price=10, production_cost=0.1)
-    p1 = Product(baseConfig._replace(name="p1"), linear_price_generator)
-    p2 = Product(baseConfig._replace(name="p2"), linear_price_generator)
-    p3 = Product(baseConfig._replace(name="p3"), linear_price_generator)
-    p4 = Product(baseConfig._replace(name="p4"), linear_price_generator)
-    p5 = Product(baseConfig._replace(name="p5"), linear_price_generator)
-
-    # Assign secondary products to the products
-    p1.add_secondary_products(p3, None)
-    p2.add_secondary_products(p1, p4)
-    p3.add_secondary_products(p2, p4)
-    p4.add_secondary_products(p1, None)
     # Create the environment
-    env = Environment()
-    # Add the products to the environment
-    env.add_product(p1)
-    env.add_product(p2)
-    env.add_product(p3)
-    env.add_product(p4)
-    env.add_product(p5)
+    env = Environment(alpha_distribution=Distribution.Dirichlet([1, 1, 1, 1, 1, 1]))
     # Create the graph
     graph = FullyConnectedGraph(env)
     graph.add_edges()

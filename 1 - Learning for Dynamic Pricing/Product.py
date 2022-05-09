@@ -2,7 +2,7 @@
     This is the definition of the Product class.
     Each product has four candidate prices that are between the base price and the maximum price. They candidate prices are equaly distributed.
 """
-from typing import Tuple, List, NamedTuple, Union, Optional, Callable
+from typing import Tuple, List, NamedTuple, Optional, Callable
 
 from numpy import linspace
 from Distribution import PositiveIntegerGaussian as PIG
@@ -13,7 +13,6 @@ class ProductConfig(NamedTuple):
     This is the definition of the ProductConfig class.
     It contains the product name, the base price, the maximum price, and the number of candidate prices.
     """
-    id: int
     name: str
     base_price: float
     max_price: float
@@ -23,6 +22,8 @@ class ProductConfig(NamedTuple):
 PriceGenerator = Callable[[float, float], List[float]]
 
 ObservationProbability = Tuple['Product', float]
+
+last_product_id = -1
 
 
 class Product:
@@ -36,8 +37,10 @@ class Product:
         """
         :param product_config: product configuration dictionary.
         """
-
-        self.id, self.name, self.base_price, self.max_price, self.production_cost = product_config
+        global last_product_id
+        last_product_id += 1
+        self.id = last_product_id
+        self.name, self.base_price, self.max_price, self.production_cost = product_config
         self.candidate_prices: List[float] = sorted(generator(self.base_price, self.max_price))
         self.secondary_products = (None, None)
 
@@ -75,14 +78,3 @@ def random_price_generator(base_price: float, max_price: float) -> List[float]:
         return samp
 
     return sorted(sample() for _ in range(4))
-
-
-"""
-Test the Product class
-"""
-# Product with no secondary products.
-prod = Product(ProductConfig(id=1, name='Product1', base_price=1, max_price=10, production_cost=0.1),
-               linear_price_generator)
-prod2 = Product(ProductConfig(id=2, name='Product2', base_price=1, max_price=10, production_cost=0.1),
-                linear_price_generator)
-prod2.add_secondary_products(prod, 0.5)

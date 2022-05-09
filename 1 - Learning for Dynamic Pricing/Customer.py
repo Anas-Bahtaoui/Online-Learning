@@ -1,57 +1,18 @@
-import enum
 from collections import defaultdict
 from functools import lru_cache
-from typing import List, Tuple, Dict, Set
+from typing import List, Dict, Set
 
 import numpy as np
 import scipy.stats
 
 import Distribution
 from Distribution import PositiveIntegerGaussian as PIG
-from Product import Product
-
-"""
-    This is the definition of the Customer class. There are three customers classes, distinguished by 2 binary features.
-    Each customer belongs to a customer class.
-    Each customer has a reservation price per product.
-    For each customer we keep track of the products that they have clicked on.
-    For each customer we keep track of the products that they have bought.
-    The users classes potentially differ for the demand curves of the 5 products, number of daily users, alpha ratios, number of products sold, and graph probabilities
-"""
+from parameters import MAX_PRICE, CustomerClass
 
 """
     Each customer is belonging to one of the three customer classes. Each class an expected reservation price for each product.
     For each customers, the reservation price is a gaussian random variable with the mean and standard deviation of the expected reservation price.
 """
-
-
-class CustomerClass(enum.IntEnum):
-    A = 0
-    B = 1
-    C = 2
-
-
-# These will come from the curve instead
-# prices = {
-#     CustomerClass.A: (10.0, 300.0, 50.0, 1000.0, 100.0),
-#     CustomerClass.B: (12.0, 360.0, 60.0, 1200.0, 120.0),
-#     CustomerClass.C: (15.0, 450.0, 75.0, 1500.0, 150.0),
-# }
-
-# TODO: is the Integer Gaussian good for this
-# TODO: After we determine our products, update these values.
-
-purchase_amounts = {
-    CustomerClass.A: (PIG(5, 2), PIG(1, 1), PIG(3, 1), PIG(1, 1), PIG(1, 1)),
-    CustomerClass.B: (PIG(8, 3), PIG(2, 1), PIG(6, 2), PIG(1, 1), PIG(2, 1)),
-    CustomerClass.C: (PIG(15, 4), PIG(4, 1), PIG(8, 2), PIG(2, 1), PIG(8, 2)),
-}
-
-customer_counts = {
-    CustomerClass.A: PIG(mean=50, variance=20),
-    CustomerClass.B: PIG(mean=100, variance=20),
-    CustomerClass.C: PIG(mean=10, variance=5),
-}
 
 
 def reservation_price_distribution_from_curves(customer_class: CustomerClass, product_id: int, price: float) -> PIG:
@@ -74,11 +35,21 @@ def load_file(file_path: str) -> np.array:
 
 def read_conversion_probability(price: float, file_path: str) -> float:
     # Prices we consider are in range 1-100
-    if price > 100:
-        price = 100
+    if price > MAX_PRICE:
+        price = MAX_PRICE
     # Sample from a linear function
     # 98.5 > look at 98 and 99 and interpolate the result in between
     return load_file(file_path)[round(price)][1]  # TODO: Linear interpolation maybe
+
+
+"""
+    This is the definition of the Customer class. There are three customers classes, distinguished by 2 binary features.
+    Each customer belongs to a customer class.
+    Each customer has a reservation price per product.
+    For each customer we keep track of the products that they have clicked on.
+    For each customer we keep track of the products that they have bought.
+    The users classes potentially differ for the demand curves of the 5 products, number of daily users, alpha ratios, number of products sold, and graph probabilities
+"""
 
 
 class Customer:
@@ -125,16 +96,3 @@ class Customer:
         :param product_id: product id.
         """
         self.products_bought[product_id] += product_count
-
-
-"""
-    Test the Customer class
-"""
-if __name__ == '__main__':
-    # Create a new customers
-    # customer = Customer(1, CustomerClass.A)
-    # print(customer.get_reservation_price_of(0))
-    # anotherCustomer = Customer(2, CustomerClass.B)
-    # print(anotherCustomer.get_reservation_price_of(0))
-
-    print(read_conversion_probability(20, 'test.npy'))
