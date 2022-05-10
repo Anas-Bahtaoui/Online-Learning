@@ -18,9 +18,10 @@ for index, class_ in enumerate(list(CustomerClass)):
         x = data[:, 0]
         y = data[:, 1]
         axs[index].plot(x, y, label=f'{class_.name}_{product.name}')
-    axs[index].legend(loc="upper right")
+    axs[index].legend(loc='center left', bbox_to_anchor=(1, 0.5))
     axs[index].set_title(f'User {class_.name}')
     axs[index].set_ylabel('Demand')
     axs[index].grid(True)
 plt.xlabel('Price')
+plt.savefig('DemandCurves.png', bbox_inches="tight")
 plt.show()

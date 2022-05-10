@@ -85,7 +85,7 @@ def load_function(path):
     Test the FunctionBuilder class.
 """
 if __name__ == '__main__':
-    x, y = design_function(x_interval=[0, 100],
+    x, y = design_function(x_interval=[2, 100],
                            y_interval=[0, 1],
                            density=1,
                            plot_result=True)
