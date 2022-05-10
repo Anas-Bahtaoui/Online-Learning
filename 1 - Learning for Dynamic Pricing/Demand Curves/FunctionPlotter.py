@@ -23,5 +23,5 @@ for index, class_ in enumerate(list(CustomerClass)):
     axs[index].set_ylabel('Demand')
     axs[index].grid(True)
 plt.xlabel('Price')
-plt.savefig('DemandCurves.png', bbox_inches="tight")
+plt.savefig('DemandCurves.png', bbox_inches="tight",dpi = 300)
 plt.show()
