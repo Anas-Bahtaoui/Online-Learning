@@ -7,13 +7,7 @@ In contrast, alpha_0 is the ratio of customers landing on the webpage of a compe
 We only consider the alpha ratios and disregard the total number of users. However, the alpha ratios will be subject to noise. 
 That is, every day, the value of the alpha ratios will be realizations of independent Dirichlet random variables
 """
-from typing import List, Tuple
-import matplotlib.pyplot as plt
-import networkx as nx
-
 import Distribution
-from Product import Product
-from parameters import products
 
 
 class Environment:
@@ -49,60 +43,3 @@ class Environment:
 
     def get_current_alpha(self):
         return self.alpha
-
-
-"""
-Definition of the fully connected directed weighted graph. 
-It is used to store the products as nodes and the click probabilities as edges. 
-"""
-
-
-class FullyConnectedGraph:
-    def __init__(self, environment: Environment):
-        self.environment = environment
-        self.graph = nx.DiGraph()
-        self.add_products()
-
-    def add_products(self):
-        for product in products:
-            self.graph.add_node(product, label=product.name)
-
-    def add_edges(self):
-        """
-        Each product can be connected to its two secondary products if is has secondary products.
-        If the product has no secondary products, the function will not add any edges.
-        """
-        for product in products:
-            if product.secondary_products[0] is not None:
-                self.graph.add_edge(product, product.secondary_products[0])
-            if product.secondary_products[1] is not None:
-                self.graph.add_edge(product, product.secondary_products[1])
-
-    def add_weight(self, primary_product: Product, secondary_product: Product, weight: float):
-        """
-        Function that adds a weight to a given edge between two products.
-        :param primary_product: primary product.
-        :param secondary_product: the secondary product.
-        :param weight: the weight to be added.
-        """
-        self.graph.add_edge(primary_product.name, secondary_product.name, weight=weight)
-
-    def get_current_graph(self):
-        return self.graph
-
-    def visualize(self):
-        # TODO Adjust the names of the nodes and edges
-        nx.draw(self.graph, with_labels=False)
-        plt.show()
-
-
-"""
-Test the Environment class.
-"""
-if __name__ == '__main__':
-    # Create the environment
-    env = Environment(alpha_distribution=Distribution.Dirichlet([1, 1, 1, 1, 1, 1]))
-    # Create the graph
-    graph = FullyConnectedGraph(env)
-    graph.add_edges()
-    graph.visualize()

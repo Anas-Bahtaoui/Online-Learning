@@ -38,10 +38,8 @@ class GreedyLearner(Learner):
             if not is_purchased:
                 return 0
             expected_purchase_count = purchase_amounts[class_][product.id].get_expectation()
-            # TODO: When I added purchase amounts, all went wrong.
             result_ = (
                               product_price - product.production_cost) * viewing_probability * n_users  # * expected_purchase_count
-            # TODO: Shall we also ignore counts, if we are ignoring them in the bandits?
             result_ = round(result_, 2)  # 2 because we want cents :)
             first_p: Optional[ObservationProbability]
             second_p: Optional[ObservationProbability]

@@ -14,6 +14,7 @@ if __name__ == '__main__':
         GreedyLearner(),
         UCBLearner(step3),
         # TSLearner(step3)
+        # GaussianTSLearner(step3)
     ]
     for learner in learners:
         environment.reset_day()

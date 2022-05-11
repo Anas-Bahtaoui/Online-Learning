@@ -36,7 +36,7 @@ def design_function(x_interval, y_interval, density=1., plot_result=True):
 
         if plot_result:
             plt.plot(x_drawn, y_drawn, linestyle='--',
-                                 label=f'Original samples - {x_drawn.shape[0]} points')
+                                 label=f'Original samples - {x_drawn.shape[0]} points',)
 
         # creation of the interpolation function
         f = interp1d(x_drawn, y_drawn, kind='cubic')
