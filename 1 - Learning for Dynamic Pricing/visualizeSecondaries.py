@@ -39,9 +39,6 @@ class FullyConnectedGraph:
         plt.show()
 
 
-"""
-Test the Environment class.
-"""
 if __name__ == '__main__':
     # Create the graph
     graph = FullyConnectedGraph()

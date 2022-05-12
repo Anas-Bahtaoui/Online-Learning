@@ -142,7 +142,7 @@ class BanditLearner(Learner):
                 expected_customer_reservation_price = expected_customer.get_reservation_price_of(product.id,
                                                                                                  expected_product_price).get_sample_value()
                 if expected_product_price > expected_customer_reservation_price:
-                    reward = (expected_product_price - product.production_cost) * expected_customer_count
+                    reward = expected_product_price * expected_customer_count
                     if self.are_counts_certain:
                         reward *= purchase_amounts[customer_class][product.id].get_expectation()
                     expected_total_reward += reward

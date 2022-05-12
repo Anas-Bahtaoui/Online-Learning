@@ -16,7 +16,6 @@ class ProductConfig(NamedTuple):
     name: str
     base_price: float
     max_price: float
-    production_cost: float
 
 
 PriceGenerator = Callable[[float, float], List[float]]
@@ -40,7 +39,7 @@ class Product:
         global last_product_id
         last_product_id += 1
         self.id = last_product_id
-        self.name, self.base_price, self.max_price, self.production_cost = product_config
+        self.name, self.base_price, self.max_price = product_config
         self.candidate_prices: List[float] = sorted(generator(self.base_price, self.max_price))
         self.secondary_products = (None, None)
 

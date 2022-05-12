@@ -8,11 +8,11 @@ MAX_PRICE = 100
 LAMBDA_ = 0.1
 
 product_configs: List[ProductConfig] = [
-    ProductConfig(name="Product 1", base_price=10, max_price=30, production_cost=1),
-    ProductConfig(name="Product 2", base_price=10, max_price=30, production_cost=1),
-    ProductConfig(name="Product 3", base_price=10, max_price=30, production_cost=1),
-    ProductConfig(name="Product 4", base_price=10, max_price=30, production_cost=1),
-    ProductConfig(name="Product 5", base_price=10, max_price=30, production_cost=1),
+    ProductConfig(name="Product 1", base_price=10, max_price=30),
+    ProductConfig(name="Product 2", base_price=10, max_price=30),
+    ProductConfig(name="Product 3", base_price=10, max_price=30),
+    ProductConfig(name="Product 4", base_price=10, max_price=30),
+    ProductConfig(name="Product 5", base_price=10, max_price=30),
 ]
 
 products: List[Product] = [Product(config, random_price_generator) for config in product_configs]
