@@ -27,13 +27,13 @@ class Learner:
         product_rewards = []
         while running and cnt < max_days:
             running, current_reward, candidate_price_indexes = self.iterate_once()
+            product_rewards.append(self.get_product_rewards())
             if log:
                 print(f"iteration {cnt}:")
                 print("Indexes", candidate_price_indexes)
                 print("Reward", current_reward)
-                print("Product rewards", self.get_product_rewards())
+                print("Product rewards", product_rewards[-1])
             cnt += 1
-            product_rewards.append(self.get_product_rewards())
             # Save the current reward
             rewards.append(current_reward)
             # Store the price indexes

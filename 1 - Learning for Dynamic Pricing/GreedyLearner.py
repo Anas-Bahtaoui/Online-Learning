@@ -37,6 +37,7 @@ class GreedyLearner(Learner):
             is_purchased = reservation_price >= product_price
             if not is_purchased:
                 return 0
+            print("Purchased, reservation price:", reservation_price, "product price:", product_price)
             expected_purchase_count = purchase_amounts[class_][product.id].get_expectation()
             result_ = product_price * viewing_probability * n_users  # * expected_purchase_count
             result_ = round(result_, 2)  # 2 because we want cents :)
@@ -51,13 +52,16 @@ class GreedyLearner(Learner):
                                         second_p[0])
             return result_
 
-        return emulate_path((), environment.alpha[product.id + 1], product)
+        return emulate_path((), environment.alpha_distribution.get_expectation()[product.id + 1], product)
 
     def calculate_total_expected_reward(self, price_indexes: Tuple[int, ...]) -> float:
         result = 0
         for product in products:
             for class_ in list(CustomerClass):
-                result += self.calculate_reward_of_product(price_indexes[product.id], product, class_)
+                inter = self.calculate_reward_of_product(price_indexes[product.id], product, class_)
+                print("For product", product.name, "user class", class_, "selected index", price_indexes[product.id],
+                      "expected reward:", inter, "expected customer count:", customer_counts[class_].get_expectation(), "")
+                result += inter
         return result
 
     def calculate_potential_candidate(self, pulled_arm: int):
@@ -65,10 +69,8 @@ class GreedyLearner(Learner):
         new_price_indexes = x[:pulled_arm] + (x[pulled_arm] + 1,) + x[pulled_arm + 1:]
         if new_price_indexes[pulled_arm] == len(products[0].candidate_prices):
             return None
-        print("New experiment on day", environment.day, "with price indexes", new_price_indexes)
         environment.new_day()  # We have a new experiment, thus new day
         reward = self.calculate_total_expected_reward(new_price_indexes)
-        print("Reward is ", reward)
         if reward > self.current_reward:
             return reward, new_price_indexes
 
@@ -85,6 +87,5 @@ class GreedyLearner(Learner):
             return False
         if best_reward < self.current_reward:
             return False
-        print("Better reward found", best_reward, "with price indexes", best_price_index)
         self.current_reward, self.candidate_price_indexes = best_reward, best_price_index
         return True

@@ -18,6 +18,6 @@ if __name__ == '__main__':
     ]
     for learner in learners:
         environment.reset_day()
-        learner.run_experiment(50, log=False)
+        learner.run_experiment(1, log=False, plot_graphs=False)
 
 # TODO: Tune down the model and debug whatever is happening with the bandit algorithms

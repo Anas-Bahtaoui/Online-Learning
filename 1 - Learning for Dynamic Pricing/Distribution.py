@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import TypeVar, List
 
 import numpy as np
+from scipy.stats import dirichlet
 
 T = TypeVar("T")
 
@@ -43,7 +44,7 @@ class Dirichlet(AbstractDistribution):
 
     def get_expectation(self) -> List[float]:
         # TODO: Expectation of dirichlet is not directly alpha.
-        return self.alpha
+        return dirichlet.mean(self.alpha)
 
     def get_sample_value(self) -> List[float]:
         return list(np.random.dirichlet(np.array(self.alpha)))

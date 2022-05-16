@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import List, Tuple, Optional, NamedTuple, Union
 
 import numpy as np
@@ -54,7 +55,8 @@ class BanditLearner(Learner):
         reward = 0
         for customer in customers:
             for product in products:
-                reward += self._get_reward_coef(customer, product.id) * product.candidate_prices[selected_price_indexes[product.id]]
+                reward += self._get_reward_coef(customer, product.id) * product.candidate_prices[
+                    selected_price_indexes[product.id]]
         return True, reward, selected_price_indexes
 
     def get_product_rewards(self) -> List[float]:
@@ -64,6 +66,25 @@ class BanditLearner(Learner):
             for product in products:
                 rewards[product.id] += self._get_reward_coef(customer, product.id) * product.candidate_prices[
                     selected_price_indexes[product.id]]
+        for product in products:
+            for class_ in CustomerClass:
+                inter = 0
+                custs_ = [customer for customer in customers if customer.class_ == class_]
+                cnt = 0
+                clicked = 0
+                total_reservation_price = 0
+                for customer in custs_:
+                    inter += self._get_reward_coef(customer, product.id) * product.candidate_prices[
+                        selected_price_indexes[product.id]]
+                    cnt += self._get_reward_coef(customer, product.id)
+                    # total_reservation_price += customer.get_reservation_price_of(product.id,
+                    #                                                          selected_price_indexes[product.id])
+                    clicked += 1 if customer.is_product_clicked(product.id) else 0
+                print("For product", product.name, "user class", class_, "selected index",
+                      selected_price_indexes[product.id],
+                      "Actual reward:", inter, "Actual amount of customers", len(custs_), "Actual clicked #customers",
+                      clicked, "Actual bought #customers",
+                      cnt)
         return rewards
 
     def __init__(self, config: BanditConfiguration):
@@ -85,7 +106,7 @@ class BanditLearner(Learner):
         for customer_class in list(CustomerClass):
             customers.extend(
                 [Customer(customer_class) for _ in range(customer_counts[customer_class].get_sample_value())])
-
+        total_reservation_prices = defaultdict(list)
         for customer in customers:
             def run_on_product(product: Product):
                 if customer.is_product_clicked(product.id):
@@ -95,7 +116,7 @@ class BanditLearner(Learner):
                 reservation_price = round(
                     customer.get_reservation_price_of(product.id, product_price).get_sample_value(), 2)
                 if reservation_price < product_price:
-                    return
+                    return reservation_price
                 buy_count = purchase_amounts[customer.class_][product.id].get_sample_value()
                 customer.buy_product(product.id, buy_count)
                 first_p: Optional[ObservationProbability]
@@ -109,10 +130,17 @@ class BanditLearner(Learner):
                     customer_views_second_product = bool(np.random.binomial(1, second_p[1] * LAMBDA_))
                     if customer_views_second_product:
                         run_on_product(second_p[0])
+                return reservation_price
 
             first_product = np.random.choice([None, *products], p=environment.get_current_alpha())
             if first_product is not None:
-                run_on_product(first_product)
+                total_reservation_prices[(customer.class_, first_product.id)].append(run_on_product(first_product))
+        for product in products:
+            for class_ in CustomerClass:
+                prices = total_reservation_prices[(class_, product.id)]
+                if len(prices) == 0:
+                    continue
+                print("Average reservation price for product", product.name, "for class", class_, sum(prices) / len(prices))
         self._history.append((selected_price_indexes, customers))
 
     def _update(self):

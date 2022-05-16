@@ -17,13 +17,13 @@ product_configs: List[ProductConfig] = [
 
 products: List[Product] = [Product(config, random_price_generator) for config in product_configs]
 
-products[0].add_secondary_products(products[2], 0.4)
-products[1].add_secondary_products(products[0], 0.3, products[3], 0.1)
-products[2].add_secondary_products(products[1], 0.25, products[3], 0.05)
-products[3].add_secondary_products(products[0], 0.15)
+# products[0].add_secondary_products(products[2], 0.4)
+# products[1].add_secondary_products(products[0], 0.3, products[3], 0.1)
+# products[2].add_secondary_products(products[1], 0.25, products[3], 0.05)
+# products[3].add_secondary_products(products[0], 0.15)
 
 from Environment import Environment
-environment = Environment(Dirichlet([100, 100, 100, 100, 100, 100]))
+environment = Environment(Dirichlet([0.001, 100, 100, 100, 100, 100]))
 
 
 class CustomerClass(enum.IntEnum):
