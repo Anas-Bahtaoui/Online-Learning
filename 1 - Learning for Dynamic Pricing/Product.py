@@ -41,7 +41,8 @@ class Product:
         self.id = last_product_id
         self.name, self.base_price, self.max_price = product_config
         self.candidate_prices: List[float] = sorted(generator(self.base_price, self.max_price))
-        self.secondary_products = (None, None)
+        self.secondary_products: Tuple[Optional[Tuple['Product', float]], Optional[Tuple['Product', float]]] = (
+            None, None)
 
     def get_candidate_prices(self):
         """
@@ -69,6 +70,7 @@ def linear_price_generator(base_price: float, max_price: float) -> List[float]:
 
 def random_price_generator(base_price: float, max_price: float) -> List[float]:
     distr = PIG(base_price, (max_price - base_price) / 3)
+
     # We want 99.7 of the prices to be between the base price and the max price.
 
     def sample() -> float:

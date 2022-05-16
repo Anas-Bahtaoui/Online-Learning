@@ -37,6 +37,7 @@ class GreedyLearner(Learner):
             is_purchased = reservation_price >= product_price
             if not is_purchased:
                 return 0
+            # TODO: Interesting question though, why don't we use this count?
             expected_purchase_count = purchase_amounts[class_][product.id].get_expectation()
             result_ = product_price * viewing_probability * n_users  # * expected_purchase_count
             result_ = round(result_, 2)  # 2 because we want cents :)

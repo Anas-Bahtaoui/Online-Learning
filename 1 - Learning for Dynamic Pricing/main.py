@@ -1,6 +1,6 @@
 from typing import List
 
-from BanditLearner import step3
+from BanditLearner import step3, test_step
 from GreedyLearner import GreedyLearner
 from Learner import Learner
 from TSLearner import TSLearner
@@ -12,6 +12,7 @@ if __name__ == '__main__':
 
     learners: List[Learner] = [
         GreedyLearner(),
+        UCBLearner(test_step),
         UCBLearner(step3),
         # TSLearner(step3)
         # GaussianTSLearner(step3)

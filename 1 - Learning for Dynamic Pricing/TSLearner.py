@@ -1,8 +1,9 @@
-from typing import List, NamedTuple
+from typing import List, NamedTuple, Tuple
 
 from BanditLearner import BanditLearner, BanditConfiguration
 import numpy as np
 
+from Customer import Customer
 from parameters import products
 
 
@@ -27,8 +28,8 @@ class TSLearner(BanditLearner):
             ))))
         return result
 
-    def _update(self):
-        last_selection, last_customers = self._history[-1]
+    def _update_from_history_item(self, len_history: int, history_item: Tuple[List[int], List[Customer]]):
+        last_selection, last_customers = history_item
         for product_id, selected_price_index in enumerate(last_selection):
             ### TODO: This doesn't vary by how many products they bought
             # Either find a way to represent this in an alpha beta distribution (how to know how many products they didn't buy?)

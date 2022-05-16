@@ -1,7 +1,8 @@
-from typing import List, NamedTuple
+from typing import List, NamedTuple, Tuple
 import numpy as np
 from BanditLearner import BanditLearner, BanditConfiguration
-from parameters import products, environment
+from Customer import Customer
+from parameters import products
 
 
 class EstimationParameter(NamedTuple):
@@ -24,14 +25,15 @@ class GaussianTSLearner(BanditLearner):
                                         range(len(product.candidate_prices)))))
         return result
 
-    def _update(self):
-        rewards = self.get_product_rewards()
-        selected_price_indexes = self._history[-1][0]
+    def _update_from_history_item(self, len_history: int, history_item: Tuple[List[int], List[Customer]]):
+        # Shall we use day or len_history?
+        rewards = self.calculate_reward(history_item)
+        selected_price_indexes = history_item[0]
         for p_i, reward in enumerate(rewards):
-            self.Q[p_i] = (1 - 1.0 / environment.day) * self.Q[p_i] + (1.0 / environment.day) * reward
+            self.Q[p_i] = (1 - 1.0 / len_history) * self.Q[p_i] + (1.0 / len_history) * reward
             i = selected_price_indexes[p_i]
             old_t, old_mu = self.parameters[p_i][i]
-            new_mu = ((old_t * old_mu) + (environment.day * self.Q[p_i])) / (
-                        old_t + environment.day)
+            new_mu = ((old_t * old_mu) + (len_history * self.Q[p_i])) / (
+                    old_t + len_history)
             new_t = old_t + 1
             self.parameters[p_i][i] = EstimationParameter(t_0=new_t, mu_0=new_mu)

@@ -7,15 +7,15 @@ In contrast, alpha_0 is the ratio of customers landing on the webpage of a compe
 We only consider the alpha ratios and disregard the total number of users. However, the alpha ratios will be subject to noise. 
 That is, every day, the value of the alpha ratios will be realizations of independent Dirichlet random variables
 """
-import Distribution
+from Distribution import AbstractDistribution
 
 
 class Environment:
-    def __init__(self, alpha_distribution: Distribution, aggregate_toggle: bool = True):
+    def __init__(self, alpha_distribution: AbstractDistribution, aggregate_toggle: bool = True):
         self.aggregate_toggle = aggregate_toggle  # We first do the first 4, because this is tricky
         self.day = 0
         self.alpha = ()
-        self.alpha_distribution: Distribution = alpha_distribution
+        self.alpha_distribution: AbstractDistribution = alpha_distribution
         self.new_day()
 
     def new_day(self):
