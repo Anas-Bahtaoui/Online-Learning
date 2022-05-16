@@ -19,9 +19,9 @@ class GaussianTSLearner(BanditLearner):
     def _select_price_indexes(self) -> List[int]:
         result = []
         for product in products:
-            result.append(int(np.argmax((np.random.randn() / (np.sqrt(self.parameters[product.id][i].t_0)) +
+            result.append(int(np.argmax([(np.random.randn() / (np.sqrt(self.parameters[product.id][i].t_0)) +
                                          self.parameters[product.id][i].mu_0) for i in
-                                        range(len(product.candidate_prices)))))
+                                        range(len(product.candidate_prices))])))
         return result
 
     def _update(self):

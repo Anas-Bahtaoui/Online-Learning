@@ -39,11 +39,11 @@ class Learner:
             # Store the price indexes
             for product_i in range(5):
                 products_[product_i].append(candidate_price_indexes[product_i])
-        if log:
-            print("###############################################\n")
-            print("Done!")
-            print("Identified price indexes:", candidate_price_indexes)
-
+        print("###############################################\n")
+        print("Done!")
+        print("Identified price indexes:", candidate_price_indexes)
+        print("Final reward:", rewards[-1])
+        print("Product rewards:", product_rewards[-1])
         if plot_graphs:
             x_iteration = list(range(1, cnt + 1))
             # Plot the current_reward over iterations

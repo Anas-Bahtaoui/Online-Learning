@@ -49,18 +49,21 @@ def reward_multiplier_for_uncertain_count(customer: Customer, product_id: int) -
 
 class BanditLearner(Learner):
     def iterate_once(self) -> Tuple[ShallContinue, Reward, PriceIndexes]:
-        selected_price_indexes = self._run_one_day()
+        self._run_one_day()
+        selected_price_indexes, customers = self._history[-1]
         reward = 0
-        for customer in self._history[-1][1]:
-            for productId in range(5):
-                reward += self._get_reward_coef(customer, productId) * selected_price_indexes[productId]
+        for customer in customers:
+            for product in products:
+                reward += self._get_reward_coef(customer, product.id) * product.candidate_prices[selected_price_indexes[product.id]]
         return True, reward, selected_price_indexes
 
     def get_product_rewards(self) -> List[float]:
         rewards = [0 for _ in products]
-        for customer in self._history[-1][1]:
-            for productId in range(5):
-                rewards[productId] += self._get_reward_coef(customer, productId) * self._history[-1][0][productId]
+        selected_price_indexes, customers = self._history[-1]
+        for customer in customers:
+            for product in products:
+                rewards[product.id] += self._get_reward_coef(customer, product.id) * product.candidate_prices[
+                    selected_price_indexes[product.id]]
         return rewards
 
     def __init__(self, config: BanditConfiguration):
@@ -120,16 +123,15 @@ class BanditLearner(Learner):
         selected_price_indexes = self._select_price_indexes()
         self._new_day(selected_price_indexes)
         self._update()
-        return selected_price_indexes
 
     def reset(self):
         self.__init__(self.config)
 
     def _get_reward_coef(self, customer: Customer, product_id: int) -> float:
-        if self.are_counts_certain:
-            return reward_multiplier_for_certain_count(customer, product_id)
-        else:
-            return reward_multiplier_for_uncertain_count(customer, product_id)
+        # if self.are_counts_certain:
+        #     return reward_multiplier_for_certain_count(customer, product_id)
+        # else:
+        return reward_multiplier_for_uncertain_count(customer, product_id)
 
     def clairvoyant_reward(self):
         selected_price_indexes = self._select_price_indexes()

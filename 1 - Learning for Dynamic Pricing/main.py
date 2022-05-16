@@ -14,10 +14,10 @@ if __name__ == '__main__':
         GreedyLearner(),
         UCBLearner(step3),
         # TSLearner(step3)
-        # GaussianTSLearner(step3)
+        GaussianTSLearner(step3)
     ]
     for learner in learners:
         environment.reset_day()
-        learner.run_experiment(20)
+        learner.run_experiment(50, log=False)
 
 # TODO: Tune down the model and debug whatever is happening with the bandit algorithms
