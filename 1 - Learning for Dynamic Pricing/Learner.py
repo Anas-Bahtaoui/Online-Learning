@@ -1,5 +1,8 @@
 from collections import defaultdict
 from typing import List, Tuple
+
+import numpy as np
+import scipy.ndimage
 from matplotlib import pyplot as plt
 
 from parameters import products
@@ -47,7 +50,7 @@ class Learner:
         if plot_graphs:
             x_iteration = list(range(1, cnt + 1))
             # Plot the current_reward over iterations
-            plt.plot(x_iteration, rewards)
+            plt.plot(x_iteration, scipy.ndimage.uniform_filter1d(rewards, size=10))
             plt.xlabel("Iteration")
             plt.ylabel("Reward")
             plt.title(f"{self.name} Reward")

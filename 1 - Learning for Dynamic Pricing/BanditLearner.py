@@ -17,6 +17,9 @@ class ContextGenerationAlgorithm:
     pass
 
 
+# TODO: Things we don't know, use the empirical mean
+# TODO: Things we know use the expectation of distribution.
+
 class BanditConfiguration(NamedTuple):
     name: str
     a_ratios_known: bool
@@ -140,7 +143,8 @@ class BanditLearner(Learner):
                 prices = total_reservation_prices[(class_, product.id)]
                 if len(prices) == 0:
                     continue
-                print("Average reservation price for product", product.name, "for class", class_, sum(prices) / len(prices))
+                print("Average reservation price for product", product.name, "for class", class_,
+                      sum(prices) / len(prices))
         self._history.append((selected_price_indexes, customers))
 
     def _update(self):
