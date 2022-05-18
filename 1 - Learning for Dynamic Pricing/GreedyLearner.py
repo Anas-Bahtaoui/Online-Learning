@@ -1,10 +1,13 @@
 from operator import itemgetter
 from typing import Tuple, Optional, List
 
+import scipy.stats
+
 from Customer import CustomerClass, reservation_price_distribution_from_curves
 from Learner import Learner, ShallContinue, Reward, PriceIndexes
 from Product import Product, ObservationProbability
 from parameters import environment, LAMBDA_, products, purchase_amounts, customer_counts
+from Distribution import PositiveIntegerGaussian as PIG
 
 
 class GreedyLearner(Learner):
@@ -22,7 +25,12 @@ class GreedyLearner(Learner):
         self.candidate_price_indexes = (0, 0, 0, 0, 0)
         self.current_reward = 0
 
+    @staticmethod
+    def _calculate_ratio_of_customer_buying(candidate_price: float, distribution: PIG) -> float:
+        return 1 - scipy.stats.norm.cdf((candidate_price - distribution.get_expectation()) / distribution.variance)
+
     def calculate_reward_of_product(self, price_index: int, product: Product, class_: CustomerClass) -> float:
+        #TODO: Shall we instead collect the result from the graph functions?
         current_price_indexes = self.candidate_price_indexes[:product.id] + (
             price_index,) + self.candidate_price_indexes[product.id + 1:]
         n_users = customer_counts[class_].get_expectation()
@@ -30,7 +38,6 @@ class GreedyLearner(Learner):
         def emulate_path(clicked_primaries: Tuple[int, ...], viewing_probability: float, current: Product):
             if current.id in clicked_primaries:
                 return 0
-
             product_price = product.candidate_prices[current_price_indexes[product.id]]
             reservation_price = reservation_price_distribution_from_curves(class_, product.id,
                                                                            product_price).get_expectation()
@@ -60,7 +67,8 @@ class GreedyLearner(Learner):
             for class_ in list(CustomerClass):
                 inter = self.calculate_reward_of_product(price_indexes[product.id], product, class_)
                 print("For product", product.name, "user class", class_, "selected index", price_indexes[product.id],
-                      "expected reward:", inter, "expected customer count:", customer_counts[class_].get_expectation(), "")
+                      "expected reward:", inter, "expected customer count:", customer_counts[class_].get_expectation(),
+                      "")
                 result += inter
         return result
 
