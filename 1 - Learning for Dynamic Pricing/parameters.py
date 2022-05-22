@@ -1,25 +1,10 @@
 import enum
-from typing import List
+from typing import List, Tuple, Annotated, NamedTuple
 
 from Distribution import Dirichlet, PositiveIntegerGaussian as PIG
-from Product import Product
 
-MAX_PRICE = 97 # There are missing values at index 99 and 100
+MAX_PRICE = 97  # There are missing values at index 99 and 100
 LAMBDA_ = 0.1
-
-
-products: List[Product] = [
-    Product("T-shirt", [3, 12, 20, 40, 80]),
-    Product("Shorts", [5, 13, 22, 35, 85]),
-    Product("Towel", [2, 10, 15, 20, 35]),
-    Product("Dumbbells", [5, 16, 34, 70, 100]),
-    Product("Protein Powder", [15, 18, 25, 35, 60]),
-]
-
-# products[0].add_secondary_products(products[2], 0.4)
-# products[1].add_secondary_products(products[0], 0.3, products[3], 0.1)
-# products[2].add_secondary_products(products[1], 0.25, products[3], 0.05)
-# products[3].add_secondary_products(products[0], 0.15)
 
 
 class Age(enum.Enum):
@@ -40,6 +25,40 @@ class CustomerClass(enum.Enum):
     YOUNG_BEGINNER = (Experience.BEGINNER, Age.YOUNG)
     OLD_BEGINNER = (Experience.BEGINNER, Age.OLD)
 
+
+class ProductConfig(NamedTuple):
+    name: str
+    prices: List[float]
+
+
+product_configs: List[ProductConfig] = [
+    ProductConfig("T-shirt", [3, 12, 20, 40]),
+    ProductConfig("Shorts", [5, 13, 22, 35]),
+    ProductConfig("Towel", [2, 10, 15, 20]),
+    ProductConfig("Dumbbells", [5, 16, 34, 70]),
+    ProductConfig("Protein Powder", [15, 18, 25, 35]),
+
+]
+# @formatter:off
+secondary_product_professional: List[List[float]] = [
+    [0,    0,    0.4,  0,    0],
+    [0.3,  0,    0,    0.1,  0],
+    [0,    0.25, 0,    0.05, 0],
+    [0.15, 0,    0,    0,    0],
+    [0,    0,    0,    0,    0],
+]
+# TODO: After basic debugging is done, remove the following line.
+secondary_product_professional: List[List[float]] = [[0]*5 for _ in range(5)]
+# TODO: Custom values for these
+secondary_product_beginner_young = secondary_product_professional
+secondary_product_beginner_old = secondary_product_professional
+# @formatter:on
+
+secondaries = {
+    CustomerClass.PROFESSIONAL: secondary_product_professional,
+    CustomerClass.YOUNG_BEGINNER: secondary_product_beginner_young,
+    CustomerClass.OLD_BEGINNER: secondary_product_beginner_old
+}
 
 # TODO: is the Integer Gaussian good for this
 # TODO: After we determine our products, update these values.

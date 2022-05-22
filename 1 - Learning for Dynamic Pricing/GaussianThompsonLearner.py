@@ -1,8 +1,8 @@
 from typing import List, NamedTuple
 import numpy as np
 from BanditLearner import BanditLearner, BanditConfiguration
-from parameters import products
 from Environment import environment
+from Product import products
 
 
 class EstimationParameter(NamedTuple):

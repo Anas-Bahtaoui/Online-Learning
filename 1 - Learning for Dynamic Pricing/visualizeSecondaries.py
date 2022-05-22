@@ -1,7 +1,10 @@
+from typing import Tuple, Optional
+
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from parameters import products
+from Product import Product, products
+from parameters import CustomerClass
 
 """
 Definition of the fully connected directed weighted graph. 
@@ -10,28 +13,28 @@ It is used to store the products as nodes and the click probabilities as edges.
 
 
 class FullyConnectedGraph:
-    def __init__(self):
+    def __init__(self, class_: CustomerClass):
         self.graph = nx.DiGraph()
-        self.add_products()
-        self.add_edges()
+        self.class_ = class_
+        self._add_products()
+        self._add_edges()
 
-    def add_products(self):
+    def _add_products(self):
         for product in products:
             self.graph.add_node(product, label=product.name)
 
-    def add_edges(self):
+    def _add_edges(self):
         """
         Each product can be connected to its two secondary products if is has secondary products.
         If the product has no secondary products, the function will not add any edges.
         """
-        for product in products:
-            if product.secondary_products[0] is not None:
-                self.graph.add_edge(product.name, product.secondary_products[0][0].name, weight=product.secondary_products[0][1])
-            if product.secondary_products[1] is not None:
-                self.graph.add_edge(product.name, product.secondary_products[1][0].name, weight=product.secondary_products[1][1])
+        def _add_edge(tuple_: Optional[Tuple[Product, float]]):
+            if tuple_ is not None:
+                self.graph.add_edge(tuple_[0], self.class_, weight=tuple_[1])
 
-    def get_current_graph(self):
-        return self.graph
+        for product in products:
+            _add_edge(product.secondary_products[self.class_][0])
+            _add_edge(product.secondary_products[self.class_][1])
 
     def visualize(self):
         # TODO Adjust the names of the nodes and edges
@@ -41,5 +44,6 @@ class FullyConnectedGraph:
 
 if __name__ == '__main__':
     # Create the graph
-    graph = FullyConnectedGraph()
-    graph.visualize()
+    for class_ in CustomerClass:
+        graph = FullyConnectedGraph(class_)
+        graph.visualize()

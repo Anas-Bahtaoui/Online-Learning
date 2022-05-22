@@ -6,9 +6,10 @@ import scipy.stats
 from Customer import CustomerClass, reservation_price_distribution_from_curves
 from Learner import Learner, ShallContinue, Reward, PriceIndexes
 from Product import Product, ObservationProbability
-from parameters import LAMBDA_, products, purchase_amounts, customer_counts
+from parameters import LAMBDA_, purchase_amounts, customer_counts
 from Distribution import PositiveIntegerGaussian as PIG
 from Environment import environment
+from Product import products
 
 
 class GreedyLearner(Learner):
@@ -31,7 +32,7 @@ class GreedyLearner(Learner):
         return 1 - scipy.stats.norm.cdf((candidate_price - distribution.get_expectation()) / distribution.variance)
 
     def calculate_reward_of_product(self, price_index: int, product: Product, class_: CustomerClass) -> float:
-        #TODO: Shall we instead collect the result from the graph functions?
+        # TODO: Shall we instead collect the result from the graph functions?
         current_price_indexes = self.candidate_price_indexes[:product.id] + (
             price_index,) + self.candidate_price_indexes[product.id + 1:]
         n_users = customer_counts[class_].get_expectation()
@@ -51,7 +52,7 @@ class GreedyLearner(Learner):
             result_ = round(result_, 2)  # 2 because we want cents :)
             first_p: Optional[ObservationProbability]
             second_p: Optional[ObservationProbability]
-            first_p, second_p = product.secondary_products
+            first_p, second_p = product.secondary_products[class_]
             new_primaries = clicked_primaries + (current.id,)
             if first_p is not None:
                 result_ += emulate_path(new_primaries, first_p[1] * viewing_probability * 1, first_p[0])

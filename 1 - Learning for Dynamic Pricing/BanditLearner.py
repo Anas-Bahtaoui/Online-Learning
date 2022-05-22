@@ -5,10 +5,11 @@ import numpy as np
 
 from Customer import Customer, CustomerClass
 from Learner import Learner, ShallContinue, Reward, PriceIndexes
-from Product import Product, ObservationProbability
-from parameters import products, LAMBDA_, customer_counts, purchase_amounts
+from Product import Product, ObservationProbability, products
+from parameters import LAMBDA_, customer_counts, purchase_amounts
 
 from Environment import environment
+
 
 class ChangeDetectionAlgorithm:
     pass
@@ -125,7 +126,7 @@ class BanditLearner(Learner):
                 customer.buy_product(product.id, buy_count)
                 first_p: Optional[ObservationProbability]
                 second_p: Optional[ObservationProbability]
-                first_p, second_p = product.secondary_products
+                first_p, second_p = product.secondary_products[customer.class_]
                 if first_p is not None:
                     customer_views_first_product = bool(np.random.binomial(1, first_p[1]))
                     if customer_views_first_product:

@@ -3,7 +3,7 @@ from typing import List
 import numpy as np
 
 from BanditLearner import BanditLearner, BanditConfiguration
-from parameters import products
+from Product import products
 
 
 class UCBLearner(BanditLearner):
@@ -22,9 +22,11 @@ class UCBLearner(BanditLearner):
         selected_price_indexes, last_customers = self._history[-1]
         for product_id, selected_price_index in enumerate(selected_price_indexes):
             for customer in last_customers:
-                reward = self._get_reward_coef(customer, product_id) * products[product_id].candidate_prices[selected_price_index]
+                reward = self._get_reward_coef(customer, product_id) * products[product_id].candidate_prices[
+                    selected_price_index]
                 self.rewards_per_arm_per_product[product_id][selected_price_index].append(reward)
-            self.means[product_id][selected_price_index] = np.mean(self.rewards_per_arm_per_product[product_id][selected_price_index])
+            self.means[product_id][selected_price_index] = np.mean(
+                self.rewards_per_arm_per_product[product_id][selected_price_index])
             n = len(self.rewards_per_arm_per_product[product_id][selected_price_index])
             if n > 0:
                 self.widths[product_id][selected_price_index] = np.sqrt(2 * np.log(t + 1) / n)

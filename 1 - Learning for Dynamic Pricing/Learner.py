@@ -5,7 +5,7 @@ import numpy as np
 import scipy.ndimage
 from matplotlib import pyplot as plt
 
-from parameters import products
+from Product import products
 
 ShallContinue = bool
 Reward = float
