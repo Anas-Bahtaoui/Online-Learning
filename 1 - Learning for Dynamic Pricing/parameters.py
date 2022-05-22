@@ -4,7 +4,7 @@ from typing import List
 from Distribution import Dirichlet, PositiveIntegerGaussian as PIG
 from Product import Product
 
-MAX_PRICE = 100
+MAX_PRICE = 97 # There are missing values at index 99 and 100
 LAMBDA_ = 0.1
 
 # TODO: In the code fix the prices
@@ -42,7 +42,7 @@ class Experience(enum.Enum):
 
 class CustomerClass(enum.Enum):
     def __str__(self):
-        return f"{self.value[0]}{' ' + self.value[1] if len(self.value) > 1 else ''}"
+        return f"{self.value[0].value}{' ' + self.value[1].value if len(self.value) > 1 else ''}"
 
     PROFESSIONAL = (Experience.PROFESSIONAL,)
     YOUNG_BEGINNER = (Experience.BEGINNER, Age.YOUNG)
