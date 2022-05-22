@@ -20,6 +20,10 @@ class NormalGaussian(AbstractDistribution):
     mean: float
     variance: float
 
+    def __post_init__(self):
+        if self.variance <= 0.00001:
+            raise ValueError("Variance must be strictly positive")
+
     def get_expectation(self) -> float:
         return self.mean
 

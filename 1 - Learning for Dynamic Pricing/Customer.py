@@ -18,7 +18,8 @@ from parameters import MAX_PRICE, CustomerClass
 def reservation_price_distribution_from_curves(customer_class: CustomerClass, product_id: int, price: float) -> PIG:
     graph_result = read_conversion_probability(price, f"Demand Curves/curves/{customer_class.name}_{product_id}.npy")
     std_norm = scipy.stats.norm.ppf(1 - graph_result)
-    sigma = 2
+    sigma = 2  # TODO: Do we really want to always set the variance to two?
+    # We at first wanted to fit this into 2 variances to cover 97 percent of the interval, but the sigma directly being the variance doesn't mean anything.
     mu = price - sigma * std_norm
     return PIG(mu, sigma)
 
