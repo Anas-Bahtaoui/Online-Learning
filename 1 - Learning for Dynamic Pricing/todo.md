@@ -18,15 +18,9 @@ Implement this.
 
 
 ### TODO on code 03.05.2022
-* Add linear interpolation to price
 * Debug Bandits using simpler models
-* Add code to automatically generate each customer classes' demand curves
-* [DONE] Visualize demand curves on demand. -> See 'FunctionPlotter.py'
-* Add the Customer classes, alpha values, product names, etc...
-* Move all the parameters to one (or two) files so that it is easier to change.
 
 
 
 ### TODO on questions 03.05.2022
 * What is the basis for step 6? Directly ask prof
-* How does sold product count affect? First check past project repos and then ask prof?

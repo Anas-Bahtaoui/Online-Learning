@@ -35,12 +35,11 @@ def load_file(file_path: str) -> np.array:
 
 
 def read_conversion_probability(price: float, file_path: str) -> float:
-    # Prices we consider are in range 1-100
+    # Prices we consider are integers in range 1-100
     if price > MAX_PRICE:
         price = MAX_PRICE
     # Sample from a linear function
-    # 98.5 > look at 98 and 99 and interpolate the result in between
-    return load_file(file_path)[round(price)][1]  # TODO: Linear interpolation maybe
+    return load_file(file_path)[round(price)][1]
 
 
 """

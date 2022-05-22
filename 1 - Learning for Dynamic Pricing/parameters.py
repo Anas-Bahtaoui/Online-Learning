@@ -7,11 +7,6 @@ from Product import Product
 MAX_PRICE = 97 # There are missing values at index 99 and 100
 LAMBDA_ = 0.1
 
-# TODO: In the code fix the prices
-# TODO: Make the product names and customer classes
-# Take from https://www.notion.so/caspardietz/Project-Online-Learning-Applications-6880fbfb7d5445719c7ab0eed356f981?p=27728e0d751b4b4e9236d028c225a702
-# Example 2
-
 
 products: List[Product] = [
     Product("T-shirt", [3, 12, 20, 40, 80]),

@@ -47,7 +47,6 @@ class Dirichlet(AbstractDistribution):
     alpha: List[float]
 
     def get_expectation(self) -> List[float]:
-        # TODO: Expectation of dirichlet is not directly alpha.
         return dirichlet.mean(self.alpha)
 
     def get_sample_value(self) -> List[float]:
