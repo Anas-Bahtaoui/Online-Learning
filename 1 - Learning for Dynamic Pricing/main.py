@@ -5,7 +5,7 @@ from GreedyLearner import GreedyLearner
 from Learner import Learner
 from UCBLearner import UCBLearner
 from GaussianThompsonLearner import GaussianTSLearner
-from parameters import environment
+from Environment import environment
 
 if __name__ == '__main__':
 

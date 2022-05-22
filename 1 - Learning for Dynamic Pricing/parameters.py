@@ -21,9 +21,6 @@ products: List[Product] = [
 # products[2].add_secondary_products(products[1], 0.25, products[3], 0.05)
 # products[3].add_secondary_products(products[0], 0.15)
 
-from Environment import Environment
-environment = Environment(Dirichlet([100, 100, 100, 100, 100, 100]))
-
 
 class Age(enum.Enum):
     YOUNG = "under 35"
@@ -57,4 +54,9 @@ customer_counts = {
     CustomerClass.PROFESSIONAL: PIG(mean=50, variance=4),
     CustomerClass.YOUNG_BEGINNER: PIG(mean=100, variance=6),
     CustomerClass.OLD_BEGINNER: PIG(mean=30, variance=5),
+}
+dirichlets = {
+    CustomerClass.PROFESSIONAL: Dirichlet([100, 100, 100, 100, 100, 100]),
+    CustomerClass.YOUNG_BEGINNER: Dirichlet([100, 100, 100, 100, 100, 100]),
+    CustomerClass.OLD_BEGINNER: Dirichlet([100, 100, 100, 100, 100, 100]),
 }

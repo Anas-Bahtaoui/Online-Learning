@@ -6,8 +6,9 @@ import numpy as np
 from Customer import Customer, CustomerClass
 from Learner import Learner, ShallContinue, Reward, PriceIndexes
 from Product import Product, ObservationProbability
-from parameters import environment, products, LAMBDA_, customer_counts, purchase_amounts
+from parameters import products, LAMBDA_, customer_counts, purchase_amounts
 
+from Environment import environment
 
 class ChangeDetectionAlgorithm:
     pass
@@ -135,7 +136,7 @@ class BanditLearner(Learner):
                         run_on_product(second_p[0])
                 return reservation_price
 
-            first_product = np.random.choice([None, *products], p=environment.get_current_alpha())
+            first_product = np.random.choice([None, *products], p=environment.get_current_alpha(customer.class_))
             if first_product is not None:
                 total_reservation_prices[(customer.class_, first_product.id)].append(run_on_product(first_product))
         for product in products:

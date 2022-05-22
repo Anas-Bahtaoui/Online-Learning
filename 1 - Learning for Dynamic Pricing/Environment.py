@@ -7,15 +7,18 @@ In contrast, alpha_0 is the ratio of customers landing on the webpage of a compe
 We only consider the alpha ratios and disregard the total number of users. However, the alpha ratios will be subject to noise. 
 That is, every day, the value of the alpha ratios will be realizations of independent Dirichlet random variables
 """
-import Distribution
+from typing import Dict, Tuple
+
+from Distribution import Dirichlet
+from parameters import CustomerClass, dirichlets
 
 
 class Environment:
-    def __init__(self, alpha_distribution: Distribution, aggregate_toggle: bool = True):
+    def __init__(self, alpha_distributions: Dict[CustomerClass, Dirichlet], aggregate_toggle: bool = True):
         self.aggregate_toggle = aggregate_toggle  # We first do the first 4, because this is tricky
         self.day = 0
-        self.alpha = ()
-        self.alpha_distribution: Distribution = alpha_distribution
+        self.alphas: Dict[CustomerClass, Tuple[float, ...]] = {k: () for k in CustomerClass}
+        self.alpha_distributions: Dict[CustomerClass, Dirichlet] = alpha_distributions
         self.new_day()
 
     def new_day(self):
@@ -33,7 +36,7 @@ class Environment:
         So, the 0th parameters is the amount of failure, and each alpha is the count of times we succeeded in selling.
         We haven't implemented this yet, but it is a dynamic distribution, we think.
         """
-        self.alpha = self.alpha_distribution.get_sample_value()
+        self.alphas = {k: self.alpha_distributions[k].get_expectation() for k in CustomerClass}
 
     def get_current_day(self):
         return self.day
@@ -41,5 +44,11 @@ class Environment:
     def reset_day(self):
         self.day = 0
 
-    def get_current_alpha(self):
-        return self.alpha
+    def get_current_alpha(self, class_: CustomerClass):
+        return self.alphas[class_]
+
+    def get_expected_alpha(self, class_: CustomerClass):
+        return self.alpha_distributions[class_].get_expectation()
+
+
+environment = Environment(dirichlets)

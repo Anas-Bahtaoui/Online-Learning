@@ -6,8 +6,9 @@ import scipy.stats
 from Customer import CustomerClass, reservation_price_distribution_from_curves
 from Learner import Learner, ShallContinue, Reward, PriceIndexes
 from Product import Product, ObservationProbability
-from parameters import environment, LAMBDA_, products, purchase_amounts, customer_counts
+from parameters import LAMBDA_, products, purchase_amounts, customer_counts
 from Distribution import PositiveIntegerGaussian as PIG
+from Environment import environment
 
 
 class GreedyLearner(Learner):
@@ -59,7 +60,7 @@ class GreedyLearner(Learner):
                                         second_p[0])
             return result_
 
-        return emulate_path((), environment.alpha_distribution.get_expectation()[product.id + 1], product)
+        return emulate_path((), environment.get_expected_alpha(class_)[product.id + 1], product)
 
     def calculate_total_expected_reward(self, price_indexes: Tuple[int, ...]) -> float:
         result = 0
