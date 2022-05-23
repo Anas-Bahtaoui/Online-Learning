@@ -1,7 +1,13 @@
 from typing import List
 
 from Distribution import Dirichlet, PositiveIntegerGaussian as PIG
+from GaussianThompsonLearner import GaussianTSLearner
+from GreedyLearner import GreedyLearner
+from Learner import Learner
+from Simulation import Simulation
+from UCBLearner import UCBLearner
 from basic_types import ProductConfig, SimulationConfig, CustomerTypeBased
+from BanditLearner import step3, step4, step5, step6_sliding_window, step6_change_detection, step7
 
 LAMBDA_ = 0.1
 
@@ -21,8 +27,6 @@ secondary_product_professional: List[List[float]] = [
     [0.15, 0,    0,    0,    0],
     [0,    0,    0,    0,    0],
 ]
-# TODO: After basic debugging is done, remove the following line.
-secondary_product_professional: List[List[float]] = [[0]*5 for _ in range(5)]
 # TODO: Custom values for these
 secondary_product_beginner_young = secondary_product_professional
 secondary_product_beginner_old = secondary_product_professional
@@ -62,3 +66,14 @@ config = SimulationConfig(
     customer_counts=customer_counts,
     dirichlets=dirichlets,
 )
+learners: List[Learner] = [
+    GreedyLearner()
+]
+
+for step in [step3, step4, step5, step6_sliding_window, step6_change_detection, step7]:
+    for Learner in [GaussianTSLearner, UCBLearner]:
+        learners.append(Learner(step))
+
+if __name__ == '__main__':
+    simulation = Simulation(config, learners)
+    simulation.run(50, log=False, plot_graphs=True)

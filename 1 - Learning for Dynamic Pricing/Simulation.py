@@ -36,7 +36,7 @@ class Simulation:
         # Create environment
         self.environment = Environment(self.config.dirichlets)
 
-    def run(self, days: int, log: bool, plot_graphs: bool):
+    def run(self, days: int, *, log: bool, plot_graphs: bool):
         for learner in self.learners:
             learner.set_vars(self.products, self.environment, self.config)
             self.environment.reset_day()

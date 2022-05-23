@@ -7,14 +7,15 @@ import numpy as np
 import sys
 
 sys.path.append('..')
-from parameters import CustomerClass, products
+from basic_types import CustomerClass
+from production import product_configs
 
 ###### READING DATA ############################
 
 fig, axs = plt.subplots(3, sharex=True, sharey=True)
 for index, class_ in enumerate(list(CustomerClass)):
-    for product in products:
-        data = np.load(f"./curves/{class_.name}_{product.id}.npy")
+    for id_, product in enumerate(product_configs):
+        data = np.load(f"./curves/{class_.name}_{id_}.npy")
         x = data[:, 0]
         y = data[:, 1]
         axs[index].plot(x, y, label=f'{class_.name}_{product.name}')
@@ -23,5 +24,5 @@ for index, class_ in enumerate(list(CustomerClass)):
     axs[index].set_ylabel('Demand')
     axs[index].grid(True)
 plt.xlabel('Price')
-plt.savefig('DemandCurves.png', bbox_inches="tight",dpi = 300)
+plt.savefig('DemandCurves.png', bbox_inches="tight", dpi=300)
 plt.show()

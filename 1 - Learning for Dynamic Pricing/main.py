@@ -6,7 +6,7 @@ from Learner import Learner
 from Simulation import Simulation
 from UCBLearner import UCBLearner
 from GaussianThompsonLearner import GaussianTSLearner
-from parameters import config
+from production import config
 
 if __name__ == '__main__':
     learners: List[Learner] = [
@@ -17,9 +17,7 @@ if __name__ == '__main__':
         UCBLearner(step3),
         GaussianTSLearner(step3)
     ]
-    # for step in [step3, step4, step5, step6_sliding_window, step6_change_detection, step7]
-    #     for Learner in [GaussianTSLearner, UCBLearner]:
-    #         learners.append(Learner(step))
+
 
     Simulation(config, learners).run(50, log=True, plot_graphs=True)
 # TODO: Tune down the model and debug whatever is happening with the bandit algorithms
