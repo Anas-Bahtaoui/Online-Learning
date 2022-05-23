@@ -8,17 +8,16 @@ We only consider the alpha ratios and disregard the total number of users. Howev
 That is, every day, the value of the alpha ratios will be realizations of independent Dirichlet random variables
 """
 from typing import Dict, Tuple
-
+from basic_types import CustomerTypeBased, CustomerClass
 from Distribution import Dirichlet
-from parameters import CustomerClass, dirichlets
 
 
 class Environment:
-    def __init__(self, alpha_distributions: Dict[CustomerClass, Dirichlet], aggregate_toggle: bool = True):
+    def __init__(self, alpha_distributions: CustomerTypeBased[Dirichlet], aggregate_toggle: bool = True):
         self.aggregate_toggle = aggregate_toggle  # We first do the first 4, because this is tricky
         self.day = 0
         self.alphas: Dict[CustomerClass, Tuple[float, ...]] = {k: () for k in CustomerClass}
-        self.alpha_distributions: Dict[CustomerClass, Dirichlet] = alpha_distributions
+        self.alpha_distributions: CustomerTypeBased[Dirichlet] = alpha_distributions
         self.new_day()
 
     def new_day(self):
@@ -51,4 +50,3 @@ class Environment:
         return self.alpha_distributions[class_].get_expectation()
 
 
-environment = Environment(dirichlets)

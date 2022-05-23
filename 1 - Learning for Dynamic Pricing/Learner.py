@@ -1,11 +1,12 @@
 from collections import defaultdict
 from typing import List, Tuple
 
-import numpy as np
 import scipy.ndimage
 from matplotlib import pyplot as plt
 
-from Product import products
+import Environment
+from Product import Product
+from basic_types import SimulationConfig
 
 ShallContinue = bool
 Reward = float
@@ -14,6 +15,22 @@ PriceIndexes = List[int]
 
 class Learner:
     name: str
+    _products: List[Product]
+    _environment: Environment.Environment
+    _config: SimulationConfig
+
+    def set_vars(self, products: List[Product], environment: Environment.Environment, config: SimulationConfig):
+        self._products = products
+        self._environment = environment
+        self._config = config
+
+    def __init__(self):
+        ## This mechanism is ugly, but let's keep it now :(
+        if not hasattr(self, "_products"):
+            self._products = []
+
+    def reset(self):
+        raise NotImplementedError()
 
     def iterate_once(self) -> Tuple[ShallContinue, Reward, PriceIndexes]:
         raise NotImplementedError()
@@ -60,9 +77,9 @@ class Learner:
             prices = defaultdict(list)
             for productId in range(5):
                 for i in range(cnt):
-                    prices[productId].append(products[productId].candidate_prices[products_[productId][i]])
+                    prices[productId].append(self._products[productId].candidate_prices[products_[productId][i]])
 
-                plt.plot(x_iteration, prices[productId], label=products[productId].name)
+                plt.plot(x_iteration, prices[productId], label=self._products[productId].name)
             plt.xlabel("Iteration")
             plt.ylabel("Prices per product")
             plt.title(f"{self.name} Prices")
@@ -72,9 +89,9 @@ class Learner:
 
             axs[0].set_title(f"{self.name} Product rewards")
             for productId in range(5):
-                axs[productId].plot(x_iteration, [product_reward[productId] for product_reward in product_rewards], label=products[productId].name)
+                axs[productId].plot(x_iteration, [product_reward[productId] for product_reward in product_rewards],
+                                    label=self._products[productId].name)
                 axs[productId].legend(loc="upper right")
             plt.ylabel("Product rewards")
             plt.xlabel("Iteration")
             plt.show()
-

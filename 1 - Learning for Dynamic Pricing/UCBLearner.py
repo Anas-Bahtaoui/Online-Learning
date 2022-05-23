@@ -3,26 +3,28 @@ from typing import List
 import numpy as np
 
 from BanditLearner import BanditLearner, BanditConfiguration
-from Product import products
 
 
 class UCBLearner(BanditLearner):
     def _select_price_indexes(self) -> List[int]:
         return [np.argmax(np.array(self.means[product.id]) + np.array(self.widths[product.id])) for product in
-                products]
+                self._products]
+
+    def reset(self):
+        self.means = [[0 for _ in product.candidate_prices] for product in self._products]
+        self.widths = [[np.inf for _ in product.candidate_prices] for product in self._products]
+        self.rewards_per_arm_per_product = [[[] for _ in product.candidate_prices] for product in self._products]
+        self.__init__(self.config)
 
     def __init__(self, config: BanditConfiguration):
         super().__init__(config)
-        self.means = [[0 for _ in product.candidate_prices] for product in products]
-        self.widths = [[np.inf for _ in product.candidate_prices] for product in products]
-        self.rewards_per_arm_per_product = [[[] for _ in product.candidate_prices] for product in products]
 
     def _update(self):
         t = len(self._history)
         selected_price_indexes, last_customers = self._history[-1]
         for product_id, selected_price_index in enumerate(selected_price_indexes):
             for customer in last_customers:
-                reward = self._get_reward_coef(customer, product_id) * products[product_id].candidate_prices[
+                reward = self._get_reward_coef(customer, product_id) * self._products[product_id].candidate_prices[
                     selected_price_index]
                 self.rewards_per_arm_per_product[product_id][selected_price_index].append(reward)
             self.means[product_id][selected_price_index] = np.mean(

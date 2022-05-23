@@ -3,12 +3,10 @@ from typing import List, Tuple, Optional, NamedTuple, Union
 
 import numpy as np
 
-from Customer import Customer, CustomerClass
+from Customer import Customer
 from Learner import Learner, ShallContinue, Reward, PriceIndexes
-from Product import Product, ObservationProbability, products
-from parameters import LAMBDA_, customer_counts, purchase_amounts
-
-from Environment import environment
+from Product import Product, ObservationProbability
+from basic_types import CustomerClass
 
 
 class ChangeDetectionAlgorithm:
@@ -59,19 +57,19 @@ class BanditLearner(Learner):
         selected_price_indexes, customers = self._history[-1]
         reward = 0
         for customer in customers:
-            for product in products:
+            for product in self._products:
                 reward += self._get_reward_coef(customer, product.id) * product.candidate_prices[
                     selected_price_indexes[product.id]]
         return True, reward, selected_price_indexes
 
     def get_product_rewards(self) -> List[float]:
-        rewards = [0 for _ in products]
+        rewards = [0 for _ in self._products]
         selected_price_indexes, customers = self._history[-1]
         for customer in customers:
-            for product in products:
+            for product in self._products:
                 rewards[product.id] += self._get_reward_coef(customer, product.id) * product.candidate_prices[
                     selected_price_indexes[product.id]]
-        for product in products:
+        for product in self._products:
             for class_ in CustomerClass:
                 inter = 0
                 custs_ = [customer for customer in customers if customer.class_ == class_]
@@ -93,11 +91,10 @@ class BanditLearner(Learner):
         return rewards
 
     def __init__(self, config: BanditConfiguration):
+        super().__init__()
         self.name = f"{type(self).__name__} for {config.name}"
         self.are_counts_certain = False  # config.n_items_sold_known
         self.config = config
-        self.means = [[0 for _ in product.candidate_prices] for product in products]
-        self.widths = [[np.inf for _ in product.candidate_prices] for product in products]
         self._history: List[Tuple[List[int], List[Customer]]] = []
 
     def _select_price_indexes(self) -> List[int]:
@@ -110,7 +107,7 @@ class BanditLearner(Learner):
         customers = []
         for customer_class in list(CustomerClass):
             customers.extend(
-                [Customer(customer_class) for _ in range(customer_counts[customer_class].get_sample_value())])
+                [Customer(customer_class) for _ in range(self._config.customer_counts[customer_class].get_sample_value())])
         total_reservation_prices = defaultdict(list)
         for customer in customers:
             def run_on_product(product: Product):
@@ -122,7 +119,7 @@ class BanditLearner(Learner):
                     customer.get_reservation_price_of(product.id, product_price).get_sample_value(), 2)
                 if reservation_price < product_price:
                     return reservation_price
-                buy_count = purchase_amounts[customer.class_][product.id].get_sample_value()
+                buy_count = self._config.purchase_amounts[customer.class_][product.id].get_sample_value()
                 customer.buy_product(product.id, buy_count)
                 first_p: Optional[ObservationProbability]
                 second_p: Optional[ObservationProbability]
@@ -132,15 +129,16 @@ class BanditLearner(Learner):
                     if customer_views_first_product:
                         run_on_product(first_p[0])
                 if second_p is not None:
-                    customer_views_second_product = bool(np.random.binomial(1, second_p[1] * LAMBDA_))
+                    customer_views_second_product = bool(np.random.binomial(1, second_p[1] * self._config.lambda_))
                     if customer_views_second_product:
                         run_on_product(second_p[0])
                 return reservation_price
 
-            first_product = np.random.choice([None, *products], p=environment.get_current_alpha(customer.class_))
+            first_product = np.random.choice([None, *self._products],
+                                             p=self._environment.get_current_alpha(customer.class_))
             if first_product is not None:
                 total_reservation_prices[(customer.class_, first_product.id)].append(run_on_product(first_product))
-        for product in products:
+        for product in self._products:
             for class_ in CustomerClass:
                 prices = total_reservation_prices[(class_, product.id)]
                 if len(prices) == 0:
@@ -153,12 +151,14 @@ class BanditLearner(Learner):
         raise NotImplementedError()
 
     def _run_one_day(self):
-        environment.new_day()
+        self._environment.new_day()
         selected_price_indexes = self._select_price_indexes()
         self._new_day(selected_price_indexes)
         self._update()
 
     def reset(self):
+        self.means = [[0 for _ in product.candidate_prices] for product in self._products]
+        self.widths = [[np.inf for _ in product.candidate_prices] for product in self._products]
         self.__init__(self.config)
 
     def _get_reward_coef(self, customer: Customer, product_id: int) -> float:
@@ -172,14 +172,14 @@ class BanditLearner(Learner):
         expected_total_reward = 0
         for customer_class in list(CustomerClass):
             expected_customer = Customer(customer_class)
-            expected_customer_count = customer_counts[customer_class].get_expectation()
-            for product in products:
+            expected_customer_count = self._config.customer_counts[customer_class].get_expectation()
+            for product in self._products:
                 expected_product_price = product.candidate_prices[selected_price_indexes[product.id]]
                 expected_customer_reservation_price = expected_customer.get_reservation_price_of(product.id,
                                                                                                  expected_product_price).get_sample_value()
                 if expected_product_price > expected_customer_reservation_price:
                     reward = expected_product_price * expected_customer_count
                     if self.are_counts_certain:
-                        reward *= purchase_amounts[customer_class][product.id].get_expectation()
+                        reward *= self._config.purchase_amounts[customer_class][product.id].get_expectation()
                     expected_total_reward += reward
         return expected_total_reward

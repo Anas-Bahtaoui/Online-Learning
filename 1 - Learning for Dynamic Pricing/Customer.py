@@ -1,13 +1,12 @@
 from collections import defaultdict
 from functools import lru_cache
-from typing import List, Dict, Set
+from typing import List, Dict, Set, Callable
 
 import numpy as np
 import scipy.stats
 
-import Distribution
 from Distribution import PositiveIntegerGaussian as PIG
-from parameters import MAX_PRICE, CustomerClass
+from basic_types import CustomerClass
 
 """
     Each customer is belonging to one of the three customer classes. Each class an expected reservation price for each product.
@@ -35,9 +34,6 @@ def load_file(file_path: str) -> np.array:
 
 
 def read_conversion_probability(price: float, file_path: str) -> float:
-    # Prices we consider are integers in range 1-100
-    if price > MAX_PRICE:
-        price = MAX_PRICE
     # Sample from a linear function
     return load_file(file_path)[round(price)][1]
 
@@ -60,7 +56,7 @@ class Customer:
         self.class_ = class_
         self.products_clicked: Set[int] = set()
         self.products_bought: Dict[int, int] = defaultdict(int)
-        self.reservation_prices: List[Distribution] = [
+        self.reservation_prices: List[Callable[[float], PIG]] = [
             lambda price: reservation_price_distribution_from_curves(self.class_, product_id, price) for product_id in
             range(5)]
 
