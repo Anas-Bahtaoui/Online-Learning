@@ -7,7 +7,7 @@ import numpy as np
 import sys
 
 sys.path.append('..')
-from basic_types import CustomerClass
+from entities.basic_types import CustomerClass
 from production import product_configs
 
 ###### READING DATA ############################

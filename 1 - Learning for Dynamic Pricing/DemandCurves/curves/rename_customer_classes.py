@@ -1,6 +1,6 @@
 import os
 import shutil
-from Customer import CustomerClass
+from entities.Customer import CustomerClass
 mapping = {
     "A": CustomerClass.PROFESSIONAL,
     "B": CustomerClass.YOUNG_BEGINNER,

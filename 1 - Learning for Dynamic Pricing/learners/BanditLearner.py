@@ -1,12 +1,9 @@
 from collections import defaultdict
 from typing import List, Tuple, Optional, NamedTuple, Union
-
 import numpy as np
 
-from Customer import Customer
 from Learner import Learner, ShallContinue, Reward, PriceIndexes
-from Product import Product, ObservationProbability
-from basic_types import CustomerClass
+from entities import CustomerClass, Product, ObservationProbability, Customer
 
 
 class ChangeDetectionAlgorithm:
@@ -107,7 +104,8 @@ class BanditLearner(Learner):
         customers = []
         for customer_class in list(CustomerClass):
             customers.extend(
-                [Customer(customer_class) for _ in range(self._config.customer_counts[customer_class].get_sample_value())])
+                [Customer(customer_class) for _ in
+                 range(self._config.customer_counts[customer_class].get_sample_value())])
         total_reservation_prices = defaultdict(list)
         for customer in customers:
             def run_on_product(product: Product):

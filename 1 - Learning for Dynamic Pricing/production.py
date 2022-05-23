@@ -1,13 +1,11 @@
 from typing import List
 
-from Distribution import Dirichlet, PositiveIntegerGaussian as PIG
-from GaussianThompsonLearner import GaussianTSLearner
-from GreedyLearner import GreedyLearner
-from Learner import Learner
-from Simulation import Simulation
-from UCBLearner import UCBLearner
-from basic_types import ProductConfig, SimulationConfig, CustomerTypeBased
-from BanditLearner import step3, step4, step5, step6_sliding_window, step6_change_detection, step7
+from learners.GaussianThompsonLearner import GaussianTSLearner
+from learners.GreedyLearner import GreedyLearner
+from learners.Learner import Learner
+from learners.UCBLearner import UCBLearner
+from entities import ProductConfig, SimulationConfig, CustomerTypeBased, Simulation, Dirichlet, PositiveIntegerGaussian as PIG
+from learners.BanditLearner import step3, step4, step5, step6_sliding_window, step6_change_detection, step7
 
 LAMBDA_ = 0.1
 

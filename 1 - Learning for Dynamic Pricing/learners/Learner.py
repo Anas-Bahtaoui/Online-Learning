@@ -4,9 +4,7 @@ from typing import List, Tuple
 import scipy.ndimage
 from matplotlib import pyplot as plt
 
-import Environment
-from Product import Product
-from basic_types import SimulationConfig
+from entities import Environment, Product, SimulationConfig
 
 ShallContinue = bool
 Reward = float
@@ -16,10 +14,10 @@ PriceIndexes = List[int]
 class Learner:
     name: str
     _products: List[Product]
-    _environment: Environment.Environment
+    _environment: Environment
     _config: SimulationConfig
 
-    def set_vars(self, products: List[Product], environment: Environment.Environment, config: SimulationConfig):
+    def set_vars(self, products: List[Product], environment: Environment, config: SimulationConfig):
         self._products = products
         self._environment = environment
         self._config = config

@@ -3,7 +3,7 @@ from operator import itemgetter
 from typing import List
 
 from Environment import Environment
-from Learner import Learner
+from learners.Learner import Learner
 from Product import Product
 from basic_types import SimulationConfig, CustomerClass
 

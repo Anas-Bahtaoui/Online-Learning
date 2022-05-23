@@ -3,10 +3,9 @@ from typing import Tuple, Optional, List
 
 import scipy.stats
 
-from Customer import CustomerClass, reservation_price_distribution_from_curves
 from Learner import Learner, ShallContinue, Reward, PriceIndexes
-from Product import Product, ObservationProbability
-from Distribution import PositiveIntegerGaussian as PIG
+from entities import Product, ObservationProbability, CustomerClass, reservation_price_distribution_from_curves, \
+    PositiveIntegerGaussian as PIG
 
 
 class GreedyLearner(Learner):
@@ -14,8 +13,9 @@ class GreedyLearner(Learner):
         self.__init__()
 
     def get_product_rewards(self) -> List[float]:
-        return [sum(self.calculate_reward_of_product(self.candidate_price_indexes[i], self._products[i], class_) for class_ in
-                    list(CustomerClass)) for i in
+        return [sum(
+            self.calculate_reward_of_product(self.candidate_price_indexes[i], self._products[i], class_) for class_ in
+            list(CustomerClass)) for i in
                 range(len(self._products))]
 
     name = "Greedy Algorithm"
@@ -61,7 +61,7 @@ class GreedyLearner(Learner):
                                         second_p[0])
             return result_
 
-        return emulate_path((),self._environment.get_expected_alpha(class_)[product.id + 1], product)
+        return emulate_path((), self._environment.get_expected_alpha(class_)[product.id + 1], product)
 
     def calculate_total_expected_reward(self, price_indexes: Tuple[int, ...]) -> float:
         result = 0
@@ -69,7 +69,8 @@ class GreedyLearner(Learner):
             for class_ in list(CustomerClass):
                 inter = self.calculate_reward_of_product(price_indexes[product.id], product, class_)
                 print("For product", product.name, "user class", class_, "selected index", price_indexes[product.id],
-                      "expected reward:", inter, "expected customer count:", self._config.customer_counts[class_].get_expectation(),
+                      "expected reward:", inter, "expected customer count:",
+                      self._config.customer_counts[class_].get_expectation(),
                       "")
                 result += inter
         return result

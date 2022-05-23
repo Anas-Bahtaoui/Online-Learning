@@ -3,9 +3,7 @@ from typing import Tuple, Optional, List
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from Product import Product
-from Simulation import Simulation
-from basic_types import CustomerClass, SimulationConfig
+from entities import Product, Simulation, CustomerClass, SimulationConfig
 from production import secondaries, product_configs, dirichlets
 
 """
