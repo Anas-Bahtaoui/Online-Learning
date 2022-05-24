@@ -3,7 +3,6 @@ from operator import itemgetter
 from typing import List
 
 from Environment import Environment
-from learners.Learner import Learner
 from Product import Product
 from basic_types import SimulationConfig, CustomerClass
 
@@ -11,7 +10,7 @@ from basic_types import SimulationConfig, CustomerClass
 @dataclass
 class Simulation:
     config: SimulationConfig
-    learners: List[Learner]
+    learners: List['Learner']
     products: List[Product] = field(init=False)
     environment: Environment = field(init=False)
 
@@ -36,9 +35,9 @@ class Simulation:
         # Create environment
         self.environment = Environment(self.config.dirichlets)
 
-    def run(self, days: int, *, log: bool, plot_graphs: bool):
+    def run(self, days: int, *, log: bool, plot_graphs: bool, verbose: bool):
         for learner in self.learners:
             learner.set_vars(self.products, self.environment, self.config)
             self.environment.reset_day()
             learner.reset()
-            learner.run_experiment(days, log=log, plot_graphs=plot_graphs)
+            learner.run_experiment(days, log=log, plot_graphs=plot_graphs, verbose=verbose)

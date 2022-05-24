@@ -1,11 +1,8 @@
 from typing import List
 
-from learners.GaussianThompsonLearner import GaussianTSLearner
-from learners.GreedyLearner import GreedyLearner
-from learners.Learner import Learner
-from learners.UCBLearner import UCBLearner
-from entities import ProductConfig, SimulationConfig, CustomerTypeBased, Simulation, Dirichlet, PositiveIntegerGaussian as PIG
-from learners.BanditLearner import step3, step4, step5, step6_sliding_window, step6_change_detection, step7
+from entities import ProductConfig, SimulationConfig, CustomerTypeBased, Simulation, Dirichlet, \
+    PositiveIntegerGaussian as PIG
+from learners import *
 
 LAMBDA_ = 0.1
 
@@ -37,23 +34,25 @@ secondaries = CustomerTypeBased(
 )
 
 # TODO: is the Integer Gaussian good for this
-# TODO: After we determine our products, update these values.
 
 purchase_amounts: CustomerTypeBased[List[PIG]] = CustomerTypeBased(
+    # TODO: Values for how many are bought
     professional=(PIG(5, 1), PIG(1, 1), PIG(3, 1), PIG(1, 1), PIG(1, 1)),
     young_beginner=(PIG(8, 1), PIG(2, 1), PIG(6, 1), PIG(1, 1), PIG(2, 1)),
     old_beginner=(PIG(15, 2), PIG(4, 1), PIG(8, 1), PIG(2, 1), PIG(8, 1)),
 )
 
 customer_counts: CustomerTypeBased[PIG] = CustomerTypeBased(
+    # TODO: Values here
     professional=PIG(mean=50, variance=4),
     young_beginner=PIG(mean=100, variance=6),
     old_beginner=PIG(mean=30, variance=5),
 )
 dirichlets: CustomerTypeBased[Dirichlet] = CustomerTypeBased(
-    professional=Dirichlet([100, 100, 100, 100, 100, 100]),
-    young_beginner=Dirichlet([100, 100, 100, 100, 100, 100]),
-    old_beginner=Dirichlet([100, 100, 100, 100, 100, 100]),
+    # TODO: We want class specific values
+    professional=Dirichlet([1, 10, 10, 1, 1, 1]),
+    young_beginner=Dirichlet([1, 10, 10, 1, 1, 1]),
+    old_beginner=Dirichlet([1, 10, 10, 1, 1, 1]),
 )
 
 config = SimulationConfig(
@@ -74,4 +73,4 @@ for step in [step3, step4, step5, step6_sliding_window, step6_change_detection, 
 
 if __name__ == '__main__':
     simulation = Simulation(config, learners)
-    simulation.run(50, log=False, plot_graphs=True)
+    simulation.run(50, log=False, plot_graphs=True, verbose=False)

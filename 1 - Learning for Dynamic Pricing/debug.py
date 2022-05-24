@@ -1,11 +1,7 @@
 from typing import List
 
-from learners.BanditLearner import step3
+from learners import step3, GaussianTSLearner, GreedyLearner, UCBLearner, Learner
 from entities import Dirichlet, Simulation, CustomerTypeBased, SimulationConfig
-from learners.GaussianThompsonLearner import GaussianTSLearner
-from learners.GreedyLearner import GreedyLearner
-from learners.Learner import Learner
-from learners.UCBLearner import UCBLearner
 from production import LAMBDA_, product_configs, purchase_amounts, customer_counts
 
 secondary_product_professional: List[List[float]] = [[0] * 5 for _ in range(5)]
@@ -41,4 +37,4 @@ learners: List[Learner] = [
 ]
 if __name__ == '__main__':
     simulation = Simulation(config, learners)
-    simulation.run(50, log=True, plot_graphs=True)
+    simulation.run(50, log=True, plot_graphs=True, verbose=True)
