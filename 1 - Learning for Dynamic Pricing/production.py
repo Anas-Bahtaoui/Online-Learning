@@ -8,10 +8,11 @@ from learners import *
 LAMBDA_ = 0.1
 
 product_configs: List[ProductConfig] = [
-    ProductConfig("T-shirt", [3, 12, 20, 40]),
+    ProductConfig("T-shirt", [3, 12, 20, 40]),  # Also here.
     ProductConfig("Shorts", [5, 13, 22, 35]),
     ProductConfig("Towel", [2, 10, 15, 20]),
-    ProductConfig("Dumbbells", [5, 16, 34, 70]),
+    ProductConfig("Dumbbells", [5, 16, 34, 45]),
+    # TODO: The previous price created an unstability, this one makes uncertainty
     ProductConfig("Protein Powder", [15, 18, 25, 35]),
 
 ]

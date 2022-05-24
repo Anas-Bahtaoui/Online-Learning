@@ -46,16 +46,18 @@ class GreedyLearner(Learner):
                 return 0
             product_price = product.candidate_prices[current_price_indexes[product.id]]
             # We don't have simulated users but use expected values directly
-            reservation_price = reservation_price_distribution_from_curves(class_, product.id,
-                                                                           product_price).get_expectation()
-            # TODO Will be changed 
-            is_purchased = reservation_price >= product_price
-            if not is_purchased:
-                return 0
+            reservation_price_distribution = reservation_price_distribution_from_curves(class_, product.id,
+                                                                                        product_price)
+            purchase_ratio = GreedyLearner._calculate_ratio_of_customer_buying(product_price,
+                                                                               reservation_price_distribution)
+
             if self._verbose:
-                print("Purchased, reservation price:", reservation_price, "product price:", product_price)
+                print(f"Purchased %{purchase_ratio * 100}, reservation price mean:",
+                      reservation_price_distribution.get_expectation(), "product price:", product_price)
+            purchase_probability = purchase_ratio * viewing_probability
+            # TODO: handle this case test with both values
             expected_purchase_count = self._config.purchase_amounts[class_][product.id].get_expectation()
-            result_ = product_price * viewing_probability * n_users  # * expected_purchase_count
+            result_ = product_price * purchase_probability * n_users  # * expected_purchase_count
             result_ = round(result_, 2)  # 2 because we want cents :)
             first_p: Optional[ObservationProbability]
             second_p: Optional[ObservationProbability]
@@ -64,12 +66,13 @@ class GreedyLearner(Learner):
             new_primaries = clicked_primaries + (current.id,)
             if first_p is not None:
                 # first_p[1] is the graph weight, first_p[0] is the product
-                result_ += emulate_path(new_primaries, first_p[1] * viewing_probability * 1, first_p[0])
+                result_ += emulate_path(new_primaries, first_p[1] * purchase_probability * 1, first_p[0])
             if second_p is not None:
                 # Now also Lambda has to be multiplied to the product because its a secondary product
-                result_ += emulate_path(new_primaries, second_p[1] * viewing_probability * self._config.lambda_,
+                result_ += emulate_path(new_primaries, second_p[1] * purchase_probability * self._config.lambda_,
                                         second_p[0])
             return result_
+
         # Probability that the customer sees a given product depends on the alpha distribution
         return emulate_path((), self._environment.get_expected_alpha(class_)[product.id + 1], product)
 
