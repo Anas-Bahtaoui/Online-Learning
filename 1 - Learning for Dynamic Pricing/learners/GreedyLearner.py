@@ -16,7 +16,7 @@ class GreedyLearner(Learner):
         return [sum(
             self.calculate_reward_of_product(self.candidate_price_indexes[i], self._products[i], class_) for class_ in
             list(CustomerClass)) for i in
-                range(len(self._products))]
+            range(len(self._products))]
 
     name = "Greedy Algorithm"
 
@@ -29,6 +29,8 @@ class GreedyLearner(Learner):
 
     @staticmethod
     def _calculate_ratio_of_customer_buying(candidate_price: float, distribution: PIG) -> float:
+        # TODO: Explain rationale
+        # TODO: Use it in the calculate reward function
         return 1 - scipy.stats.norm.cdf((candidate_price - distribution.get_expectation()) / distribution.variance)
 
     # We need to pass the price indexes of all products
@@ -77,7 +79,8 @@ class GreedyLearner(Learner):
             for class_ in list(CustomerClass):
                 inter = self.calculate_reward_of_product(price_indexes[product.id], product, class_)
                 if self._verbose:
-                    print("For product", product.name, "user class", class_, "selected index", price_indexes[product.id],
+                    print("For product", product.name, "user class", class_, "selected index",
+                          price_indexes[product.id],
                           "expected reward:", inter, "expected customer count:",
                           self._config.customer_counts[class_].get_expectation(),
                           "")

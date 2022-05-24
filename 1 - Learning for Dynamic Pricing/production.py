@@ -1,4 +1,5 @@
 from typing import List
+import preamble
 
 from entities import ProductConfig, SimulationConfig, CustomerTypeBased, Simulation, Dirichlet, \
     PositiveIntegerGaussian as PIG
