@@ -54,7 +54,7 @@ class Customer:
         :param customer_config: customer configuration dictionary
         """
         self.class_ = class_
-        self.products_clicked: Set[int] = set()
+        self.products_clicked: List[int] = []
         self.products_bought: Dict[int, int] = defaultdict(int)
         self.reservation_prices: List[Callable[[float], PIG]] = [
             lambda price: reservation_price_distribution_from_curves(self.class_, product_id, price) for product_id in
@@ -82,7 +82,7 @@ class Customer:
         
         :param product_id: product id.
         """
-        self.products_clicked.add(product_id)
+        self.products_clicked.append(product_id)
 
     def is_product_clicked(self, product_id):
         return product_id in self.products_clicked

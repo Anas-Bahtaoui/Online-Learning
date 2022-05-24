@@ -9,12 +9,11 @@ That is, every day, the value of the alpha ratios will be realizations of indepe
 """
 from typing import Dict, Tuple
 from basic_types import CustomerTypeBased, CustomerClass
-from Distribution import Dirichlet
+from Distribution import Dirichlet, PositiveIntegerGaussian, AbstractDistribution
 
 
 class Environment:
-    def __init__(self, alpha_distributions: CustomerTypeBased[Dirichlet], aggregate_toggle: bool = True):
-        self.aggregate_toggle = aggregate_toggle  # We first do the first 4, because this is tricky
+    def __init__(self, alpha_distributions: CustomerTypeBased[Dirichlet]):
         self.day = 0
         self.alphas: Dict[CustomerClass, Tuple[float, ...]] = {k: () for k in CustomerClass}
         self.alpha_distributions: CustomerTypeBased[Dirichlet] = alpha_distributions
@@ -49,4 +48,11 @@ class Environment:
     def get_expected_alpha(self, class_: CustomerClass):
         return self.alpha_distributions[class_].get_expectation()
 
-
+    def get_aggregate_alpha(self, customer_counts: CustomerTypeBased[AbstractDistribution]):
+        alphas = 0
+        total = 0
+        for customerClass in CustomerClass:
+            count = customer_counts[customerClass].get_expectation()
+            alphas = count * self.get_expected_alpha(customerClass)
+            total += count
+        return alphas / total

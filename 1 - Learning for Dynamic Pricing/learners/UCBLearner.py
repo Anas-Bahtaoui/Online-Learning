@@ -3,12 +3,12 @@ from typing import List
 import numpy as np
 
 from BanditLearner import BanditLearner, BanditConfiguration
+from entities import Product
 
 
 class UCBLearner(BanditLearner):
-    def _select_price_indexes(self) -> List[int]:
-        return [np.argmax(np.array(self.means[product.id]) + np.array(self.widths[product.id])) for product in
-                self._products]
+    def _select_price_criteria(self, product: Product) -> List[float]:
+        return np.array(self.means[product.id]) + np.array(self.widths[product.id])
 
     def reset(self):
         self.means = [[0 for _ in product.candidate_prices] for product in self._products]

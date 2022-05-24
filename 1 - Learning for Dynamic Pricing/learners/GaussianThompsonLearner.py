@@ -1,6 +1,7 @@
 from typing import List, NamedTuple
 import numpy as np
 from BanditLearner import BanditLearner, BanditConfiguration
+from entities import Product
 
 
 class EstimationParameter(NamedTuple):
@@ -15,13 +16,10 @@ class GaussianTSLearner(BanditLearner):
         self.parameters = [[EstimationParameter() for _ in product.candidate_prices] for product in
                            self._products]  # precision
 
-    def _select_price_indexes(self) -> List[int]:
-        result = []
-        for product in self._products:
-            result.append(int(np.argmax([(np.random.randn() / (np.sqrt(self.parameters[product.id][i].t_0)) +
-                                          self.parameters[product.id][i].mu_0) for i in
-                                         range(len(product.candidate_prices))])))
-        return result
+    def _select_price_criteria(self, product: Product) -> List[float]:
+        return [(np.random.randn() / (np.sqrt(self.parameters[product.id][i].t_0)) +
+                 self.parameters[product.id][i].mu_0) for i in
+                range(len(product.candidate_prices))]
 
     def _update(self):
         rewards = self.get_product_rewards()

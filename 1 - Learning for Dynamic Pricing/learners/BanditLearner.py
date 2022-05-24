@@ -38,14 +38,47 @@ step6_change_detection = BanditConfiguration("Step 6 with Custom Algorithm", Fal
 step7 = BanditConfiguration("Step 7", False, False, True, None, (14, ContextGenerationAlgorithm()))
 
 
-def reward_multiplier_for_certain_count(customer: Customer, product_id: int) -> float:
-    ### For step 3, 5, 6
-    return customer.products_bought[product_id]
+class ParameterEstimator:
+    def update(self, customer: Customer):
+        raise NotImplementedError()
+
+    def modify(self, criterias: List[float]) -> List[float]:
+        raise NotImplementedError()
 
 
-def reward_multiplier_for_uncertain_count(customer: Customer, product_id: int) -> float:
-    ### For step 4 and step 7 we don't know the count of products bought
-    return 1 if customer.products_bought[product_id] > 0 else 0
+class AlphaEstimator(ParameterEstimator):
+    def __init__(self):
+        self.first_visit_counts = [0 for _ in range(5)]
+
+    def update(self, customer: Customer):
+        self.first_visit_counts[customer.products_clicked[0]] += 1
+
+    def modify(self, criterias: List[float]) -> List[float]:
+        return [criterias[i] * (self.first_visit_counts[i] / sum(self.first_visit_counts)) for i in range(5)]
+
+
+class KnownAlphaEstimator(ParameterEstimator):
+    def __init__(self, alpha: List[float]):
+        self.alpha = alpha
+
+    def update(self, customer: Customer):
+        pass
+
+    def modify(self, criterias: List[float]) -> List[float]:
+        return [criterias[i] * self.alpha[i] for i in range(5)]
+
+
+class NumberOfItemsSoldEstimator(ParameterEstimator):
+    def __init__(self):
+        self.product_buy_count = [0 for _ in range(5)]
+
+    def update(self, customer: Customer):
+        for product_i in customer.products_clicked:
+            self.product_buy_count[product_i] += customer.products_bought[product_i]
+
+    def modify(self, criterias: List[float]) -> List[float]:
+        return [criterias[i] * (self.product_buy_count[i] / sum(self.product_buy_count)) for i in range(5)]
+
 
 
 class BanditLearner(Learner):
@@ -93,8 +126,25 @@ class BanditLearner(Learner):
         self.are_counts_certain = False  # config.n_items_sold_known
         self.config = config
         self._history: List[Tuple[List[int], List[Customer]]] = []
+        self._estimators: List[ParameterEstimator] = []
+
+        if config.a_ratios_known:
+            alpha_prediction = self._environment.get_aggregate_alpha(self._config.customer_counts)
+            self._estimators.append(KnownAlphaEstimator(alpha_prediction))
+        else:
+            self._estimators.append(AlphaEstimator())
 
     def _select_price_indexes(self) -> List[int]:
+        result = []
+        for product in self._products:
+            price_vals = self._select_price_criteria(product)
+            for estimator in self._estimators:
+                price_vals = estimator.modify(price_vals)
+            selected_index = int(np.argmax(price_vals))
+            result.append(selected_index)
+        return result
+
+    def _select_price_criteria(self, product: Product) -> List[float]:
         raise NotImplementedError()
 
     def _new_day(self, selected_price_indexes: List[int]):
@@ -149,11 +199,18 @@ class BanditLearner(Learner):
     def _update(self):
         raise NotImplementedError()
 
+    def _update_parameter_estimators(self):
+        customers = self._history[-1][1]
+
+        for customer in customers:
+            _ = (estimator.update(customer) for estimator in self._estimators)
+
     def _run_one_day(self):
         self._environment.new_day()
         selected_price_indexes = self._select_price_indexes()
         self._new_day(selected_price_indexes)
         self._update()
+        self._update_parameter_estimators()
 
     def reset(self):
         self.means = [[0 for _ in product.candidate_prices] for product in self._products]
@@ -164,7 +221,7 @@ class BanditLearner(Learner):
         # if self.are_counts_certain:
         #     return reward_multiplier_for_certain_count(customer, product_id)
         # else:
-        return reward_multiplier_for_uncertain_count(customer, product_id)
+        return 1 if customer.products_bought[product_id] > 0 else 0
 
     """
     Might not work ...
@@ -172,12 +229,13 @@ class BanditLearner(Learner):
     TODO We will write a new one similiar to the GREEDY but w/o the constraints.
     For each customer class calculate it and sum it up. Then get the maximum reward of all price indexes.
     """
+
     def clairvoyant_reward(self):
-        selected_price_indexes = self._select_price_indexes() 
+        selected_price_indexes = self._select_price_indexes()
         expected_total_reward = 0
         for customer_class in list(CustomerClass):
-            expected_customer = Customer(customer_class) 
-            expected_customer_count = self._config.customer_counts[customer_class].get_expectation() 
+            expected_customer = Customer(customer_class)
+            expected_customer_count = self._config.customer_counts[customer_class].get_expectation()
             for product in self._products:
                 expected_product_price = product.candidate_prices[selected_price_indexes[product.id]]
                 expected_customer_reservation_price = expected_customer.get_reservation_price_of(product.id,
