@@ -1,11 +1,8 @@
 from typing import List
 
-from learners.GaussianThompsonLearner import GaussianTSLearner
-from learners.GreedyLearner import GreedyLearner
-from learners.Learner import Learner
-from learners.UCBLearner import UCBLearner
-from entities import ProductConfig, SimulationConfig, CustomerTypeBased, Simulation, Dirichlet, PositiveIntegerGaussian as PIG
-from learners.BanditLearner import step3, step4, step5, step6_sliding_window, step6_change_detection, step7
+from entities import ProductConfig, SimulationConfig, CustomerTypeBased, Simulation, Dirichlet, \
+    PositiveIntegerGaussian as PIG
+from learners import *
 
 LAMBDA_ = 0.1
 
@@ -52,7 +49,7 @@ customer_counts: CustomerTypeBased[PIG] = CustomerTypeBased(
     old_beginner=PIG(mean=30, variance=5),
 )
 dirichlets: CustomerTypeBased[Dirichlet] = CustomerTypeBased(
-    #TODO: We want class specific values
+    # TODO: We want class specific values
     professional=Dirichlet([1, 10, 10, 1, 1, 1]),
     young_beginner=Dirichlet([1, 10, 10, 1, 1, 1]),
     old_beginner=Dirichlet([1, 10, 10, 1, 1, 1]),

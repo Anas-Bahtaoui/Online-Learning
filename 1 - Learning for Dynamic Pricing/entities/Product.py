@@ -2,7 +2,6 @@
     This is the definition of the Product class.
     Each product has four candidate prices that are between the base price and the maximum price. They candidate prices are equaly distributed.
 """
-from operator import itemgetter
 from typing import Tuple, List, Optional, Dict
 
 from basic_types import CustomerClass

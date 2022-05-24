@@ -3,7 +3,6 @@ from operator import itemgetter
 from typing import List
 
 from Environment import Environment
-from learners.Learner import Learner
 from Product import Product
 from basic_types import SimulationConfig, CustomerClass
 
@@ -11,7 +10,7 @@ from basic_types import SimulationConfig, CustomerClass
 @dataclass
 class Simulation:
     config: SimulationConfig
-    learners: List[Learner]
+    learners: List['Learner']
     products: List[Product] = field(init=False)
     environment: Environment = field(init=False)
 
