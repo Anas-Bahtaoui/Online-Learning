@@ -165,12 +165,18 @@ class BanditLearner(Learner):
         # else:
         return reward_multiplier_for_uncertain_count(customer, product_id)
 
+    """
+    Might not work ...
+    
+    TODO We will write a new one similiar to the GREEDY but w/o the constraints.
+    For each customer class calculate it and sum it up. Then get the maximum reward of all price indexes.
+    """
     def clairvoyant_reward(self):
-        selected_price_indexes = self._select_price_indexes()
+        selected_price_indexes = self._select_price_indexes() 
         expected_total_reward = 0
         for customer_class in list(CustomerClass):
-            expected_customer = Customer(customer_class)
-            expected_customer_count = self._config.customer_counts[customer_class].get_expectation()
+            expected_customer = Customer(customer_class) 
+            expected_customer_count = self._config.customer_counts[customer_class].get_expectation() 
             for product in self._products:
                 expected_product_price = product.candidate_prices[selected_price_indexes[product.id]]
                 expected_customer_reservation_price = expected_customer.get_reservation_price_of(product.id,

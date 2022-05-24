@@ -31,6 +31,7 @@ class GreedyLearner(Learner):
     def _calculate_ratio_of_customer_buying(candidate_price: float, distribution: PIG) -> float:
         return 1 - scipy.stats.norm.cdf((candidate_price - distribution.get_expectation()) / distribution.variance)
 
+    # We need to pass the price indexes of all products
     def calculate_reward_of_product(self, price_index: int, product: Product, class_: CustomerClass) -> float:
         # TODO: Shall we instead collect the result from the graph functions?
         current_price_indexes = self.candidate_price_indexes[:product.id] + (
@@ -38,11 +39,14 @@ class GreedyLearner(Learner):
         n_users = self._config.customer_counts[class_].get_expectation()
 
         def emulate_path(clicked_primaries: Tuple[int, ...], viewing_probability: float, current: Product):
+            # We already looked at this product, thus we can skip it
             if current.id in clicked_primaries:
                 return 0
             product_price = product.candidate_prices[current_price_indexes[product.id]]
+            # We don't have simulated users but use expected values directly
             reservation_price = reservation_price_distribution_from_curves(class_, product.id,
                                                                            product_price).get_expectation()
+            # TODO Will be changed 
             is_purchased = reservation_price >= product_price
             if not is_purchased:
                 return 0
@@ -52,15 +56,18 @@ class GreedyLearner(Learner):
             result_ = round(result_, 2)  # 2 because we want cents :)
             first_p: Optional[ObservationProbability]
             second_p: Optional[ObservationProbability]
+            # Calculation of the primary product done
             first_p, second_p = product.secondary_products[class_]
             new_primaries = clicked_primaries + (current.id,)
             if first_p is not None:
+                # first_p[1] is the graph weight, first_p[0] is the product
                 result_ += emulate_path(new_primaries, first_p[1] * viewing_probability * 1, first_p[0])
             if second_p is not None:
+                # Now also Lambda has to be multiplied to the product because its a secondary product
                 result_ += emulate_path(new_primaries, second_p[1] * viewing_probability * self._config.lambda_,
                                         second_p[0])
             return result_
-
+        # Probability that the customer sees a given product depends on the alpha distribution
         return emulate_path((), self._environment.get_expected_alpha(class_)[product.id + 1], product)
 
     def calculate_total_expected_reward(self, price_indexes: Tuple[int, ...]) -> float:
