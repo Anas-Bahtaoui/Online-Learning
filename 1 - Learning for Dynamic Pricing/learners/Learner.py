@@ -26,6 +26,7 @@ class Learner:
         ## This mechanism is ugly, but let's keep it now :(
         if not hasattr(self, "_products"):
             self._products = []
+        self._verbose = False
 
     def reset(self):
         raise NotImplementedError()
@@ -36,13 +37,18 @@ class Learner:
     def get_product_rewards(self) -> List[float]:
         raise NotImplementedError()
 
-    def run_experiment(self, max_days: int, *, log: bool = True, plot_graphs: bool = True) -> None:
+    def run_experiment(self, max_days: int, *, log: bool = True, plot_graphs: bool = True,
+                       verbose: bool = True) -> None:
         running = True
         cnt = 0
+        self._verbose = verbose
 
         rewards = []
         products_ = defaultdict(list)
         product_rewards = []
+        print()
+        print("###############################################")
+        print(f"Starting {self.name}")
         while running and cnt < max_days:
             running, current_reward, candidate_price_indexes = self.iterate_once()
             product_rewards.append(self.get_product_rewards())
@@ -57,7 +63,6 @@ class Learner:
             # Store the price indexes
             for product_i in range(5):
                 products_[product_i].append(candidate_price_indexes[product_i])
-        print("###############################################\n")
         print("Done!")
         print("Identified price indexes:", candidate_price_indexes)
         print("Final reward:", rewards[-1])

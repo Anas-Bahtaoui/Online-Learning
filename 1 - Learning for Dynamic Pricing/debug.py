@@ -37,4 +37,4 @@ learners: List[Learner] = [
 ]
 if __name__ == '__main__':
     simulation = Simulation(config, learners)
-    simulation.run(50, log=True, plot_graphs=True)
+    simulation.run(50, log=True, plot_graphs=True, verbose=True)

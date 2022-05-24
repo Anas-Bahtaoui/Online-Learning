@@ -46,7 +46,8 @@ class GreedyLearner(Learner):
             is_purchased = reservation_price >= product_price
             if not is_purchased:
                 return 0
-            print("Purchased, reservation price:", reservation_price, "product price:", product_price)
+            if self._verbose:
+                print("Purchased, reservation price:", reservation_price, "product price:", product_price)
             expected_purchase_count = self._config.purchase_amounts[class_][product.id].get_expectation()
             result_ = product_price * viewing_probability * n_users  # * expected_purchase_count
             result_ = round(result_, 2)  # 2 because we want cents :)
@@ -68,10 +69,11 @@ class GreedyLearner(Learner):
         for product in self._products:
             for class_ in list(CustomerClass):
                 inter = self.calculate_reward_of_product(price_indexes[product.id], product, class_)
-                print("For product", product.name, "user class", class_, "selected index", price_indexes[product.id],
-                      "expected reward:", inter, "expected customer count:",
-                      self._config.customer_counts[class_].get_expectation(),
-                      "")
+                if self._verbose:
+                    print("For product", product.name, "user class", class_, "selected index", price_indexes[product.id],
+                          "expected reward:", inter, "expected customer count:",
+                          self._config.customer_counts[class_].get_expectation(),
+                          "")
                 result += inter
         return result
 

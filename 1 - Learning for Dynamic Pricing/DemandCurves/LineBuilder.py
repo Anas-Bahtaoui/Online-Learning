@@ -14,7 +14,6 @@ class LineBuilder:
         self.cid = line.figure.canvas.mpl_connect('button_press_event', self)
 
     def __call__(self, event):
-        # print('click', event)
         if event.inaxes != self.line.axes:
             return
         self.xs.append(event.xdata)

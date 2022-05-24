@@ -80,11 +80,11 @@ class BanditLearner(Learner):
                     # total_reservation_price += customer.get_reservation_price_of(product.id,
                     #                                                          selected_price_indexes[product.id])
                     clicked += 1 if customer.is_product_clicked(product.id) else 0
-                print("For product", product.name, "user class", class_, "selected index",
-                      selected_price_indexes[product.id],
-                      "Actual reward:", inter, "Actual amount of customers", len(custs_), "Actual clicked #customers",
-                      clicked, "Actual bought #customers",
-                      cnt)
+                if self._verbose:
+                    print("For product", product.name, "user class", class_, "selected index",
+                          selected_price_indexes[product.id],
+                          "Actual reward:", inter, "Actual amount of customers", len(custs_),
+                          "Actual clicked #customers", clicked, "Actual bought #customers", cnt)
         return rewards
 
     def __init__(self, config: BanditConfiguration):
@@ -141,8 +141,9 @@ class BanditLearner(Learner):
                 prices = total_reservation_prices[(class_, product.id)]
                 if len(prices) == 0:
                     continue
-                print("Average reservation price for product", product.name, "for class", class_,
-                      sum(prices) / len(prices))
+                if self._verbose:
+                    print("Average reservation price for product", product.name, "for class", class_,
+                          sum(prices) / len(prices))
         self._history.append((selected_price_indexes, customers))
 
     def _update(self):
