@@ -1,10 +1,10 @@
 from collections import defaultdict
-from typing import List, Tuple, Optional, NamedTuple, Union
+from typing import Tuple, Optional, NamedTuple, Union
 import numpy as np
 
 from Learner import Learner, ShallContinue, Reward, PriceIndexes
-from entities import CustomerClass, Product, ObservationProbability, Customer
-
+from entities import CustomerClass, Product, ObservationProbability
+from parameter_estimators import *
 
 class ChangeDetectionAlgorithm:
     pass
@@ -36,48 +36,6 @@ step6_sliding_window = BanditConfiguration("Step 6 with Sliding Window", False, 
 step6_change_detection = BanditConfiguration("Step 6 with Custom Algorithm", False, False, False,
                                              ChangeDetectionAlgorithm())
 step7 = BanditConfiguration("Step 7", False, False, True, None, (14, ContextGenerationAlgorithm()))
-
-
-class ParameterEstimator:
-    def update(self, customer: Customer):
-        raise NotImplementedError()
-
-    def modify(self, criterias: List[float]) -> List[float]:
-        raise NotImplementedError()
-
-
-class AlphaEstimator(ParameterEstimator):
-    def __init__(self):
-        self.first_visit_counts = [0 for _ in range(5)]
-
-    def update(self, customer: Customer):
-        self.first_visit_counts[customer.products_clicked[0]] += 1
-
-    def modify(self, criterias: List[float]) -> List[float]:
-        return [criterias[i] * (self.first_visit_counts[i] / sum(self.first_visit_counts)) for i in range(5)]
-
-
-class KnownAlphaEstimator(ParameterEstimator):
-    def __init__(self, alpha: List[float]):
-        self.alpha = alpha
-
-    def update(self, customer: Customer):
-        pass
-
-    def modify(self, criterias: List[float]) -> List[float]:
-        return [criterias[i] * self.alpha[i] for i in range(5)]
-
-
-class NumberOfItemsSoldEstimator(ParameterEstimator):
-    def __init__(self):
-        self.product_buy_count = [0 for _ in range(5)]
-
-    def update(self, customer: Customer):
-        for product_i in customer.products_clicked:
-            self.product_buy_count[product_i] += customer.products_bought[product_i]
-
-    def modify(self, criterias: List[float]) -> List[float]:
-        return [criterias[i] * (self.product_buy_count[i] / sum(self.product_buy_count)) for i in range(5)]
 
 
 
@@ -129,10 +87,18 @@ class BanditLearner(Learner):
         self._estimators: List[ParameterEstimator] = []
 
         if config.a_ratios_known:
+            # Calculate Customer class independent alphas
             alpha_prediction = self._environment.get_aggregate_alpha(self._config.customer_counts)
             self._estimators.append(KnownAlphaEstimator(alpha_prediction))
         else:
             self._estimators.append(AlphaEstimator())
+
+        if config.n_items_sold_known:
+            # Calculate customer class independent number of items sold
+            self._estimators.append(
+                KnownItemsSoldEstimator(self._config.customer_counts, self._config.purchase_amounts))
+        else:
+            self._estimators.append(NumberOfItemsSoldEstimator())
 
     def _select_price_indexes(self) -> List[int]:
         result = []

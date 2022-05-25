@@ -90,8 +90,3 @@ class SimulationConfig:
         # Lambda
         if self.lambda_ < 0 or self.lambda_ > 1:
             raise Exception(f"The lambda is not in range [0, 1].")
-
-def get_aggregate_expectation(of_: CustomerTypeBased[Distribution.AbstractDistribution],
-                              customer_count: Distribution.AbstractDistribution) :
-    total = sum(of_[class_].get_expectation() * customer_count.get_expectation() for class_ in CustomerClass)
-
