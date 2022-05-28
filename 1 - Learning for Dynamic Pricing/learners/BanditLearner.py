@@ -1,10 +1,11 @@
 from collections import defaultdict
-from typing import Tuple, Optional, NamedTuple, Union
+from typing import NamedTuple, Union
 import numpy as np
 
 from Learner import Learner, ShallContinue, Reward, PriceIndexes
-from entities import CustomerClass, Product, ObservationProbability
+from entities import Environment, SimulationConfig
 from parameter_estimators import *
+
 
 class ChangeDetectionAlgorithm:
     pass
@@ -36,7 +37,6 @@ step6_sliding_window = BanditConfiguration("Step 6 with Sliding Window", False, 
 step6_change_detection = BanditConfiguration("Step 6 with Custom Algorithm", False, False, False,
                                              ChangeDetectionAlgorithm())
 step7 = BanditConfiguration("Step 7", False, False, True, None, (14, ContextGenerationAlgorithm()))
-
 
 
 class BanditLearner(Learner):
@@ -86,19 +86,28 @@ class BanditLearner(Learner):
         self._history: List[Tuple[List[int], List[Customer]]] = []
         self._estimators: List[ParameterEstimator] = []
 
-        if config.a_ratios_known:
+    def set_vars(self, products: List[Product], environment: Environment, config: SimulationConfig):
+        super().set_vars(products, environment, config)
+        if self.config.a_ratios_known:
             # Calculate Customer class independent alphas
+
             alpha_prediction = self._environment.get_aggregate_alpha(self._config.customer_counts)
             self._estimators.append(KnownAlphaEstimator(alpha_prediction))
         else:
             self._estimators.append(AlphaEstimator())
 
-        if config.n_items_sold_known:
+        if self.config.n_items_sold_known:
             # Calculate customer class independent number of items sold
             self._estimators.append(
                 KnownItemsSoldEstimator(self._config.customer_counts, self._config.purchase_amounts))
         else:
             self._estimators.append(NumberOfItemsSoldEstimator())
+
+        if self.config.graph_weights_known:
+            self._estimators.append(KnownGraphWeightsEstimator(self._config.secondaries, self._config.customer_counts,
+                                                               self._config.lambda_))
+        else:
+            self._estimators.append(GraphWeightsEstimator())
 
     def _select_price_indexes(self) -> List[int]:
         result = []
@@ -179,8 +188,6 @@ class BanditLearner(Learner):
         self._update_parameter_estimators()
 
     def reset(self):
-        self.means = [[0 for _ in product.candidate_prices] for product in self._products]
-        self.widths = [[np.inf for _ in product.candidate_prices] for product in self._products]
         self.__init__(self.config)
 
     def _get_reward_coef(self, customer: Customer, product_id: int) -> float:

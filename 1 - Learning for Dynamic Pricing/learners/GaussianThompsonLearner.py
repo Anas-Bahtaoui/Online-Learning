@@ -33,3 +33,6 @@ class GaussianTSLearner(BanditLearner):
                     old_t + self._environment.day)
             new_t = old_t + 1
             self.parameters[p_i][i] = EstimationParameter(t_0=new_t, mu_0=new_mu)
+
+    def reset(self):
+        self.__init__(self.config)

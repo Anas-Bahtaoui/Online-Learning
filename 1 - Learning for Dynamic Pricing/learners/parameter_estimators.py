@@ -1,6 +1,7 @@
-from typing import List
+from operator import itemgetter
+from typing import List, Tuple, Optional
 
-from entities import Customer, CustomerTypeBased, AbstractDistribution, CustomerClass
+from entities import Customer, CustomerTypeBased, AbstractDistribution, CustomerClass, Product, ObservationProbability
 
 
 class ParameterEstimator:
@@ -98,25 +99,37 @@ class GraphWeightsEstimator(ParameterEstimator):
 
 class KnownGraphWeightsEstimator(ParameterEstimator):
     def __init__(self, graph_weights: CustomerTypeBased[List[List[float]]],
-                 customer_counts: CustomerTypeBased[AbstractDistribution]):
-        self.graph_weights = graph_weights
-
-        hamza = [[0.0 for _ in range(5)] for _ in range(5)]
-        for i in range(5):
-            hamza[i][i] = 1
-        total_customers = customer_counts.young_beginner.get_expectation() + customer_counts.old_beginner.get_expec
+                 customer_counts: CustomerTypeBased[AbstractDistribution], lambda_: float):
+        normalized_weights = [[0.0 for _ in range(5)] for _ in range(5)]
+        young_c = customer_counts.young_beginner.get_expectation()
+        old_c = customer_counts.old_beginner.get_expectation()
+        prof_c = customer_counts.professional.get_expectation()
+        total_customers = young_c + old_c + prof_c
         for i in range(5):
             for j in range(5):
                 if i != j:
-                    hamza[i][j] = graph_weights.young_beginner[i][
-                                      j] * customer_counts.young_beginner.get_expectation() + \
-                                  graph_weights.old_beginner[i][
-                                      j] * customer_counts.old_beginner.get_expectation() + customer_counts.professional.get_expectation() * \
-                                  graph_weights.professional[i][j]
-                    hamza[i][j] /= total_customers
+                    normalized_weights[i][j] = \
+                        graph_weights.young_beginner[i][j] * young_c + \
+                        graph_weights.old_beginner[i][j] * old_c + \
+                        prof_c * graph_weights.professional[i][j]
+
+                    normalized_weights[i][j] /= total_customers
+
+        def emulate_path(clicked_primaries: Tuple[int, ...], viewing_probability: float, current_id: int):
+            if current_id in clicked_primaries:
+                return 0
+            result_ = viewing_probability
+            first_p, second_p = sorted(enumerate(normalized_weights[current_id]), key=itemgetter(1))[:2]
+            new_primaries = clicked_primaries + (current_id,)
+            if first_p[1] > 0.0:
+                result_ += emulate_path(new_primaries, first_p[1] * 1, first_p[0])
+            if second_p[1] > 0.0:
+                result_ += emulate_path(new_primaries, second_p[1] * lambda_, second_p[0])
+            return result_
+        self.product_weights = [emulate_path((), 1.0, i) for i in range(5)]
 
     def update(self, customer: Customer):
         pass
 
     def modify(self, criterias: List[float]) -> List[float]:
-        pass
+        return [criterias[i] * self.product_weights[i] for i in range(5)]
