@@ -97,8 +97,23 @@ class GraphWeightsEstimator(ParameterEstimator):
 
 
 class KnownGraphWeightsEstimator(ParameterEstimator):
-    def __init__(self, graph_weights: CustomerTypeBased[List[List[float]]]):
+    def __init__(self, graph_weights: CustomerTypeBased[List[List[float]]],
+                 customer_counts: CustomerTypeBased[AbstractDistribution]):
         self.graph_weights = graph_weights
+
+        hamza = [[0.0 for _ in range(5)] for _ in range(5)]
+        for i in range(5):
+            hamza[i][i] = 1
+        total_customers = customer_counts.young_beginner.get_expectation() + customer_counts.old_beginner.get_expec
+        for i in range(5):
+            for j in range(5):
+                if i != j:
+                    hamza[i][j] = graph_weights.young_beginner[i][
+                                      j] * customer_counts.young_beginner.get_expectation() + \
+                                  graph_weights.old_beginner[i][
+                                      j] * customer_counts.old_beginner.get_expectation() + customer_counts.professional.get_expectation() * \
+                                  graph_weights.professional[i][j]
+                    hamza[i][j] /= total_customers
 
     def update(self, customer: Customer):
         pass
