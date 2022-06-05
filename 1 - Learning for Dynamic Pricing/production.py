@@ -44,6 +44,7 @@ purchase_amounts: CustomerTypeBased[List[PIG]] = CustomerTypeBased(
     old_beginner=(PIG(15, 2), PIG(4, 1), PIG(8, 1), PIG(2, 1), PIG(8, 1)),
 )
 
+# TODO: Assign ratios based on one number, so we can control convergence
 customer_counts: CustomerTypeBased[PIG] = CustomerTypeBased(
     # TODO: Values here
     professional=PIG(mean=50, variance=4),

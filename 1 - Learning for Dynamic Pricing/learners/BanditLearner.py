@@ -62,6 +62,9 @@ class BanditLearner(Learner):
                 inter = 0
                 custs_ = [customer for customer in customers if customer.class_ == class_]
                 cnt = 0
+
+                ## TODO: Fix this and use it in all learners (one of them is using something else)
+                ## So it calculates the reward also with coounts
                 clicked = 0
                 total_reservation_price = 0
                 for customer in custs_:
@@ -83,7 +86,7 @@ class BanditLearner(Learner):
         self.name = f"{type(self).__name__} for {config.name}"
         self.are_counts_certain = False  # config.n_items_sold_known
         self.config = config
-        self._history: List[Tuple[List[int], List[Customer]]] = []
+        self._history: List[Tuple[List[int], List[Customer]]] = []  # TODO: Rewards per product add here
         self._estimators: List[ParameterEstimator] = []
 
     def set_vars(self, products: List[Product], environment: Environment, config: SimulationConfig):

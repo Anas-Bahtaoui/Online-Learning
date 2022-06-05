@@ -20,7 +20,7 @@ class AlphaEstimator(ParameterEstimator):
         self.first_visit_counts[customer.products_clicked[0]] += 1
 
     def modify(self, criterias: List[float]) -> List[float]:
-        return [criterias[i] * (self.first_visit_counts[i] / sum(self.first_visit_counts)) for i in range(5)]
+        return [criterias[i] * ((self.first_visit_counts[i] / sum(self.first_visit_counts)) + 0.00001) for i in range(5)]
 
 
 class KnownAlphaEstimator(ParameterEstimator):

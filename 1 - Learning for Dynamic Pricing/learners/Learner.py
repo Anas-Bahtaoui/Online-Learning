@@ -39,6 +39,7 @@ class Learner:
 
     def run_experiment(self, max_days: int, *, log: bool = True, plot_graphs: bool = True,
                        verbose: bool = True) -> None:
+        ## TODO: This is a very bad way, we want more presentable results :)
         running = True
         cnt = 0
         self._verbose = verbose
