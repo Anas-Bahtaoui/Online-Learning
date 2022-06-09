@@ -1,5 +1,22 @@
+# Tasks
+## 1 - Average regret & reward computed over a significant number of runs 
+## 2 - The ratio between the empirical regret and the upper bound
+
 # import libraries
 import numpy as np
+
+## Compute the empirical regret
+def expected_reward(Time_horizon, arms_rewards_list):
+    # arms_rewards_list : list of rewards received at each time t
+    return sum(arms_rewards_list)
+
+# compute the average regret
+def average_regret(clairvoyant_reward, Time_horizon, arms_rewards_list):
+    # clairvoyant_reward : the reward of the clairvoyant learner
+    # Time_horizon : the time horizon of the experiment
+    # arms_pulled_list : the list of arms pulled by the learner we want to compute the average regret for
+    # arms_rewards_list : the list of rewards of the arms pulled by the learner we want to compute the average regret for
+    return Time_horizon * clairvoyant_reward - expected_reward(Time_horizon, arms_rewards_list)
 
 # function that computes the upper bound of the UCB learner
 def UCB_regret_UB(Time_horizon, clairvoyant_reward, arms_rewards_list):
