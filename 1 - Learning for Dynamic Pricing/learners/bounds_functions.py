@@ -28,13 +28,16 @@ def average_regret(clairvoyant_reward, arms_rewards_list):
 # function that computes the upper bound of the UCB learner
 def UCB_regret_UB(Time_horizon, clairvoyant_reward, arms_rewards_list):
 		# clairvoyant reward : when we code it
-		# arms_rewards_list : it is on get get_product_rewards
-    delta_a = [4 * np.log(Time_horizon) / (clairvoyant_reward - arms_rewards_list[i])  
-                + 8 * (clairvoyant_reward - arms_rewards_list[i])
-                for i in range(len(arms_rewards_list))]
+		# arms_rewards_list : list containing the expected reward of each arm
+    # filter the arms with a less reward than the clairvoyant reward
+    filtered_arms = arms_rewards_list[arms_rewards_list < clairvoyant_reward]
+    delta_a = [4 * np.log(Time_horizon) / (clairvoyant_reward - filtered_arms[i])  
+                + 8 * (clairvoyant_reward - filtered_arms[i])
+                for i in range(len(filtered_arms))]
 		# this is shit XD
     return sum(delta_a)
 
+##########################################
 
 ### function that computes the upper bound of the TS learner
 # define the kullback leibler divergence
