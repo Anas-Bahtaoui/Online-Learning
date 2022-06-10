@@ -8,19 +8,20 @@ For the Steps 3-7, in the algorithm evaluation, report:
 # import libraries
 import numpy as np
 
-## Compute the expected reward : 
-## definition (on the slides) as the sum of the rewards we get at each time step
-def expected_reward(arms_rewards_list):
-    # arms_rewards_list : list of rewards received at each time t
-    return sum(arms_rewards_list)
+# step 1: compute the average regret of the learner
+# step 1.1 : compute the cumulative expected reward
+def cumulative_expected_reward(arms_rewards_list):
+  # arms_rewards_list : list of expected reward of the arm pulled at time t
+  return np.cumsum(arms_rewards_list)
 
-# compute the average regret :
-## definition (on the slides) difference between claivoyant reward and the expected reward of our learner
+
+# step 1.2 : compute the average regret at time t :
 def average_regret(clairvoyant_reward, arms_rewards_list):
     # claivoyant reward : reward we get from the clairvoyant learner
     # arms_rewards_list : list of rewards received at each time t
-    Time_horizon = len(arms_rewards_list)
-    return Time_horizon * clairvoyant_reward - expected_reward(arms_rewards_list)
+    cumulative_clairvoyant_reward = np.array([i * clairvoyant_reward for i in range(1, len(arms_rewards_list) + 1)])
+    cum_exp_reward = np.array(cumulative_expected_reward(arms_rewards_list))
+    return cum_exp_reward - cumulative_clairvoyant_reward
 
 # function that computes the upper bound of the UCB learner
 def UCB_regret_UB(Time_horizon, clairvoyant_reward, arms_rewards_list):
