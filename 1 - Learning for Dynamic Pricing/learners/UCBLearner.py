@@ -20,8 +20,9 @@ class UCBLearner(BanditLearner):
         super().__init__(config)
 
     def _update(self):
-        t = len(self._history)
-        selected_price_indexes, last_customers = self._history[-1]
+        t = len(self._customer_history)
+        selected_price_indexes: List[int] = self._experiment_history[-1][1]
+        last_customers = self._customer_history[-1]
         for product_id, selected_price_index in enumerate(selected_price_indexes):
             for customer in last_customers:
                 reward = self._get_reward_coef(customer, product_id) * self._products[product_id].candidate_prices[

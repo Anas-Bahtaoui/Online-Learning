@@ -22,10 +22,9 @@ class GaussianTSLearner(BanditLearner):
                 range(len(product.candidate_prices))]
 
     def _update(self):
-        rewards = self.get_product_rewards()
-        selected_price_indexes = self._history[-1][0]
+        _, selected_price_indexes, product_rewards = self._experiment_history[-1]
         ### TODO: Why aren't we using customer count here?
-        for p_i, reward in enumerate(rewards):
+        for p_i, reward in enumerate(product_rewards):
             self.Q[p_i] = (1 - 1.0 / self._environment.day) * self.Q[p_i] + (1.0 / self._environment.day) * reward
             i = selected_price_indexes[p_i]
             old_t, old_mu = self.parameters[p_i][i]

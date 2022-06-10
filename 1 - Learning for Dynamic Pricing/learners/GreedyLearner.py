@@ -12,7 +12,7 @@ class GreedyLearner(Learner):
     def reset(self):
         self.__init__()
 
-    def get_product_rewards(self) -> List[float]:
+    def _get_rewards_of_current_run(self) -> List[float]:
         return [sum(
             self.calculate_reward_of_product(self.candidate_price_indexes[i], self._products[i], class_) for class_ in
             list(CustomerClass)) for i in
@@ -20,10 +20,14 @@ class GreedyLearner(Learner):
 
     name = "Greedy Algorithm"
 
-    def iterate_once(self) -> Tuple[ShallContinue, Reward, PriceIndexes]:
-        return self._iterate_once(), self.current_reward, list(self.candidate_price_indexes)
+    def iterate_once(self) -> ShallContinue:
+        shall_continue = self._iterate_once()
+        product_rewards = self._get_rewards_of_current_run()
+        self._experiment_history.append((self.current_reward, list(self.candidate_price_indexes), product_rewards))
+        return shall_continue
 
     def __init__(self):
+        super(GreedyLearner, self).__init__()
         self.candidate_price_indexes = (0, 0, 0, 0, 0)
         self.current_reward = 0
 
@@ -80,7 +84,7 @@ class GreedyLearner(Learner):
         # Probability that the customer sees a given product depends on the alpha distribution
         return round(emulate_path((), self._environment.get_expected_alpha(class_)[product.id + 1], product), 2)
 
-    def log_run(self):
+    def log_experiment(self):
         if self._verbose:
             price_indexes = self.candidate_price_indexes
             for product in self._products:
@@ -114,6 +118,7 @@ class GreedyLearner(Learner):
 
         :return: Returns False if no more iterations are possible
         """
+        ## TODO: Doesn't this need to run one candidate per day?
         best_reward, best_price_index = max(
             (item for item in (self.calculate_potential_candidate(i) for i in range(len(self.candidate_price_indexes)))
              if item),

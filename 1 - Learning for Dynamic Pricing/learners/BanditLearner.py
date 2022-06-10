@@ -40,19 +40,13 @@ step7 = BanditConfiguration("Step 7", False, False, True, None, (14, ContextGene
 
 
 class BanditLearner(Learner):
-    def iterate_once(self) -> Tuple[ShallContinue, Reward, PriceIndexes]:
+    def iterate_once(self) -> ShallContinue:
         self._run_one_day()
-        selected_price_indexes, customers = self._history[-1]
-        reward = 0
-        for customer in customers:
-            for product in self._products:
-                reward += self._get_reward_coef(customer, product.id) * product.candidate_prices[
-                    selected_price_indexes[product.id]]
-        return True, reward, selected_price_indexes
+        return True  # Bandit learner always runs
 
-    def get_product_rewards(self) -> List[float]:
+    def _calculate_product_rewards(self, selected_price_indexes) -> List[float]:
         rewards = [0 for _ in self._products]
-        selected_price_indexes, customers = self._history[-1]
+        customers = self._customer_history[-1]
         for customer in customers:
             for product in self._products:
                 rewards[product.id] += product.candidate_prices[selected_price_indexes[product.id]] * \
@@ -60,36 +54,28 @@ class BanditLearner(Learner):
 
         return rewards
 
-    def log_run(self):
+    def log_experiment(self):
         if self._verbose:
-            selected_price_indexes, customers = self._history[-1]
+            _, selected_price_indexes, product_rewards = self._experiment_history[-1]
+            customers = self._customer_history[-1]
             for product in self._products:
+                purchase_count = 0
+                product_click_count = 0
                 for class_ in CustomerClass:
-                    inter = 0
                     custs_ = [customer for customer in customers if customer.class_ == class_]
-                    cnt = 0
-
-                    ## TODO: Fix this and use it in all learners (one of them is using something else)
-                    ## So it calculates the reward also with coounts
-                    clicked = 0
                     for customer in custs_:
-                        inter += self._get_reward_coef(customer, product.id) * product.candidate_prices[
-                            selected_price_indexes[product.id]]
-                        cnt += customer.products_bought[product.id]
-                        # total_reservation_price += customer.get_reservation_price_of(product.id,
-                        #                                                          selected_price_indexes[product.id])
-                        clicked += 1 if customer.is_product_clicked(product.id) else 0
-                    print("For product", product.name, "user class", class_, "selected index",
-                          selected_price_indexes[product.id],
-                          "Actual reward:", inter, "Actual amount of customers", len(custs_),
-                          "Actual clicked #customers", clicked, "Actual bought #customers", cnt)
+                        purchase_count += customer.products_bought[product.id]
+                        product_click_count += 1 if customer.is_product_clicked(product.id) else 0
+                print("For product", product.name, "selected index",
+                      selected_price_indexes[product.id],
+                      "Actual reward:", product_rewards[product.id], "Actual amount of customers", len(customers),
+                      "Actual clicked #customers", product_click_count, "Actual bought #customers", purchase_count)
 
     def __init__(self, config: BanditConfiguration):
         super().__init__()
         self.name = f"{type(self).__name__} for {config.name}"
-        self.are_counts_certain = False  # config.n_items_sold_known
         self.config = config
-        self._history: List[Tuple[List[int], List[Customer]]] = []  # TODO: Rewards per product add here
+        self._customer_history: List[List[Customer]] = []
         self._estimators: List[ParameterEstimator] = []
 
     def set_vars(self, products: List[Product], environment: Environment, config: SimulationConfig):
@@ -167,21 +153,24 @@ class BanditLearner(Learner):
                                              p=self._environment.get_current_alpha(customer.class_))
             if first_product is not None:
                 total_reservation_prices[(customer.class_, first_product.id)].append(run_on_product(first_product))
-        for product in self._products:
-            for class_ in CustomerClass:
-                prices = total_reservation_prices[(class_, product.id)]
-                if len(prices) == 0:
-                    continue
-                if self._verbose:
+        if self._verbose:
+            for product in self._products:
+                for class_ in CustomerClass:
+                    prices = total_reservation_prices[(class_, product.id)]
+                    if len(prices) == 0:
+                        continue
                     print("Average reservation price for product", product.name, "for class", class_,
                           sum(prices) / len(prices))
-        self._history.append((selected_price_indexes, customers))
+
+        self._customer_history.append(customers)
+        product_rewards = self._calculate_product_rewards(selected_price_indexes)
+        self._experiment_history.append((sum(product_rewards), selected_price_indexes, product_rewards))
 
     def _update(self):
         raise NotImplementedError()
 
     def _update_parameter_estimators(self):
-        customers = self._history[-1][1]
+        customers = self._customer_history[-1]
 
         for customer in customers:
             _ = (estimator.update(customer) for estimator in self._estimators)
@@ -221,7 +210,6 @@ class BanditLearner(Learner):
                                                                                                  expected_product_price).get_sample_value()
                 if expected_product_price > expected_customer_reservation_price:
                     reward = expected_product_price * expected_customer_count
-                    if self.are_counts_certain:
-                        reward *= self._config.purchase_amounts[customer_class][product.id].get_expectation()
+                    reward *= self._config.purchase_amounts[customer_class][product.id].get_expectation()
                     expected_total_reward += reward
         return expected_total_reward
