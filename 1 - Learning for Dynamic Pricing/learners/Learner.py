@@ -5,6 +5,7 @@ import scipy.ndimage
 from matplotlib import pyplot as plt
 
 from entities import Environment, Product, SimulationConfig
+from tqdm import tqdm
 
 ShallContinue = bool
 Reward = float
@@ -40,7 +41,7 @@ class Learner:
     def log_run(self):
         raise NotImplementedError()
 
-    def run_experiment(self, max_days: int, *, log: bool = True, plot_graphs: bool = True,
+    def run_experiment(self, max_days: int, *, log: bool = False, plot_graphs: bool = True,
                        verbose: bool = True) -> None:
         ## TODO: This is a very bad way, we want more presentable results :)
         running = True
@@ -50,23 +51,24 @@ class Learner:
         rewards = []
         products_ = defaultdict(list)
         product_rewards = []
-        print()
-        print("###############################################")
-        print(f"Starting {self.name}")
-        while running and cnt < max_days:
-            running, current_reward, candidate_price_indexes = self.iterate_once()
-            product_rewards.append(self.get_product_rewards())
-            if log:
-                print(f"iteration {cnt}:")
-                print("Indexes", candidate_price_indexes)
-                print("Reward", current_reward)
-                print("Product rewards", product_rewards[-1])
-            cnt += 1
-            # Save the current reward
-            rewards.append(current_reward)
-            # Store the price indexes
-            for product_i in range(5):
-                products_[product_i].append(candidate_price_indexes[product_i])
+
+        with tqdm(total=max_days) as pbar:
+            pbar.set_description(f"Running {self.name}")
+            while running and cnt < max_days:
+                running, current_reward, candidate_price_indexes = self.iterate_once()
+                product_rewards.append(self.get_product_rewards())
+                if log:
+                    print(f"iteration {cnt}:")
+                    print("Indexes", candidate_price_indexes)
+                    print("Reward", current_reward)
+                    print("Product rewards", product_rewards[-1])
+                cnt += 1
+                # Save the current reward
+                rewards.append(current_reward)
+                # Store the price indexes
+                for product_i in range(5):
+                    products_[product_i].append(candidate_price_indexes[product_i])
+                pbar.update(1)
         print("Done!")
         print("Identified price indexes:", candidate_price_indexes)
         print("Final reward:", rewards[-1])

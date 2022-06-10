@@ -29,8 +29,6 @@ class GreedyLearner(Learner):
 
     @staticmethod
     def _calculate_ratio_of_customer_buying(candidate_price: float, distribution: PIG) -> float:
-        # TODO: Explain rationale
-        # TODO: Use it in the calculate reward function
         """
         This function calculates a value based on the inverse of the normal distribution function.
         So, it calculates the ratio of the people who have the reservation price beneath their expectation.
