@@ -55,31 +55,34 @@ class BanditLearner(Learner):
         selected_price_indexes, customers = self._history[-1]
         for customer in customers:
             for product in self._products:
-                rewards[product.id] += self._get_reward_coef(customer, product.id) * product.candidate_prices[
-                    selected_price_indexes[product.id]]
-        for product in self._products:
-            for class_ in CustomerClass:
-                inter = 0
-                custs_ = [customer for customer in customers if customer.class_ == class_]
-                cnt = 0
+                rewards[product.id] += product.candidate_prices[selected_price_indexes[product.id]] * \
+                                       customer.products_bought[product.id]
 
-                ## TODO: Fix this and use it in all learners (one of them is using something else)
-                ## So it calculates the reward also with coounts
-                clicked = 0
-                total_reservation_price = 0
-                for customer in custs_:
-                    inter += self._get_reward_coef(customer, product.id) * product.candidate_prices[
-                        selected_price_indexes[product.id]]
-                    cnt += self._get_reward_coef(customer, product.id)
-                    # total_reservation_price += customer.get_reservation_price_of(product.id,
-                    #                                                          selected_price_indexes[product.id])
-                    clicked += 1 if customer.is_product_clicked(product.id) else 0
-                if self._verbose:
+        return rewards
+
+    def log_run(self):
+        if self._verbose:
+            selected_price_indexes, customers = self._history[-1]
+            for product in self._products:
+                for class_ in CustomerClass:
+                    inter = 0
+                    custs_ = [customer for customer in customers if customer.class_ == class_]
+                    cnt = 0
+
+                    ## TODO: Fix this and use it in all learners (one of them is using something else)
+                    ## So it calculates the reward also with coounts
+                    clicked = 0
+                    for customer in custs_:
+                        inter += self._get_reward_coef(customer, product.id) * product.candidate_prices[
+                            selected_price_indexes[product.id]]
+                        cnt += customer.products_bought[product.id]
+                        # total_reservation_price += customer.get_reservation_price_of(product.id,
+                        #                                                          selected_price_indexes[product.id])
+                        clicked += 1 if customer.is_product_clicked(product.id) else 0
                     print("For product", product.name, "user class", class_, "selected index",
                           selected_price_indexes[product.id],
                           "Actual reward:", inter, "Actual amount of customers", len(custs_),
                           "Actual clicked #customers", clicked, "Actual bought #customers", cnt)
-        return rewards
 
     def __init__(self, config: BanditConfiguration):
         super().__init__()

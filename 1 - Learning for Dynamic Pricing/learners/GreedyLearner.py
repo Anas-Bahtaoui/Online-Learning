@@ -31,11 +31,18 @@ class GreedyLearner(Learner):
     def _calculate_ratio_of_customer_buying(candidate_price: float, distribution: PIG) -> float:
         # TODO: Explain rationale
         # TODO: Use it in the calculate reward function
+        """
+        This function calculates a value based on the inverse of the normal distribution function.
+        So, it calculates the ratio of the people who have the reservation price beneath their expectation.
+        We only need this in Greedy because we basically expect this to be something similar to emulating each customer.
+        :param candidate_price: The suggested price of the product
+        :param distribution: The distribution for the reservation price
+        :return: ratio of people who have the reservation price beneath their expectation
+        """
         return 1 - scipy.stats.norm.cdf((candidate_price - distribution.get_expectation()) / distribution.variance)
 
     # We need to pass the price indexes of all products
     def calculate_reward_of_product(self, price_index: int, product: Product, class_: CustomerClass) -> float:
-        # TODO: Shall we instead collect the result from the graph functions?
         current_price_indexes = self.candidate_price_indexes[:product.id] + (
             price_index,) + self.candidate_price_indexes[product.id + 1:]
         n_users = self._config.customer_counts[class_].get_expectation()
@@ -55,9 +62,8 @@ class GreedyLearner(Learner):
                 print(f"Purchased %{purchase_ratio * 100}, reservation price mean:",
                       reservation_price_distribution.get_expectation(), "product price:", product_price)
             purchase_probability = purchase_ratio * viewing_probability
-            # TODO: handle this case test with both values
             expected_purchase_count = self._config.purchase_amounts[class_][product.id].get_expectation()
-            result_ = product_price * purchase_probability * n_users  # * expected_purchase_count
+            result_ = product_price * purchase_probability * n_users * expected_purchase_count
             result_ = round(result_, 2)  # 2 because we want cents :)
             first_p: Optional[ObservationProbability]
             second_p: Optional[ObservationProbability]
@@ -74,20 +80,25 @@ class GreedyLearner(Learner):
             return result_
 
         # Probability that the customer sees a given product depends on the alpha distribution
-        return emulate_path((), self._environment.get_expected_alpha(class_)[product.id + 1], product)
+        return round(emulate_path((), self._environment.get_expected_alpha(class_)[product.id + 1], product), 2)
 
-    def calculate_total_expected_reward(self, price_indexes: Tuple[int, ...]) -> float:
-        result = 0
-        for product in self._products:
-            for class_ in list(CustomerClass):
-                inter = self.calculate_reward_of_product(price_indexes[product.id], product, class_)
-                if self._verbose:
+    def log_run(self):
+        if self._verbose:
+            price_indexes = self.candidate_price_indexes
+            for product in self._products:
+                for class_ in list(CustomerClass):
+                    inter = self.calculate_reward_of_product(price_indexes[product.id], product, class_)
                     print("For product", product.name, "user class", class_, "selected index",
                           price_indexes[product.id],
                           "expected reward:", inter, "expected customer count:",
                           self._config.customer_counts[class_].get_expectation(),
                           "")
-                result += inter
+
+    def calculate_total_expected_reward(self, price_indexes: Tuple[int, ...]) -> float:
+        result = 0
+        for product in self._products:
+            for class_ in list(CustomerClass):
+                result += self.calculate_reward_of_product(price_indexes[product.id], product, class_)
         return result
 
     def calculate_potential_candidate(self, pulled_arm: int):
