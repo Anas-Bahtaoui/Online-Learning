@@ -21,7 +21,9 @@ def average_regret(clairvoyant_reward, arms_rewards_list):
     # arms_rewards_list : list of rewards received at each time t
     cumulative_clairvoyant_reward = np.array([i * clairvoyant_reward for i in range(1, len(arms_rewards_list) + 1)])
     cum_exp_reward = np.array(cumulative_expected_reward(arms_rewards_list))
-    return cum_exp_reward - cumulative_clairvoyant_reward
+    return cum_exp_reward - cumulative_clairvoyant_reward # an array with the regret at each time t
+
+# step 2 : Compute the theoretical upper bounds
 
 # function that computes the upper bound of the UCB learner
 def UCB_regret_UB(Time_horizon, clairvoyant_reward, arms_rewards_list):
