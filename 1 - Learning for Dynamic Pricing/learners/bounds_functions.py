@@ -1,22 +1,26 @@
-# Tasks
-## 1 - Average regret & reward computed over a significant number of runs 
-## 2 - The ratio between the empirical regret and the upper bound
+'''
+For the Steps 3-7, in the algorithm evaluation, report:
+## the average regret and reward computed over a significant number of runs,their standard deviation, 
+## when theoretical bounds are available, also report the ratio between the empiric regret 
+#                                                                       and the upper bound.
+'''
 
 # import libraries
 import numpy as np
 
-## Compute the empirical regret
-def expected_reward(Time_horizon, arms_rewards_list):
+## Compute the expected reward : 
+## definition (on the slides) as the sum of the rewards we get at each time step
+def expected_reward(arms_rewards_list):
     # arms_rewards_list : list of rewards received at each time t
     return sum(arms_rewards_list)
 
-# compute the average regret
-def average_regret(clairvoyant_reward, Time_horizon, arms_rewards_list):
-    # clairvoyant_reward : the reward of the clairvoyant learner
-    # Time_horizon : the time horizon of the experiment
-    # arms_pulled_list : the list of arms pulled by the learner we want to compute the average regret for
-    # arms_rewards_list : the list of rewards of the arms pulled by the learner we want to compute the average regret for
-    return Time_horizon * clairvoyant_reward - expected_reward(Time_horizon, arms_rewards_list)
+# compute the average regret :
+## definition (on the slides) difference between claivoyant reward and the expected reward of our learner
+def average_regret(clairvoyant_reward, arms_rewards_list):
+    # claivoyant reward : reward we get from the clairvoyant learner
+    # arms_rewards_list : list of rewards received at each time t
+    Time_horizon = len(arms_rewards_list)
+    return Time_horizon * clairvoyant_reward - expected_reward(arms_rewards_list)
 
 # function that computes the upper bound of the UCB learner
 def UCB_regret_UB(Time_horizon, clairvoyant_reward, arms_rewards_list):
