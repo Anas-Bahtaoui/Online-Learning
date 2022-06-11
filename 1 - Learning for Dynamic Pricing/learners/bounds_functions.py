@@ -37,21 +37,20 @@ def UCB_regret_UB(Time_horizon, clairvoyant_reward, arms_rewards_list):
 		# this is shit XD
     return sum(delta_a)
 
-##########################################
-
 ### function that computes the upper bound of the TS learner
-# define the kullback leibler divergence
-def KL_divergence(p, q):
-		# p & q : probability distribution
-    return np.sum(p * np.log(p / q))
-		# it is in scipy 
+# define the kullback leibler div between 2 bernoulli distributions
+def kullback_leibler(p, q):
+  return p * np.log(p / q) + (1 - p) * np.log((1 - p) / (1 - q))
 
 def TS_regret_UB(Time_horizon, epsilon, clairvoyant_reward, C, arms_rewards_list):
 		# epsilon & C values
     delta_a = [(np.log(Time_horizon) + np.log(np.log(Time_horizon))) 
-                * (clairvoyant_reward - arms_rewards_list[i]) / KL_divergence(clairvoyant_reward, arms_rewards_list[i])
+                * (clairvoyant_reward - arms_rewards_list[i]) / kullback_leibler(clairvoyant_reward, arms_rewards_list[i])
                 for i in range(len(arms_rewards_list))]
     return (1 + epsilon) * sum(delta_a) + C
+
+
+##########################################################
 
 
 # function that computes the upper bound of the Gaussian-TS learner
