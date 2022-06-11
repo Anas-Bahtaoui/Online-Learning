@@ -24,6 +24,8 @@ class GaussianTSLearner(BanditLearner):
     def _update(self):
         _, selected_price_indexes, product_rewards = self._experiment_history[-1]
         ### TODO: Why aren't we using customer count here?
+        ### Because we are not using the data value of how many customers have been served.
+        ### TODO: But why aren't we using it IDK
         for p_i, reward in enumerate(product_rewards):
             self.Q[p_i] = (1 - 1.0 / self._environment.day) * self.Q[p_i] + (1.0 / self._environment.day) * reward
             i = selected_price_indexes[p_i]

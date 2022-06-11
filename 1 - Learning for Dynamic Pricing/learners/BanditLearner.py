@@ -185,12 +185,6 @@ class BanditLearner(Learner):
     def reset(self):
         self.__init__(self.config)
 
-    def _get_reward_coef(self, customer: Customer, product_id: int) -> float:
-        # if self.are_counts_certain:
-        #     return reward_multiplier_for_certain_count(customer, product_id)
-        # else:
-        return 1 if customer.products_bought[product_id] > 0 else 0
-
     """
     Might not work ...
     
