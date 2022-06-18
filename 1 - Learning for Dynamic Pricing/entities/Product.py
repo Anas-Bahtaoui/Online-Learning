@@ -8,8 +8,6 @@ from basic_types import CustomerClass
 
 ObservationProbability = Tuple['Product', float]
 
-last_product_id = -1
-
 
 class Product:
     """
@@ -18,10 +16,8 @@ class Product:
     """
     secondary_products: Dict[CustomerClass, Tuple[Optional[ObservationProbability], Optional[ObservationProbability]]]
 
-    def __init__(self, name: str, candidate_prices: List[float]):
-        global last_product_id
-        last_product_id += 1
-        self.id = last_product_id
+    def __init__(self, product_id: int, name: str, candidate_prices: List[float]):
+        self.id = product_id
         self.name = name
         self.candidate_prices: List[float] = candidate_prices
         self.secondary_products = {k: (None, None) for k in CustomerClass}
@@ -40,4 +36,10 @@ class Product:
         self.secondary_products[class_] = (
             (secondary_product_1, prob1), (secondary_product_2, prob2) if secondary_product_2 is not None else None)
 
-
+    def serialize(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "candidate_prices": self.candidate_prices,
+            # We don't serialize secondary products, maybe in the future
+        }

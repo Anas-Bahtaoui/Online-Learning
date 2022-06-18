@@ -19,7 +19,7 @@ class Simulation:
         # Create products
         product_configs = self.config.product_configs
         secondaries = self.config.secondaries
-        products = [Product(*product_config) for product_config in product_configs]
+        products = [Product(id_, *product_config) for id_, product_config in enumerate(product_configs)]
         for class_ in CustomerClass:
             for from_, targets in enumerate(secondaries[class_]):
                 first, second = sorted(enumerate(targets), key=itemgetter(1))[:2]

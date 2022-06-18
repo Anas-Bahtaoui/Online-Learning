@@ -92,3 +92,10 @@ class Customer:
         :param product_id: product id.
         """
         self.products_bought[product_id] += product_count
+
+    def serialize(self):
+        return {
+            "class": self.class_.name,
+            "products_clicked": self.products_clicked,
+            "products_bought": self.products_bought
+        }
