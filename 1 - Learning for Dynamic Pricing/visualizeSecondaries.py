@@ -45,7 +45,7 @@ class FullyConnectedGraph:
 
 if __name__ == '__main__':
     # Create the graph
-    simulation = Simulation(SimulationConfig(0,product_configs, secondaries, None, None, dirichlets), [])
+    simulation = Simulation(SimulationConfig(0, product_configs, secondaries, None, None, dirichlets), [])
 
     for class_ in CustomerClass:
         graph = FullyConnectedGraph(class_, simulation.products)

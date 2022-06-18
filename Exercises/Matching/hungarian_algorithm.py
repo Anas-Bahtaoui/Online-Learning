@@ -99,7 +99,8 @@ def hungarian(cost_matrix):
         cost_matrix[:, j] += 1
     return assignment * initial_matrix, assignment
 
+
 if __name__ == '__main__':
-    a = np.random.randint(100, size=(3,3))
+    a = np.random.randint(100, size=(3, 3))
     res = hungarian(a)
     print(f"Optimal Matching\n {res[1]} \n Value: {np.sum(res[0])}")
