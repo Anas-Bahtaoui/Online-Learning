@@ -84,7 +84,7 @@ class Learner:
         running = True
         self._verbose = verbose
 
-        with tqdm(total=max_days) as pbar:
+        with tqdm(total=max_days, leave=False) as pbar:
             pbar.set_description(f"Running {self.name}")
             while running and len(self._experiment_history) < max_days:
                 running = self.iterate_once()
@@ -96,11 +96,12 @@ class Learner:
                     print("Reward", current_reward)
                     print("Product rewards", current_product_rewards)
                 pbar.update(1)
-        print("Done!")
+
         final_reward, final_candidate_price_indexes, final_product_reward = self._experiment_history[-1]
-        print("Identified price indexes:", final_candidate_price_indexes)
-        print("Final reward:", final_reward)
-        print("Product rewards:", final_product_reward)
+        if log:
+            print("Identified price indexes:", final_candidate_price_indexes)
+            print("Final reward:", final_reward)
+            print("Product rewards:", final_product_reward)
         if plot_graphs:
             rewards = [reward for reward, _, _ in self._experiment_history]
             draw_reward_graph(rewards, self.name)

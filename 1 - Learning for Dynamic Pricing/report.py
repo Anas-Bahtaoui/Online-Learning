@@ -75,7 +75,7 @@ potentials = {
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 ### Intermediate storage
-data_storage = dcc.Store(id="data-storage", storage_type="local", data={
+data_storage = dcc.Store(id="data-storage", storage_type="memory", data={
     "clicks": 0,
     "results": None,
     "run_count": 20,
@@ -89,6 +89,8 @@ config_selectors = dbc.Row([
             id=f"{i}-selector",
             options=[{"label": x, "value": x} for x in v.keys()],
             value=list(v.keys())[0],
+            searchable=False,
+            clearable=False,
         )], width=3
     ) for i, (k, v) in enumerate(potentials.items(), )], className="mb-3")
 
@@ -122,7 +124,7 @@ second_row = dbc.Row([
     [State(f"{i}-selector", "value") for i in range(4)],
 )
 def run_experiment(clicks, saved_data, run_count, *config_values):
-    learners_ = learners[:2]
+    learners_ = learners[:7]
     if saved_data["clicks"] == clicks:
         raise PreventUpdate
     saved_data["clicks"] = clicks
@@ -200,12 +202,19 @@ def render_for_learner(learner_name, learner_data):
 
 
 app.config.suppress_callback_exceptions = True
-
+dropdownProps = dict(
+    searchable=False,
+    clearable=False,
+    placeholder="(no learner data)",
+    disabled=True,
+)
 experiment_selector_left = dcc.Dropdown(
     id="experiment-selector-left",
+    **dropdownProps,
 )
 experiment_selector_right = dcc.Dropdown(
     id="experiment-selector-right",
+    **dropdownProps,
 )
 
 
@@ -219,10 +228,12 @@ experiment_selector_right = dcc.Dropdown(
     Input(data_storage, "data"),
 )
 def update_experiment_selectors(data):
-    result_left = ([{"label": x, "value": x} for x in data["results"].keys()], list(data["results"].keys())[0], False) \
-        if data is not None else ([], None, True)
-    result_right = ([{"label": x, "value": x} for x in data["results"].keys()], list(data["results"].keys())[1], False) \
-        if data is not None else ([], None, True)
+    if data is None or data["results"] is None:
+        result = ([], "(No learner data)", True)
+        return *result, *result
+
+    result_left = ([{"label": x, "value": x} for x in data["results"].keys()], list(data["results"].keys())[0], False)
+    result_right = ([{"label": x, "value": x} for x in data["results"].keys()], list(data["results"].keys())[1], False)
     return *result_left, *result_right
 
 
@@ -232,8 +243,8 @@ def update_experiment_selectors(data):
     Input("experiment-selector-left", "value"),
 )
 def update_result_div_left(data, selected_experiment):
-    if data is None:
-        return html.Div()
+    if data is None or data["results"] is None:
+        return html.Div("Run a simulation to compare results")
     if selected_experiment is None:
         return html.Div("Pick an experiment from above to compare")
     return render_for_learner(selected_experiment, data["results"][selected_experiment])
@@ -245,7 +256,7 @@ def update_result_div_left(data, selected_experiment):
     Input("experiment-selector-right", "value"),
 )
 def update_result_div_right(data, selected_experiment):
-    if data is None:
+    if data is None or data["results"] is None:
         return html.Div()
     if selected_experiment is None:
         return html.Div("Pick an experiment from above to compare")
