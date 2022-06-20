@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import TypeVar, List
-
+from random_ import np_random
 import numpy as np
 from scipy.stats import dirichlet
 
@@ -28,7 +28,7 @@ class NormalGaussian(AbstractDistribution):
         return self.mean
 
     def get_sample_value(self) -> float:
-        return np.random.normal(self.mean, self.variance)
+        return np_random.normal(self.mean, self.variance)
 
 
 class PositiveIntegerGaussian(NormalGaussian):
@@ -50,7 +50,7 @@ class Dirichlet(AbstractDistribution):
         return dirichlet.mean(self.alpha)
 
     def get_sample_value(self) -> List[float]:
-        return list(np.random.dirichlet(np.array(self.alpha)))
+        return list(np_random.dirichlet(np.array(self.alpha)))
 
 
 @dataclass
@@ -69,7 +69,7 @@ class Poisson(AbstractDistribution):
     mean: float
 
     def get_sample_value(self) -> int:
-        return np.random.poisson(self.mean)
+        return np_random.poisson(self.mean)
 
     def get_expectation(self) -> int:
         return round(self.mean)

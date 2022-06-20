@@ -5,6 +5,7 @@ from typing import List
 from Environment import Environment
 from Product import Product
 from basic_types import SimulationConfig, CustomerClass
+from random_ import np_random
 
 
 @dataclass
@@ -37,6 +38,7 @@ class Simulation:
 
     def run(self, days: int, *, log: bool, plot_graphs: bool, verbose: bool):
         for learner in self.learners:
+            np_random.reset_seed()
             learner.set_vars(self.products, self.environment, self.config)
             self.environment.reset_day()
             learner.reset()

@@ -2,8 +2,8 @@ from collections import defaultdict
 from typing import NamedTuple, Union
 import numpy as np
 
-from Learner import Learner, ShallContinue, Reward, PriceIndexes
-from entities import Environment, SimulationConfig
+from Learner import Learner, ShallContinue
+from entities import Environment, SimulationConfig, np_random
 from parameter_estimators import *
 
 
@@ -140,16 +140,16 @@ class BanditLearner(Learner):
                 second_p: Optional[ObservationProbability]
                 first_p, second_p = product.secondary_products[customer.class_]
                 if first_p is not None:
-                    customer_views_first_product = bool(np.random.binomial(1, first_p[1]))
+                    customer_views_first_product = bool(np_random.binomial(1, first_p[1]))
                     if customer_views_first_product:
                         run_on_product(first_p[0])
                 if second_p is not None:
-                    customer_views_second_product = bool(np.random.binomial(1, second_p[1] * self._config.lambda_))
+                    customer_views_second_product = bool(np_random.binomial(1, second_p[1] * self._config.lambda_))
                     if customer_views_second_product:
                         run_on_product(second_p[0])
                 return reservation_price
 
-            first_product = np.random.choice([None, *self._products],
+            first_product = np_random.choice([None, *self._products],
                                              p=self._environment.get_current_alpha(customer.class_))
             if first_product is not None:
                 total_reservation_prices[(customer.class_, first_product.id)].append(run_on_product(first_product))
