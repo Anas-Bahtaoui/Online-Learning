@@ -31,7 +31,7 @@ class AlphaEstimator(ParameterEstimator):
         self.first_visit_counts[customer.products_clicked[0]] += 1
 
     def modify(self, criterias: List[float]) -> List[float]:
-        result = [criterias[i] * ((self.first_visit_counts[i] / sum(self.first_visit_counts)) + 0.00001) for i in
+        result = [criterias[i] * (self.first_visit_counts[i] / (sum(self.first_visit_counts) + 0.00001)) for i in
                   range(5)]
         self._history.append(HistoryEntry(criterias, result, self.first_visit_counts))
         return result
@@ -59,7 +59,7 @@ class NumberOfItemsSoldEstimator(ParameterEstimator):
             self.product_buy_count[product_i] += customer.products_bought[product_i]
 
     def modify(self, criterias: List[float]) -> List[float]:
-        result = [criterias[i] * (self.product_buy_count[i] / sum(self.product_buy_count)) for i in range(5)]
+        result = [criterias[i] * (self.product_buy_count[i] / (sum(self.product_buy_count) + 0.00001)) for i in range(5)]
         self._history.append(HistoryEntry(criterias, result, self.product_buy_count))
         return result
 
@@ -105,7 +105,7 @@ class GraphWeightsEstimator(ParameterEstimator):
         for i in range(5):
             normalized_secondary_visits[i][i] = 1.0
             for j in range(5):
-                normalized_secondary_visits[i][j] = self._secondary_visit_counts[i][j] / self._total_visits[i]
+                normalized_secondary_visits[i][j] = self._secondary_visit_counts[i][j] / (self._total_visits[i] + 0.0001)
         for to_ in range(5):
             total_prob = 0.0
             for from_ in range(5):

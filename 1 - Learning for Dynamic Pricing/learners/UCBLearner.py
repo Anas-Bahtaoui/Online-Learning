@@ -19,9 +19,7 @@ class UCBLearner(BanditLearner):
     def __init__(self, config: BanditConfiguration):
         super().__init__(config)
 
-    def _update(self):
-        t = len(self._customer_history)
-        _, selected_price_indexes, product_rewards = self._experiment_history[-1]
+    def _update_learner_state(self, selected_price_indexes, product_rewards, t):
         for product_id, product_reward in enumerate(product_rewards):
             pulled_arm = selected_price_indexes[product_id]
 

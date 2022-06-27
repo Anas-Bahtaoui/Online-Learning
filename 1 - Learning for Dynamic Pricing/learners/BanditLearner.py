@@ -106,10 +106,6 @@ class BanditLearner(Learner):
         result = []
         for product in self._products:
             price_vals = self._select_price_criteria(product)
-            for estimator in self._estimators:
-                assert all(value >= 0 for value in price_vals)
-                price_vals = estimator.modify(price_vals)
-                assert all(value >= 0 for value in price_vals)
             selected_index = int(np.argmax(price_vals))
             result.append(selected_index)
         return result
@@ -169,8 +165,15 @@ class BanditLearner(Learner):
         product_rewards = self._calculate_product_rewards(selected_price_indexes)
         self._experiment_history.append((sum(product_rewards), selected_price_indexes, product_rewards))
 
-    def _update(self):
+    def _update_learner_state(self, selected_price_indexes, product_rewards, t):
         raise NotImplementedError()
+
+    def _update(self):
+        t = len(self._customer_history)
+        _, selected_price_indexes, product_rewards = self._experiment_history[-1]
+        for estimator in self._estimators:
+            product_rewards = estimator.modify(product_rewards)
+        self._update_learner_state(selected_price_indexes, product_rewards, t)
 
     def _update_parameter_estimators(self):
         customers = self._customer_history[-1]
@@ -182,8 +185,8 @@ class BanditLearner(Learner):
         self._environment.new_day()
         selected_price_indexes = self._select_price_indexes()
         self._new_day(selected_price_indexes)
-        self._update()
         self._update_parameter_estimators()
+        self._update()
 
     def reset(self):
         self.__init__(self.config)

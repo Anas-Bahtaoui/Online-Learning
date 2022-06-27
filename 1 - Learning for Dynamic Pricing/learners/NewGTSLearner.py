@@ -13,8 +13,7 @@ class NewGTSLearner(BanditLearner):
     def _select_price_criteria(self, product: Product) -> List[float]:
         return np_random.normal(self.means[product.id], self.sigmas[product.id])
 
-    def _update(self):
-        _, selected_price_indexes, product_rewards = self._experiment_history[-1]
+    def _update_learner_state(self, selected_price_indexes, product_rewards, t):
         for product_id, product_reward in enumerate(product_rewards):
             pulled_arm = selected_price_indexes[product_id]
             self._rewards_per_arm[product_id][pulled_arm].append(product_reward)
