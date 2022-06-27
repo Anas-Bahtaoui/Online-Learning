@@ -1,10 +1,21 @@
+import copy
 from operator import itemgetter
-from typing import List, Tuple, Optional
+from typing import List, Tuple, TypeVar, Union, NamedTuple
 
 from entities import Customer, CustomerTypeBased, AbstractDistribution, CustomerClass, Product, ObservationProbability
 
+T = TypeVar("T")
+
+
+class HistoryEntry(NamedTuple):
+    incoming_prices: List[float]
+    outgoing_prices: List[float]
+    parameter: T
+
 
 class ParameterEstimator:
+    _history: List[HistoryEntry] = []
+
     def update(self, customer: Customer):
         raise NotImplementedError()
 
@@ -20,7 +31,10 @@ class AlphaEstimator(ParameterEstimator):
         self.first_visit_counts[customer.products_clicked[0]] += 1
 
     def modify(self, criterias: List[float]) -> List[float]:
-        return [criterias[i] * ((self.first_visit_counts[i] / sum(self.first_visit_counts)) + 0.00001) for i in range(5)]
+        result = [criterias[i] * ((self.first_visit_counts[i] / sum(self.first_visit_counts)) + 0.00001) for i in
+                  range(5)]
+        self._history.append(HistoryEntry(criterias, result, self.first_visit_counts))
+        return result
 
 
 class KnownAlphaEstimator(ParameterEstimator):
@@ -31,7 +45,9 @@ class KnownAlphaEstimator(ParameterEstimator):
         pass
 
     def modify(self, criterias: List[float]) -> List[float]:
-        return [criterias[i] * self.alpha[i] for i in range(5)]
+        result = [criterias[i] * self.alpha[i] for i in range(5)]
+        self._history.append(HistoryEntry(criterias, result, self.alpha))
+        return result
 
 
 class NumberOfItemsSoldEstimator(ParameterEstimator):
@@ -43,7 +59,9 @@ class NumberOfItemsSoldEstimator(ParameterEstimator):
             self.product_buy_count[product_i] += customer.products_bought[product_i]
 
     def modify(self, criterias: List[float]) -> List[float]:
-        return [criterias[i] * (self.product_buy_count[i] / sum(self.product_buy_count)) for i in range(5)]
+        result = [criterias[i] * (self.product_buy_count[i] / sum(self.product_buy_count)) for i in range(5)]
+        self._history.append(HistoryEntry(criterias, result, self.product_buy_count))
+        return result
 
 
 class KnownItemsSoldEstimator(ParameterEstimator):
@@ -65,7 +83,10 @@ class KnownItemsSoldEstimator(ParameterEstimator):
         pass
 
     def modify(self, criterias: List[float]) -> List[float]:
-        return [criterias[i] * self.n_items_sold[i] for i in range(5)]
+
+        result = [criterias[i] * self.n_items_sold[i] for i in range(5)]
+        self._history.append(HistoryEntry(criterias, result, self.n_items_sold))
+        return result
 
 
 class GraphWeightsEstimator(ParameterEstimator):
@@ -80,6 +101,7 @@ class GraphWeightsEstimator(ParameterEstimator):
 
     def modify(self, criterias: List[float]) -> List[float]:
         normalized_secondary_visits = [[0.0 for _ in range(5)] for _ in range(5)]
+        old_criterias = copy.copy(criterias)
         for i in range(5):
             normalized_secondary_visits[i][i] = 1.0
             for j in range(5):
@@ -89,6 +111,7 @@ class GraphWeightsEstimator(ParameterEstimator):
             for from_ in range(5):
                 total_prob += normalized_secondary_visits[from_][to_]
             criterias[to_] *= total_prob
+        self._history.append(HistoryEntry(old_criterias, criterias, self._secondary_visit_counts))
         return criterias
 
     def __init__(self):
@@ -132,4 +155,6 @@ class KnownGraphWeightsEstimator(ParameterEstimator):
         pass
 
     def modify(self, criterias: List[float]) -> List[float]:
-        return [criterias[i] * self.product_weights[i] for i in range(5)]
+        result = [criterias[i] * self.product_weights[i] for i in range(5)]
+        self._history.append(HistoryEntry(criterias, result, self.product_weights))
+        return result

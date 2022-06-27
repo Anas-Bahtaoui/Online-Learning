@@ -9,6 +9,7 @@ import dash_bootstrap_components as dbc
 
 from Learner import PriceIndexes, ProductRewards
 from entities import Dirichlet, CustomerTypeBased, PositiveIntegerGaussian as PIG, SimulationConfig, Simulation, Product
+from parameter_estimators import HistoryEntry
 from production import LAMBDA_, product_configs, purchase_amounts, customer_counts, dirichlets, secondaries, \
     learners
 
@@ -145,6 +146,8 @@ def run_experiment(clicks, saved_data, run_count, *config_values):
         if hasattr(learner, "_customer_history"):
             output_data[learner.name]["customers"] = [[customer.serialize() for customer in day] for day in
                                                       learner._customer_history]
+        if hasattr(learner, "_estimators"):
+            output_data[learner.name]["estimators"] = [estimator._history for estimator in learner._estimators]
     saved_data["results"] = output_data
     return saved_data
 
@@ -186,18 +189,41 @@ def render_product_rewards_graph(products: List[Product], product_rewards: List[
     return dcc.Graph(figure=fig)
 
 
+def render_for_estimator(products: List[Product], type_history: List[List[float]], name: str, type_name: str):
+    x_iteration = list(range(1, len(type_history) + 1))
+    fig = go.Figure()
+    for product in products:
+        fig.add_trace(
+            go.Scatter(x=x_iteration, y=[history_item[product.id] for history_item in type_history],
+                       name=product.name, line={"color": colors[product.id]}))
+
+    fig.update_layout(title=f"{type_name} for estimator {name}", xaxis_title="Iteration",
+                      yaxis_title=type_name)
+    return dcc.Graph(figure=fig)
+
+
 def render_for_learner(learner_name, learner_data):
     rewards = [reward for reward, _, _ in learner_data["exp"]]
     products = [Product(*product_dict.values()) for product_dict in learner_data["products"]]
-    seleced_price_indexes = [index for _, index, _ in learner_data["exp"]]
+    selected_price_indexes = [index for _, index, _ in learner_data["exp"]]
     product_rewards = [p_reward for _, _, p_reward in learner_data["exp"]]
-
+    graphs = [
+        render_rewards(learner_name, rewards),
+        render_selection_indexes(products, selected_price_indexes, learner_name),
+        render_product_rewards_graph(products, product_rewards, learner_name),
+    ]
+    if "estimators" in learner_data:
+        n_items_history: List[HistoryEntry] = learner_data["estimators"][1]
+        incoming_list = [item.incoming_prices for item in n_items_history]
+        result_list = [item.outgoing_prices for item in n_items_history]
+        parameters = [item.parameter for item in n_items_history]
+        graphs.extend(
+            [render_for_estimator(products, incoming_list, "Number of items estimator", "Incoming price"),
+             render_for_estimator(products, result_list, "Number of items estimator", "Resulting price"),
+             render_for_estimator(products, parameters, "Number of items estimator", "Parameters"),
+             ])
     return dbc.Col([
-        dbc.Row(row) for row in [
-            render_rewards(learner_name, rewards),
-            render_selection_indexes(products, seleced_price_indexes, learner_name),
-            render_product_rewards_graph(products, product_rewards, learner_name),
-        ]
+        dbc.Row(row) for row in graphs
     ])
 
 

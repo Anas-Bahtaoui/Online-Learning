@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import NamedTuple, Union
+from typing import NamedTuple, Union, Optional
 import numpy as np
 
 from Learner import Learner, ShallContinue
@@ -76,7 +76,8 @@ class BanditLearner(Learner):
         self.name = f"{type(self).__name__} for {config.name}"
         self.config = config
         self._customer_history: List[List[Customer]] = []
-        self._estimators: List[ParameterEstimator] = []
+        if not hasattr(self, "_estimators"):
+            self._estimators: List[ParameterEstimator] = []
 
     def set_vars(self, products: List[Product], environment: Environment, config: SimulationConfig):
         super().set_vars(products, environment, config)
@@ -106,7 +107,9 @@ class BanditLearner(Learner):
         for product in self._products:
             price_vals = self._select_price_criteria(product)
             for estimator in self._estimators:
+                assert all(value >= 0 for value in price_vals)
                 price_vals = estimator.modify(price_vals)
+                assert all(value >= 0 for value in price_vals)
             selected_index = int(np.argmax(price_vals))
             result.append(selected_index)
         return result
