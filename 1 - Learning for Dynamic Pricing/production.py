@@ -71,7 +71,7 @@ learners: List[Learner] = [
 ]
 
 for step in [step3, step4, step5, step6_sliding_window, step6_change_detection, step7]:
-    for Learner in [GaussianTSLearner, UCBLearner]:
+    for Learner in [NewGTSLearner, UCBLearner]:
         learners.append(Learner(step))
 
 if __name__ == '__main__':

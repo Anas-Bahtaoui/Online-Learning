@@ -26,7 +26,7 @@ class UCBLearner(BanditLearner):
         for product_id, selected_price_index in enumerate(selected_price_indexes):
             for customer in last_customers:
                 reward = customer.products_bought[product_id] * self._products[product_id].candidate_prices[
-                    selected_price_index]
+                    selected_price_index] # TODO: Already calculated in the history
                 self.rewards_per_arm_per_product[product_id][selected_price_index].append(reward)
             self.means[product_id][selected_price_index] = np.mean(
                 self.rewards_per_arm_per_product[product_id][selected_price_index])
