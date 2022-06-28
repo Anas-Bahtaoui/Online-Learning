@@ -49,13 +49,13 @@ def read_conversion_probability(price: float, file_path: str) -> float:
 
 
 class Customer:
-    def __init__(self, class_: CustomerClass):
+    def __init__(self, class_: CustomerClass, products_clicked=None, products_bought=None):
         """
         :param customer_config: customer configuration dictionary
         """
         self.class_ = class_
-        self.products_clicked: List[int] = []
-        self.products_bought: Dict[int, int] = defaultdict(int)
+        self.products_clicked: List[int] = products_clicked or []
+        self.products_bought: Dict[int, int] = products_bought or defaultdict(int)
         self.reservation_prices: List[Callable[[float], PIG]] = [
             lambda price: reservation_price_distribution_from_curves(self.class_, product_id, price) for product_id in
             range(5)]

@@ -27,7 +27,7 @@ class NewGTSLearner(BanditLearner):
         n_products = len(self._config.product_configs)
         n_arms = len(self._config.product_configs[0].prices)
         self.means = [np.zeros(n_arms) for _ in range(n_products)]
-        self.sigmas = [np.full(n_arms, 1e3) for _ in range(n_products)]
+        self.sigmas = [np.full(n_arms, 1e1) for _ in range(n_products)]
         self._rewards_per_arm = [[[] for _ in range(n_arms)] for _ in range(n_products)]
         self._collected_rewards = [[] for _ in range(n_products)]
         self.__init__(self.config)

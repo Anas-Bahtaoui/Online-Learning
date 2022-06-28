@@ -81,6 +81,9 @@ class BanditLearner(Learner):
 
     def set_vars(self, products: List[Product], environment: Environment, config: SimulationConfig):
         super().set_vars(products, environment, config)
+        self._estimators = []
+        self._experiment_history = []
+        self._customer_history = []
         if self.config.a_ratios_known:
             # Calculate Customer class independent alphas
 
@@ -169,7 +172,7 @@ class BanditLearner(Learner):
         raise NotImplementedError()
 
     def _update(self):
-        t = len(self._customer_history)
+        t = len(self._experiment_history)
         _, selected_price_indexes, product_rewards = self._experiment_history[-1]
         for estimator in self._estimators:
             product_rewards = estimator.modify(product_rewards)
@@ -189,6 +192,8 @@ class BanditLearner(Learner):
         self._update()
 
     def reset(self):
+        self._estimators = []
+        self._customer_history = []
         self.__init__(self.config)
 
     """

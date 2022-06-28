@@ -13,8 +13,16 @@ class HistoryEntry(NamedTuple):
     parameter: T
 
 
+def safe_div(a, b):
+    if b == 0:
+        return 0
+    return a / b
+
+
 class ParameterEstimator:
-    _history: List[HistoryEntry] = []
+    _history: List[HistoryEntry]
+    def __init__(self):
+        self._history = []
 
     def update(self, customer: Customer):
         raise NotImplementedError()
@@ -25,33 +33,36 @@ class ParameterEstimator:
 
 class AlphaEstimator(ParameterEstimator):
     def __init__(self):
+        super().__init__()
         self.first_visit_counts = [0 for _ in range(5)]
 
     def update(self, customer: Customer):
         self.first_visit_counts[customer.products_clicked[0]] += 1
 
     def modify(self, criterias: List[float]) -> List[float]:
-        result = [criterias[i] * (self.first_visit_counts[i] / (sum(self.first_visit_counts) + 0.00001)) for i in
+        result = [safe_div(criterias[i], safe_div(self.first_visit_counts[i], sum(self.first_visit_counts))) for i in
                   range(5)]
-        self._history.append(HistoryEntry(criterias, result, self.first_visit_counts))
+        self._history.append(HistoryEntry(criterias, result, list(self.first_visit_counts)))
         return result
 
 
 class KnownAlphaEstimator(ParameterEstimator):
     def __init__(self, alpha: List[float]):
+        super().__init__()
         self.alpha = alpha
 
     def update(self, customer: Customer):
         pass
 
     def modify(self, criterias: List[float]) -> List[float]:
-        result = [criterias[i] * self.alpha[i] for i in range(5)]
-        self._history.append(HistoryEntry(criterias, result, self.alpha))
+        result = [safe_div(criterias[i], self.alpha[i]) for i in range(5)]
+        self._history.append(HistoryEntry(criterias, result, list(self.alpha)))
         return result
 
 
 class NumberOfItemsSoldEstimator(ParameterEstimator):
     def __init__(self):
+        super().__init__()
         self.product_buy_count = [0 for _ in range(5)]
 
     def update(self, customer: Customer):
@@ -59,8 +70,9 @@ class NumberOfItemsSoldEstimator(ParameterEstimator):
             self.product_buy_count[product_i] += customer.products_bought[product_i]
 
     def modify(self, criterias: List[float]) -> List[float]:
-        result = [criterias[i] * (self.product_buy_count[i] / (sum(self.product_buy_count) + 0.00001)) for i in range(5)]
-        self._history.append(HistoryEntry(criterias, result, self.product_buy_count))
+        result = [safe_div(criterias[i], safe_div(self.product_buy_count[i], sum(self.product_buy_count))) for i in
+                  range(5)]
+        self._history.append(HistoryEntry(criterias, result, list(self.product_buy_count)))
         return result
 
 
@@ -68,6 +80,7 @@ class KnownItemsSoldEstimator(ParameterEstimator):
     def __init__(self, customer_counts: CustomerTypeBased[AbstractDistribution],
                  purchase_amounts: CustomerTypeBased[List[AbstractDistribution]]):
 
+        super().__init__()
         total_customers = 0
         total_n_items_sold = [0 for _ in range(5)]
         for class_ in CustomerClass:
@@ -83,9 +96,8 @@ class KnownItemsSoldEstimator(ParameterEstimator):
         pass
 
     def modify(self, criterias: List[float]) -> List[float]:
-
-        result = [criterias[i] * self.n_items_sold[i] for i in range(5)]
-        self._history.append(HistoryEntry(criterias, result, self.n_items_sold))
+        result = [safe_div(criterias[i], self.n_items_sold[i]) for i in range(5)]
+        self._history.append(HistoryEntry(criterias, result, list(self.n_items_sold)))
         return result
 
 
@@ -105,17 +117,19 @@ class GraphWeightsEstimator(ParameterEstimator):
         for i in range(5):
             normalized_secondary_visits[i][i] = 1.0
             for j in range(5):
-                normalized_secondary_visits[i][j] = self._secondary_visit_counts[i][j] / (self._total_visits[i] + 0.0001)
+                normalized_secondary_visits[i][j] = safe_div(self._secondary_visit_counts[i][j], self._total_visits[i])
         for to_ in range(5):
             total_prob = 0.0
             for from_ in range(5):
                 total_prob += normalized_secondary_visits[from_][to_]
-            criterias[to_] *= total_prob
-        self._history.append(HistoryEntry(old_criterias, criterias, self._secondary_visit_counts))
+            criterias[to_] = safe_div(criterias[to_], total_prob)
+        self._history.append(
+            HistoryEntry(old_criterias, criterias, [list(elem) for elem in self._secondary_visit_counts]))
         return criterias
 
     def __init__(self):
         # We don't need lambdas, they are already embedded in paths
+        super().__init__()
         self._secondary_visit_counts = [[0 for _ in range(5)] for _ in range(5)]
         self._total_visits = [0 for _ in range(5)]
 
@@ -123,6 +137,7 @@ class GraphWeightsEstimator(ParameterEstimator):
 class KnownGraphWeightsEstimator(ParameterEstimator):
     def __init__(self, graph_weights: CustomerTypeBased[List[List[float]]],
                  customer_counts: CustomerTypeBased[AbstractDistribution], lambda_: float):
+        super().__init__()
         normalized_weights = [[0.0 for _ in range(5)] for _ in range(5)]
         young_c = customer_counts.young_beginner.get_expectation()
         old_c = customer_counts.old_beginner.get_expectation()
@@ -149,12 +164,13 @@ class KnownGraphWeightsEstimator(ParameterEstimator):
             if second_p[1] > 0.0:
                 result_ += emulate_path(new_primaries, second_p[1] * lambda_, second_p[0])
             return result_
+
         self.product_weights = [emulate_path((), 1.0, i) for i in range(5)]
 
     def update(self, customer: Customer):
         pass
 
     def modify(self, criterias: List[float]) -> List[float]:
-        result = [criterias[i] * self.product_weights[i] for i in range(5)]
-        self._history.append(HistoryEntry(criterias, result, self.product_weights))
+        result = [safe_div(criterias[i], self.product_weights[i]) for i in range(5)]
+        self._history.append(HistoryEntry(criterias, result, list(self.product_weights)))
         return result
