@@ -1,4 +1,4 @@
-from entities import Dirichlet, CustomerTypeBased, PositiveIntegerGaussian as PIG
+from entities import Dirichlet, CustomerTypeBased, PositiveIntegerGaussian as PIG, Constant
 from production import dirichlets, customer_counts, purchase_amounts, secondaries
 
 dirichlet = Dirichlet([100, 100, 100, 100, 100, 100])
@@ -15,9 +15,9 @@ potential_diriclets = {
     "Same Weights": same_diriclets,
 }
 zeros = CustomerTypeBased(
-    professional=PIG(0, small_variance),
-    young_beginner=PIG(0, small_variance),
-    old_beginner=PIG(0, small_variance),
+    professional=Constant(0),
+    young_beginner=Constant(0),
+    old_beginner=Constant(0),
 )
 potential_customer_counts = {
     "Production": customer_counts,

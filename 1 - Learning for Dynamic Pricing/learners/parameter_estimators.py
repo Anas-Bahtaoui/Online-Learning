@@ -21,6 +21,7 @@ def safe_div(a, b):
 
 class ParameterEstimator:
     _history: List[HistoryEntry]
+
     def __init__(self):
         self._history = []
 
@@ -34,29 +35,37 @@ class ParameterEstimator:
 class AlphaEstimator(ParameterEstimator):
     def __init__(self):
         super().__init__()
-        self.first_visit_counts = [0 for _ in range(5)]
+        self.first_visit_counts = [0 for _ in range(6)]
 
     def update(self, customer: Customer):
         if len(customer.products_clicked) > 0:
             self.first_visit_counts[customer.products_clicked[0]] += 1
+        else:
+            self.first_visit_counts[5] += 1
 
     def modify(self, criterias: List[float]) -> List[float]:
-        result = [safe_div(criterias[i], 1 + safe_div(self.first_visit_counts[i], sum(self.first_visit_counts))) for i in
-                  range(5)]
-        self._history.append(HistoryEntry(criterias, result, list(self.first_visit_counts)))
+        result = []
+        sum_first_visit_counts = sum(self.first_visit_counts)
+        ratios = []
+        for i in range(5):
+            first_visit_ratio = safe_div(self.first_visit_counts[i], sum_first_visit_counts)
+            assert first_visit_ratio != 0
+            result.append(criterias[i] * first_visit_ratio)
+            ratios.append(first_visit_ratio)
+        self._history.append(HistoryEntry(criterias, result, ratios))
         return result
 
 
 class KnownAlphaEstimator(ParameterEstimator):
     def __init__(self, alpha: List[float]):
         super().__init__()
-        self.alpha = alpha
+        self.alpha = [item / sum(alpha) for item in alpha]
 
     def update(self, customer: Customer):
         pass
 
     def modify(self, criterias: List[float]) -> List[float]:
-        result = [ safe_div(criterias[i], self.alpha[i]) for i in range(5)]
+        result = [criterias[i] * self.alpha[i] for i in range(5)]
         self._history.append(HistoryEntry(criterias, result, list(self.alpha)))
         return result
 
@@ -71,9 +80,15 @@ class NumberOfItemsSoldEstimator(ParameterEstimator):
             self.product_buy_count[product_i] += customer.products_bought[product_i]
 
     def modify(self, criterias: List[float]) -> List[float]:
-        result = [safe_div(criterias[i], 1 + safe_div(self.product_buy_count[i], sum(self.product_buy_count))) for i in
-                  range(5)]
-        self._history.append(HistoryEntry(criterias, result, list(self.product_buy_count)))
+        sum_product_buy_count = sum(self.product_buy_count)
+        result = []
+        ratios = []
+        for i in range(5):
+            product_ratio = safe_div(self.product_buy_count[i], sum_product_buy_count)
+            assert product_ratio != 0
+            result.append(criterias[i] * product_ratio)
+            ratios.append(product_ratio)
+        self._history.append(HistoryEntry(criterias, result, ratios))
         return result
 
 
@@ -90,15 +105,18 @@ class KnownItemsSoldEstimator(ParameterEstimator):
             for product_id in range(5):
                 total_n_items_sold[product_id] += count * purchase_amounts[class_][
                     product_id].get_expectation()
-        total_prediction = [total_n_items_sold[i] / total_customers for i in range(5)]
-        self.n_items_sold = total_prediction
+        sum_items_sold = sum(total_n_items_sold)
+        total_prediction = [total_n_items_sold[i] / sum_items_sold for i in range(5)]
+        self.items_sold_ratio = total_prediction
 
     def update(self, customer: Customer):
         pass
 
     def modify(self, criterias: List[float]) -> List[float]:
-        result = [safe_div(criterias[i], self.n_items_sold[i]) for i in range(5)]
-        self._history.append(HistoryEntry(criterias, result, list(self.n_items_sold)))
+
+        assert all(criteria != 0 for criteria in self.items_sold_ratio)
+        result = [criterias[i] * self.items_sold_ratio[i] for i in range(5)]
+        self._history.append(HistoryEntry(criterias, result, list(self.items_sold_ratio)))
         return result
 
 
@@ -123,7 +141,7 @@ class GraphWeightsEstimator(ParameterEstimator):
             total_prob = 0.0
             for from_ in range(5):
                 total_prob += normalized_secondary_visits[from_][to_]
-            criterias[to_] = safe_div(criterias[to_], 1 + total_prob)
+            criterias[to_] = safe_div(criterias[to_], total_prob)
         self._history.append(
             HistoryEntry(old_criterias, criterias, [list(elem) for elem in self._secondary_visit_counts]))
         return criterias
@@ -136,6 +154,7 @@ class GraphWeightsEstimator(ParameterEstimator):
 
 
 class KnownGraphWeightsEstimator(ParameterEstimator):
+    ### TODO: check logic
     def __init__(self, graph_weights: CustomerTypeBased[List[List[float]]],
                  customer_counts: CustomerTypeBased[AbstractDistribution], lambda_: float):
         super().__init__()

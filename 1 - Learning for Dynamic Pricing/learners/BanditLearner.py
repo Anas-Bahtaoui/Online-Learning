@@ -174,8 +174,9 @@ class BanditLearner(Learner):
     def _update(self):
         t = len(self._experiment_history)
         _, selected_price_indexes, product_rewards = self._experiment_history[-1]
-        for estimator in self._estimators:
-            product_rewards = estimator.modify(product_rewards)
+        if t > 1:
+            for estimator in self._estimators:
+                product_rewards = estimator.modify(product_rewards)
         self._update_learner_state(selected_price_indexes, product_rewards, t)
 
     def _update_parameter_estimators(self):

@@ -9,7 +9,7 @@ That is, every day, the value of the alpha ratios will be realizations of indepe
 """
 from typing import Dict, Tuple
 from basic_types import CustomerTypeBased, CustomerClass
-from Distribution import Dirichlet, PositiveIntegerGaussian, AbstractDistribution
+from Distribution import Dirichlet, AbstractDistribution
 
 
 class Environment:
