@@ -37,10 +37,11 @@ class AlphaEstimator(ParameterEstimator):
         self.first_visit_counts = [0 for _ in range(5)]
 
     def update(self, customer: Customer):
-        self.first_visit_counts[customer.products_clicked[0]] += 1
+        if len(customer.products_clicked) > 0:
+            self.first_visit_counts[customer.products_clicked[0]] += 1
 
     def modify(self, criterias: List[float]) -> List[float]:
-        result = [safe_div(criterias[i], safe_div(self.first_visit_counts[i], sum(self.first_visit_counts))) for i in
+        result = [safe_div(criterias[i], 1 + safe_div(self.first_visit_counts[i], sum(self.first_visit_counts))) for i in
                   range(5)]
         self._history.append(HistoryEntry(criterias, result, list(self.first_visit_counts)))
         return result
@@ -55,7 +56,7 @@ class KnownAlphaEstimator(ParameterEstimator):
         pass
 
     def modify(self, criterias: List[float]) -> List[float]:
-        result = [safe_div(criterias[i], self.alpha[i]) for i in range(5)]
+        result = [ safe_div(criterias[i], self.alpha[i]) for i in range(5)]
         self._history.append(HistoryEntry(criterias, result, list(self.alpha)))
         return result
 
@@ -70,7 +71,7 @@ class NumberOfItemsSoldEstimator(ParameterEstimator):
             self.product_buy_count[product_i] += customer.products_bought[product_i]
 
     def modify(self, criterias: List[float]) -> List[float]:
-        result = [safe_div(criterias[i], safe_div(self.product_buy_count[i], sum(self.product_buy_count))) for i in
+        result = [safe_div(criterias[i], 1 + safe_div(self.product_buy_count[i], sum(self.product_buy_count))) for i in
                   range(5)]
         self._history.append(HistoryEntry(criterias, result, list(self.product_buy_count)))
         return result
@@ -122,7 +123,7 @@ class GraphWeightsEstimator(ParameterEstimator):
             total_prob = 0.0
             for from_ in range(5):
                 total_prob += normalized_secondary_visits[from_][to_]
-            criterias[to_] = safe_div(criterias[to_], total_prob)
+            criterias[to_] = safe_div(criterias[to_], 1 + total_prob)
         self._history.append(
             HistoryEntry(old_criterias, criterias, [list(elem) for elem in self._secondary_visit_counts]))
         return criterias

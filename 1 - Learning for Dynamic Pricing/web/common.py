@@ -56,7 +56,7 @@ class SimulationResult(NamedTuple):
 
     @staticmethod
     def from_result(learner: Learner, simulation: Simulation):
-        exps = learner._experiment_history  # There is something weird happening here
+        exps = learner._experiment_history
         rewards = [reward for (reward, _, _) in exps]
         price_indexes = [price_indexes for (_, price_indexes, _) in exps]
         product_rewards = [product_rewards for (_, _, product_rewards) in exps]

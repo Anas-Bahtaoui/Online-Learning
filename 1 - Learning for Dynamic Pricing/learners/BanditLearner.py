@@ -182,7 +182,7 @@ class BanditLearner(Learner):
         customers = self._customer_history[-1]
 
         for customer in customers:
-            _ = (estimator.update(customer) for estimator in self._estimators)
+            [estimator.update(customer) for estimator in self._estimators]
 
     def _run_one_day(self):
         self._environment.new_day()
