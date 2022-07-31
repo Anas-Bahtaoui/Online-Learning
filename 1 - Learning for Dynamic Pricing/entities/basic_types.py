@@ -59,6 +59,11 @@ class SimulationConfig:
     customer_counts: CustomerTypeBased[Distribution.AbstractDistribution]
     dirichlets: CustomerTypeBased[Distribution.Dirichlet]
 
+    def __iter__(self):
+        return iter(
+            (self.lambda_, self.product_configs, self.secondaries, self.purchase_amounts, self.customer_counts, self
+             .dirichlets))
+
     def __post_init__(self):
 
         # Check variables are correct

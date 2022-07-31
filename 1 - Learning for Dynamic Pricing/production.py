@@ -74,6 +74,7 @@ for step in [step3, step4, step5, step6_sliding_window, step6_change_detection, 
     for Learner in [NewGTSLearner, UCBLearner]:
         learners.append(Learner(step))
 
+RUN_COUNT = 50
 if __name__ == '__main__':
     simulation = Simulation(config, learners)
-    simulation.run(50, log=False, plot_graphs=True, verbose=False)
+    simulation.run(RUN_COUNT, log=False, plot_graphs=True, verbose=False)

@@ -1,8 +1,7 @@
 import plotly.express
 import plotly.graph_objs as go
 import scipy.ndimage
-from dash import Dash, dcc, html, Input, Output, State
-from dash.exceptions import PreventUpdate
+from dash import dcc
 import dash_bootstrap_components as dbc
 from typing import List
 from Learner import PriceIndexes, ProductRewards

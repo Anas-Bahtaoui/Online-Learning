@@ -2,12 +2,13 @@ from common import ids
 from dash import dcc, html
 import dash_bootstrap_components as dbc
 
+from production import RUN_COUNT
 from web.params import potentials
 
 data_storage = dcc.Store(id=ids.storage, storage_type="memory", data={
     "clicks": 0,
     "results": None,
-    "run_count": 20,
+    "run_count": RUN_COUNT,
     "reset_clicks": 0,
 })
 
@@ -29,7 +30,7 @@ run_count_selector = dbc.Input(
     type="number",
     min=0,
     max=1000,
-    value=20,
+    value=RUN_COUNT,
 )
 
 run_experiment_button = dbc.Button("Run Experiment", id=ids.run_experiment, n_clicks=0, color="primary")
