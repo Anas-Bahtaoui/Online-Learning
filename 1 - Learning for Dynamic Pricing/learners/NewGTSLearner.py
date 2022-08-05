@@ -17,8 +17,7 @@ class NewGTSLearner(BanditLearner):
         for product_id, product_reward in enumerate(product_rewards):
             pulled_arm = selected_price_indexes[product_id]
             self._rewards_per_arm[product_id][pulled_arm].append(product_reward)
-            self._collected_rewards[product_id].append(product_reward)
-            self.means[product_id] = np.mean(self._rewards_per_arm[product_id][pulled_arm])
+            self.means[product_id][pulled_arm] = np.mean(self._rewards_per_arm[product_id][pulled_arm])
             n_samples = len(self._rewards_per_arm[pulled_arm])
             if n_samples > 1:
                 self.sigmas[product_id][pulled_arm] = np.std(self._rewards_per_arm[product_id][pulled_arm]) / n_samples
@@ -29,5 +28,4 @@ class NewGTSLearner(BanditLearner):
         self.means = [np.zeros(n_arms) for _ in range(n_products)]
         self.sigmas = [np.full(n_arms, 1e1) for _ in range(n_products)]
         self._rewards_per_arm = [[[] for _ in range(n_arms)] for _ in range(n_products)]
-        self._collected_rewards = [[] for _ in range(n_products)]
         self.__init__(self.config)

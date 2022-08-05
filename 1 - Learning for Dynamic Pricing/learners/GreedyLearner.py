@@ -118,7 +118,7 @@ class GreedyLearner(Learner):
 
         :return: Returns False if no more iterations are possible
         """
-        ## TODO: Doesn't this need to run one candidate per day?
+        ## By hw text, there are five trials for each iteration of the algorithm
         best_reward, best_price_index = max(
             (item for item in (self.calculate_potential_candidate(i) for i in range(len(self.candidate_price_indexes)))
              if item),

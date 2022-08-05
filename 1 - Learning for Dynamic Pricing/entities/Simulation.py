@@ -23,7 +23,7 @@ class Simulation:
         products = [Product(id_, *product_config) for id_, product_config in enumerate(product_configs)]
         for class_ in CustomerClass:
             for from_, targets in enumerate(secondaries[class_]):
-                first, second = sorted(enumerate(targets), key=itemgetter(1))[:2]
+                first, second = sorted(enumerate(targets), key=itemgetter(1), reverse=True)[:2]
                 if first[1] == 0:
                     pass
                 elif second[1] == 0:

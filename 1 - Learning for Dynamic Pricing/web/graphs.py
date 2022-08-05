@@ -64,7 +64,7 @@ def render_for_learner(learner_name: str, learner_data: SimulationResult):
         render_product_rewards_graph(learner_data.products, learner_data.product_rewards, learner_name),
     ]
     if learner_data.estimators is not None:
-        for name, n_items_history in list(learner_data.estimators.items())[:2]:
+        for name, n_items_history in list(learner_data.estimators.items()): # [:2]:
             n_items_history = [HistoryEntry(*item) for item in n_items_history]
             incoming_list = [item.incoming_prices for item in n_items_history]
             result_list = [item.outgoing_prices for item in n_items_history]

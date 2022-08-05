@@ -59,7 +59,7 @@ class AlphaEstimator(ParameterEstimator):
 class KnownAlphaEstimator(ParameterEstimator):
     def __init__(self, alpha: List[float]):
         super().__init__()
-        self.alpha = [item / sum(alpha) for item in alpha]
+        self.alpha = [item / sum(alpha[1:]) for item in alpha[1:]] # Remove the probability of people leaving
 
     def update(self, customer: Customer):
         pass
@@ -71,6 +71,7 @@ class KnownAlphaEstimator(ParameterEstimator):
 
 
 class NumberOfItemsSoldEstimator(ParameterEstimator):
+    # TODO: This has some discrepencies
     def __init__(self):
         super().__init__()
         self.product_buy_count = [0 for _ in range(5)]
@@ -85,7 +86,7 @@ class NumberOfItemsSoldEstimator(ParameterEstimator):
         ratios = []
         for i in range(5):
             product_ratio = safe_div(self.product_buy_count[i], sum_product_buy_count)
-            assert product_ratio != 0
+            # assert product_ratio != 0
             result.append(criterias[i] * product_ratio)
             ratios.append(product_ratio)
         self._history.append(HistoryEntry(criterias, result, ratios))
@@ -132,18 +133,20 @@ class GraphWeightsEstimator(ParameterEstimator):
 
     def modify(self, criterias: List[float]) -> List[float]:
         normalized_secondary_visits = [[0.0 for _ in range(5)] for _ in range(5)]
-        old_criterias = copy.copy(criterias)
+        weights = [0.0 for _ in range(5)]
         for i in range(5):
-            normalized_secondary_visits[i][i] = 1.0
             for j in range(5):
                 normalized_secondary_visits[i][j] = safe_div(self._secondary_visit_counts[i][j], self._total_visits[i])
+            normalized_secondary_visits[i][i] = 1.0
         for to_ in range(5):
             total_prob = 0.0
             for from_ in range(5):
                 total_prob += normalized_secondary_visits[from_][to_]
-            criterias[to_] = safe_div(criterias[to_], total_prob)
+            weights[to_] = total_prob
+
+        result = [weights[i] * criterias[i] for i in range(5)]
         self._history.append(
-            HistoryEntry(old_criterias, criterias, [list(elem) for elem in self._secondary_visit_counts]))
+            HistoryEntry(criterias, result, weights))
         return criterias
 
     def __init__(self):
@@ -154,7 +157,10 @@ class GraphWeightsEstimator(ParameterEstimator):
 
 
 class KnownGraphWeightsEstimator(ParameterEstimator):
-    ### TODO: check logic
+
+    ### This doesn't work well because the theoretical weights are not the actual results
+    # (the probability is problematic because after the first product, whether the subsequent productsa are
+    # purchased also depends on reservation prices and classes)
     def __init__(self, graph_weights: CustomerTypeBased[List[List[float]]],
                  customer_counts: CustomerTypeBased[AbstractDistribution], lambda_: float):
         super().__init__()
@@ -172,25 +178,32 @@ class KnownGraphWeightsEstimator(ParameterEstimator):
                         prof_c * graph_weights.professional[i][j]
 
                     normalized_weights[i][j] /= total_customers
+        view_weight_matrix = [0.0 for _ in range(5)]
 
         def emulate_path(clicked_primaries: Tuple[int, ...], viewing_probability: float, current_id: int):
             if current_id in clicked_primaries:
-                return 0
-            result_ = viewing_probability
-            first_p, second_p = sorted(enumerate(normalized_weights[current_id]), key=itemgetter(1))[:2]
+                return
+            view_weight_matrix[current_id] += viewing_probability
+            first_p, second_p = sorted(enumerate(normalized_weights[current_id]), key=itemgetter(1), reverse=True)[:2]
             new_primaries = clicked_primaries + (current_id,)
             if first_p[1] > 0.0:
-                result_ += emulate_path(new_primaries, first_p[1] * 1, first_p[0])
+                emulate_path(new_primaries, first_p[1] * 1, first_p[0])
             if second_p[1] > 0.0:
-                result_ += emulate_path(new_primaries, second_p[1] * lambda_, second_p[0])
-            return result_
+                emulate_path(new_primaries, second_p[1] * lambda_, second_p[0])
 
-        self.product_weights = [emulate_path((), 1.0, i) for i in range(5)]
+        for product_id in range(5):
+            emulate_path((), 1.0, product_id)
+        view_weight_matrix = [item - 1 for item in view_weight_matrix]
+        total = sum(view_weight_matrix)
+        view_weight_matrix = [item / total for item in view_weight_matrix]
+        view_weight_matrix = [item + 1 for item in view_weight_matrix]
+        self.product_weights = view_weight_matrix
 
     def update(self, customer: Customer):
         pass
 
     def modify(self, criterias: List[float]) -> List[float]:
-        result = [safe_div(criterias[i], self.product_weights[i]) for i in range(5)]
+        result = [criterias[i] * self.product_weights[i] for i in
+                  range(5)]  # Since the weight indicates how much it will be visited in total, so multiply not divide
         self._history.append(HistoryEntry(criterias, result, list(self.product_weights)))
         return result
