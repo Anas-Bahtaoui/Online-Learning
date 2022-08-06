@@ -39,9 +39,9 @@ secondaries = CustomerTypeBased(
 
 purchase_amounts: CustomerTypeBased[List[PIG]] = CustomerTypeBased(
     # TODO: Values for how many are bought
-    professional=(PIG(5, 1), PIG(1, 1), PIG(3, 1), PIG(1, 1), PIG(1, 1)),
-    young_beginner=(PIG(8, 1), PIG(2, 1), PIG(6, 1), PIG(1, 1), PIG(2, 1)),
-    old_beginner=(PIG(15, 2), PIG(4, 1), PIG(8, 1), PIG(2, 1), PIG(8, 1)),
+    professional=(PIG(2, 1), PIG(1, 1), PIG(3, 1), PIG(1, 1), PIG(1, 1)),
+    young_beginner=(PIG(3, 1), PIG(2, 1), PIG(6, 1), PIG(1, 1), PIG(2, 1)),
+    old_beginner=(PIG(4, 2), PIG(4, 1), PIG(8, 1), PIG(2, 1), PIG(8, 1)),
 )
 
 # TODO: Assign ratios based on one number, so we can control convergence
