@@ -71,14 +71,14 @@ class KnownAlphaEstimator(ParameterEstimator):
 
 
 class NumberOfItemsSoldEstimator(ParameterEstimator):
-    # TODO: This has some discrepencies
+    # This is actually correct, since it gets updated based on actual data
     def __init__(self):
         super().__init__()
         self.product_buy_count = [0 for _ in range(5)]
 
     def update(self, customer: Customer):
-        for product_i in customer.products_clicked:
-            self.product_buy_count[product_i] += customer.products_bought[product_i]
+        for product_i, count in customer.products_bought.items():
+            self.product_buy_count[product_i] += count
 
     def modify(self, criterias: List[float]) -> List[float]:
         sum_product_buy_count = sum(self.product_buy_count)
@@ -96,7 +96,8 @@ class NumberOfItemsSoldEstimator(ParameterEstimator):
 class KnownItemsSoldEstimator(ParameterEstimator):
     def __init__(self, customer_counts: CustomerTypeBased[AbstractDistribution],
                  purchase_amounts: CustomerTypeBased[List[AbstractDistribution]]):
-
+        # This is useless since because we can't observe classes and reservation prices
+        # So this knowledge doesn't help
         super().__init__()
         total_customers = 0
         total_n_items_sold = [0 for _ in range(5)]
@@ -159,7 +160,7 @@ class GraphWeightsEstimator(ParameterEstimator):
 class KnownGraphWeightsEstimator(ParameterEstimator):
 
     ### This doesn't work well because the theoretical weights are not the actual results
-    # (the probability is problematic because after the first product, whether the subsequent productsa are
+    # (the probability is problematic because after the first product, whether the subsequent products are
     # purchased also depends on reservation prices and classes)
     def __init__(self, graph_weights: CustomerTypeBased[List[List[float]]],
                  customer_counts: CustomerTypeBased[AbstractDistribution], lambda_: float):
