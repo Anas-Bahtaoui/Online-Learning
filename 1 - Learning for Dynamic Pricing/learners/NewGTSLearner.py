@@ -7,6 +7,14 @@ from entities import Product, np_random
 
 
 class NewGTSLearner(BanditLearner):
+    def _reset_parameters(self):
+        n_products = len(self._config.product_configs)
+        n_arms = len(self._config.product_configs[0].prices)
+        self.means = [np.zeros(n_arms) for _ in range(n_products)]
+        self.sigmas = [np.full(n_arms, 1e1) for _ in range(n_products)]
+        self._rewards_per_arm = [[[] for _ in range(n_arms)] for _ in range(n_products)]
+
+
     def __init__(self, config: BanditConfiguration):
         super().__init__(config)
 
@@ -21,11 +29,3 @@ class NewGTSLearner(BanditLearner):
             n_samples = len(self._rewards_per_arm[pulled_arm])
             if n_samples > 1:
                 self.sigmas[product_id][pulled_arm] = np.std(self._rewards_per_arm[product_id][pulled_arm]) / n_samples
-
-    def reset(self):
-        n_products = len(self._config.product_configs)
-        n_arms = len(self._config.product_configs[0].prices)
-        self.means = [np.zeros(n_arms) for _ in range(n_products)]
-        self.sigmas = [np.full(n_arms, 1e1) for _ in range(n_products)]
-        self._rewards_per_arm = [[[] for _ in range(n_arms)] for _ in range(n_products)]
-        self.__init__(self.config)

@@ -7,14 +7,13 @@ from entities import Product
 
 
 class UCBLearner(BanditLearner):
-    def _select_price_criteria(self, product: Product) -> List[float]:
-        return np.array(self.means[product.id]) + np.array(self.widths[product.id])
-
-    def reset(self):
+    def _reset_parameters(self):
         self.means = [[0 for _ in product.candidate_prices] for product in self._products]
         self.widths = [[np.inf for _ in product.candidate_prices] for product in self._products]
         self.rewards_per_arm_per_product = [[[] for _ in product.candidate_prices] for product in self._products]
-        self.__init__(self.config)
+
+    def _select_price_criteria(self, product: Product) -> List[float]:
+        return np.array(self.means[product.id]) + np.array(self.widths[product.id])
 
     def __init__(self, config: BanditConfiguration):
         super().__init__(config)

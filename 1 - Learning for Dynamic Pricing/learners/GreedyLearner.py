@@ -9,6 +9,9 @@ from entities import Product, ObservationProbability, CustomerClass, reservation
 
 
 class GreedyLearner(Learner):
+    def update_experiment_days(self, days: int):
+        pass
+
     def reset(self):
         self.__init__()
 

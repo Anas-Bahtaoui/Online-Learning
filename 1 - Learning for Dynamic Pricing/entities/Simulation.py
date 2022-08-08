@@ -39,7 +39,7 @@ class Simulation:
     def run(self, days: int, *, log: bool, plot_graphs: bool, verbose: bool):
         for learner in self.learners:
             np_random.reset_seed()
-            learner.set_vars(self.products, self.environment, self.config)
+            learner.refresh_vars(self.products, self.environment, self.config)
             self.environment.reset_day()
             learner.reset()
             learner.run_experiment(days, log=log, plot_graphs=plot_graphs, verbose=verbose)

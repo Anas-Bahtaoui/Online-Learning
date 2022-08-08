@@ -28,14 +28,20 @@ class ParameterEstimator:
     def update(self, customer: Customer):
         raise NotImplementedError()
 
-    def modify(self, criterias: List[float]) -> List[float]:
+    def modify(self, criterias: List[float], *, register_history: bool = True) -> List[float]:
         raise NotImplementedError()
+
+    def reset(self):
+        pass
 
 
 class AlphaEstimator(ParameterEstimator):
+    def reset(self):
+        self.first_visit_counts = [0 for _ in range(6)]
+
     def __init__(self):
         super().__init__()
-        self.first_visit_counts = [0 for _ in range(6)]
+        self.reset()
 
     def update(self, customer: Customer):
         if len(customer.products_clicked) > 0:
@@ -43,44 +49,51 @@ class AlphaEstimator(ParameterEstimator):
         else:
             self.first_visit_counts[5] += 1
 
-    def modify(self, criterias: List[float]) -> List[float]:
+    def modify(self, criterias: List[float], register_history=True) -> List[float]:
         result = []
         sum_first_visit_counts = sum(self.first_visit_counts)
         ratios = []
         for i in range(5):
             first_visit_ratio = safe_div(self.first_visit_counts[i], sum_first_visit_counts)
-            assert first_visit_ratio != 0
+            if first_visit_ratio == 0:
+                breakpoint()
             result.append(criterias[i] * first_visit_ratio)
             ratios.append(first_visit_ratio)
-        self._history.append(HistoryEntry(criterias, result, ratios))
+        if register_history:
+            self._history.append(HistoryEntry(criterias, result, ratios))
         return result
 
 
 class KnownAlphaEstimator(ParameterEstimator):
     def __init__(self, alpha: List[float]):
         super().__init__()
-        self.alpha = [item / sum(alpha[1:]) for item in alpha[1:]] # Remove the probability of people leaving
+        self.alpha = [item / sum(alpha[1:]) for item in alpha[1:]]  # Remove the probability of people leaving
 
     def update(self, customer: Customer):
         pass
 
-    def modify(self, criterias: List[float]) -> List[float]:
+    def modify(self, criterias: List[float], register_history=True) -> List[float]:
         result = [criterias[i] * self.alpha[i] for i in range(5)]
-        self._history.append(HistoryEntry(criterias, result, list(self.alpha)))
+        if register_history:
+            self._history.append(HistoryEntry(criterias, result, list(self.alpha)))
         return result
 
 
 class NumberOfItemsSoldEstimator(ParameterEstimator):
     # This is actually correct, since it gets updated based on actual data
+
+    def reset(self):
+        self.product_buy_count = [0 for _ in range(5)]
+
     def __init__(self):
         super().__init__()
-        self.product_buy_count = [0 for _ in range(5)]
+        self.reset()
 
     def update(self, customer: Customer):
         for product_i, count in customer.products_bought.items():
             self.product_buy_count[product_i] += count
 
-    def modify(self, criterias: List[float]) -> List[float]:
+    def modify(self, criterias: List[float], register_history=True) -> List[float]:
         sum_product_buy_count = sum(self.product_buy_count)
         result = []
         ratios = []
@@ -89,7 +102,8 @@ class NumberOfItemsSoldEstimator(ParameterEstimator):
             # assert product_ratio != 0
             result.append(criterias[i] * product_ratio)
             ratios.append(product_ratio)
-        self._history.append(HistoryEntry(criterias, result, ratios))
+        if register_history:
+            self._history.append(HistoryEntry(criterias, result, ratios))
         return result
 
 
@@ -114,11 +128,12 @@ class KnownItemsSoldEstimator(ParameterEstimator):
     def update(self, customer: Customer):
         pass
 
-    def modify(self, criterias: List[float]) -> List[float]:
+    def modify(self, criterias: List[float], register_history=True) -> List[float]:
 
         assert all(criteria != 0 for criteria in self.items_sold_ratio)
         result = [criterias[i] * self.items_sold_ratio[i] for i in range(5)]
-        self._history.append(HistoryEntry(criterias, result, list(self.items_sold_ratio)))
+        if register_history:
+            self._history.append(HistoryEntry(criterias, result, list(self.items_sold_ratio)))
         return result
 
 
@@ -132,7 +147,7 @@ class GraphWeightsEstimator(ParameterEstimator):
         for i in range(len(customer.products_clicked) - 1):
             self._secondary_visit_counts[customer.products_clicked[i]][customer.products_clicked[i + 1]] += 1
 
-    def modify(self, criterias: List[float]) -> List[float]:
+    def modify(self, criterias: List[float], register_history=True) -> List[float]:
         normalized_secondary_visits = [[0.0 for _ in range(5)] for _ in range(5)]
         weights = [0.0 for _ in range(5)]
         for i in range(5):
@@ -146,15 +161,18 @@ class GraphWeightsEstimator(ParameterEstimator):
             weights[to_] = total_prob
 
         result = [weights[i] * criterias[i] for i in range(5)]
-        self._history.append(
-            HistoryEntry(criterias, result, weights))
+        if register_history:
+            self._history.append(HistoryEntry(criterias, result, weights))
         return criterias
 
-    def __init__(self):
+    def reset(self):
         # We don't need lambdas, they are already embedded in paths
-        super().__init__()
         self._secondary_visit_counts = [[0 for _ in range(5)] for _ in range(5)]
         self._total_visits = [0 for _ in range(5)]
+
+    def __init__(self):
+        super().__init__()
+        self.reset()
 
 
 class KnownGraphWeightsEstimator(ParameterEstimator):
@@ -203,8 +221,9 @@ class KnownGraphWeightsEstimator(ParameterEstimator):
     def update(self, customer: Customer):
         pass
 
-    def modify(self, criterias: List[float]) -> List[float]:
+    def modify(self, criterias: List[float], register_history=True) -> List[float]:
         result = [criterias[i] * self.product_weights[i] for i in
                   range(5)]  # Since the weight indicates how much it will be visited in total, so multiply not divide
-        self._history.append(HistoryEntry(criterias, result, list(self.product_weights)))
+        if register_history:
+            self._history.append(HistoryEntry(criterias, result, list(self.product_weights)))
         return result

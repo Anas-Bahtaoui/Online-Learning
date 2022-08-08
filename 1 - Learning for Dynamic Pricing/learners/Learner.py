@@ -11,6 +11,7 @@ ShallContinue = bool
 Reward = float
 PriceIndexes = List[int]
 ProductRewards = List[float]
+ChangeDetected = bool
 
 
 def draw_reward_graph(rewards: List[Reward], name: str):
@@ -38,6 +39,7 @@ def draw_selection_index_graph(products: List[Product], selected_price_indexes: 
     plt.legend()
     plt.show()
 
+
 def draw_product_reward_graph(products: List[Product], product_rewards: List[ProductRewards], name: str):
     x_iteration = list(range(1, len(product_rewards) + 1))
     fig, axs = plt.subplots(5, sharex=True, sharey=True)
@@ -45,11 +47,15 @@ def draw_product_reward_graph(products: List[Product], product_rewards: List[Pro
     axs[0].set_title(f"{name} Product rewards")
     for product in products:
         axs[product.id].plot(x_iteration, [product_reward[product.id] for product_reward in product_rewards],
-                            label=product.name)
+                             label=product.name)
         axs[product.id].legend(loc="upper right")
     plt.ylabel("Product rewards")
     plt.xlabel("Iteration")
     plt.show()
+
+
+ExperimentHistoryItem = Tuple[Reward, PriceIndexes, ProductRewards, ChangeDetected]
+
 
 class Learner:
     name: str
@@ -57,7 +63,7 @@ class Learner:
     _environment: Environment
     _config: SimulationConfig
 
-    def set_vars(self, products: List[Product], environment: Environment, config: SimulationConfig):
+    def refresh_vars(self, products: List[Product], environment: Environment, config: SimulationConfig):
         self._products = products
         self._environment = environment
         self._config = config
@@ -67,7 +73,7 @@ class Learner:
         if not hasattr(self, "_products"):
             self._products = []
         self._verbose = False
-        self._experiment_history: List[Tuple[Reward, PriceIndexes, ProductRewards]] = []
+        self._experiment_history: List[ExperimentHistoryItem] = []
 
     def reset(self):
         raise NotImplementedError()
@@ -78,36 +84,41 @@ class Learner:
     def log_experiment(self):
         raise NotImplementedError()
 
+    def update_experiment_days(self, days: int):
+        raise NotImplementedError()
+
     def run_experiment(self, max_days: int, *, log: bool = False, plot_graphs: bool = True,
                        verbose: bool = True) -> None:
         ## TODO: This is a very bad way, we want more presentable results :)
         running = True
         self._verbose = verbose
-
+        self.update_experiment_days(max_days)
         with tqdm(total=max_days, leave=False) as pbar:
             pbar.set_description(f"Running {self.name}")
             while running and len(self._experiment_history) < max_days:
                 running = self.iterate_once()
-                current_reward, candidate_price_indexes, current_product_rewards = self._experiment_history[-1]
+                current_reward, candidate_price_indexes, current_product_rewards, change_detected = self._experiment_history[-1]
 
                 if log:
                     print(f"iteration {len(self._experiment_history)}:")
                     print("Indexes", candidate_price_indexes)
                     print("Reward", current_reward)
                     print("Product rewards", current_product_rewards)
+                    if change_detected:
+                        print("Change detected")
                 pbar.update(1)
 
-        final_reward, final_candidate_price_indexes, final_product_reward = self._experiment_history[-1]
+        final_reward, final_candidate_price_indexes, final_product_reward, _ = self._experiment_history[-1]
         if log:
             print("Identified price indexes:", final_candidate_price_indexes)
             print("Final reward:", final_reward)
             print("Product rewards:", final_product_reward)
         if plot_graphs:
-            rewards = [reward for reward, _, _ in self._experiment_history]
+            rewards = [reward for reward, _, _, _ in self._experiment_history]
             draw_reward_graph(rewards, self.name)
 
-            selected_prices = [prices for _, prices, _ in self._experiment_history]
+            selected_prices = [prices for _, prices, _, _ in self._experiment_history]
             draw_selection_index_graph(self._products, selected_prices, self.name)
 
-            product_rewards = [product_reward for _, _, product_reward in self._experiment_history]
+            product_rewards = [product_reward for _, _, product_reward, _ in self._experiment_history]
             draw_product_reward_graph(self._products, product_rewards, self.name)

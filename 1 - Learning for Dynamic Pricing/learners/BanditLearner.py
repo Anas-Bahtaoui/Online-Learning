@@ -2,13 +2,10 @@ from collections import defaultdict
 from typing import NamedTuple, Union, Optional
 import numpy as np
 
-from Learner import Learner, ShallContinue
+from Learner import Learner, ShallContinue, ExperimentHistoryItem
+from change_detectors import ChangeDetectionAlgorithm, CumSum
 from entities import Environment, SimulationConfig, np_random
 from parameter_estimators import *
-
-
-class ChangeDetectionAlgorithm:
-    pass
 
 
 class ContextGenerationAlgorithm:
@@ -31,11 +28,10 @@ class BanditConfiguration(NamedTuple):
 step3 = BanditConfiguration("Step 3", True, True, True)
 step4 = BanditConfiguration("Step 4", False, False, True)
 step5 = BanditConfiguration("Step 5", True, True, False)
-# TODO: Step 6 is unclear, what will the first 3 parameters be
-# TODO: Ask to the professor
+# Step 6 is there for comparing two algorithms, it is better to just say all is unknown
 step6_sliding_window = BanditConfiguration("Step 6 with Sliding Window", False, False, False, 10)
 step6_change_detection = BanditConfiguration("Step 6 with Custom Algorithm", False, False, False,
-                                             ChangeDetectionAlgorithm())
+                                             CumSum(10, 0.1, 2))
 step7 = BanditConfiguration("Step 7", False, False, True, None, (14, ContextGenerationAlgorithm()))
 
 
@@ -56,7 +52,7 @@ class BanditLearner(Learner):
 
     def log_experiment(self):
         if self._verbose:
-            _, selected_price_indexes, product_rewards = self._experiment_history[-1]
+            _, selected_price_indexes, product_rewards, resetted = self._experiment_history[-1]
             customers = self._customer_history[-1]
             for product in self._products:
                 purchase_count = 0
@@ -78,12 +74,18 @@ class BanditLearner(Learner):
         self._customer_history: List[List[Customer]] = []
         if not hasattr(self, "_estimators"):
             self._estimators: List[ParameterEstimator] = []
+        self._t = 0
 
-    def set_vars(self, products: List[Product], environment: Environment, config: SimulationConfig):
-        super().set_vars(products, environment, config)
-        self._estimators = []
-        self._experiment_history = []
+    def refresh_vars(self, products: List[Product], environment: Environment, config: SimulationConfig):
+        super().refresh_vars(products, environment, config)
+        self._experiment_history: List[ExperimentHistoryItem] = []
         self._customer_history = []
+        self._reset_parameters()
+        if isinstance(self.config.non_stationary, ChangeDetectionAlgorithm):
+            self.config.non_stationary.reset()
+        self._t = 0
+
+        self._estimators = []
         if self.config.a_ratios_known:
             # Calculate Customer class independent alphas
 
@@ -104,6 +106,10 @@ class BanditLearner(Learner):
                                                                self._config.lambda_))
         else:
             self._estimators.append(GraphWeightsEstimator())
+
+    def update_experiment_days(self, days: int):
+        if isinstance(self.config.non_stationary, int):
+            self.config = self.config._replace(non_stationary=int(days ** 0.5))
 
     def _select_price_indexes(self) -> List[int]:
         result = []
@@ -166,18 +172,34 @@ class BanditLearner(Learner):
 
         self._customer_history.append(customers)
         product_rewards = self._calculate_product_rewards(selected_price_indexes)
-        self._experiment_history.append((sum(product_rewards), selected_price_indexes, product_rewards))
+        self._experiment_history.append((sum(product_rewards), selected_price_indexes, product_rewards, False))
 
     def _update_learner_state(self, selected_price_indexes, product_rewards, t):
         raise NotImplementedError()
 
+    def _reset_and_rerun_for_last_n(self, n: int):
+        self._t = 0
+        self._reset_parameters()
+        for estimator in self._estimators:
+            estimator.reset()
+        for i in range(-min(n, len(self._experiment_history)), 0, 1):
+            self._t += 1
+            _, selected_price_indexes, product_rewards, _ = self._experiment_history[i]
+            if self._t > 1:
+                last_customers = self._customer_history[i - 1]
+                for estimator in self._estimators:
+                    for customer in last_customers:
+                        estimator.update(customer)
+                    product_rewards = estimator.modify(product_rewards, register_history=False)
+            self._update_learner_state(selected_price_indexes, product_rewards, self._t)
+
     def _update(self):
-        t = len(self._experiment_history)
-        _, selected_price_indexes, product_rewards = self._experiment_history[-1]
-        if t > 1:
+        self._t += 1
+        _, selected_price_indexes, product_rewards, _ = self._experiment_history[-1]
+        if self._t > 1:
             for estimator in self._estimators:
                 product_rewards = estimator.modify(product_rewards)
-        self._update_learner_state(selected_price_indexes, product_rewards, t)
+        self._update_learner_state(selected_price_indexes, product_rewards, self._t)
 
     def _update_parameter_estimators(self):
         customers = self._customer_history[-1]
@@ -190,12 +212,23 @@ class BanditLearner(Learner):
         selected_price_indexes = self._select_price_indexes()
         self._new_day(selected_price_indexes)
         self._update_parameter_estimators()
-        self._update()
+        if isinstance(self.config.non_stationary, int):
+            self._reset_and_rerun_for_last_n(self.config.non_stationary)
+        elif isinstance(self.config.non_stationary, ChangeDetectionAlgorithm):
+            if self.config.non_stationary.has_changed(self._customer_history[-1]):
+                self.config.non_stationary.reset()
+                self._reset_parameters()
+                self._reset_and_rerun_for_last_n(1)
+                self._experiment_history[-1] = self._experiment_history[-1][:-1] + (True,)
+            self.config.non_stationary.update(self._customer_history[-1])
+        else:
+            self._update()
 
     def reset(self):
-        self._estimators = []
-        self._customer_history = []
         self.__init__(self.config)
+
+    def _reset_parameters(self):
+        raise NotImplementedError()
 
     """
     Might not work ...

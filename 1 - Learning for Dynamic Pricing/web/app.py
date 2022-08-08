@@ -23,7 +23,7 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
     [State(f"{i}-selector", "value") for i in range(4)],
 )
 def run_experiment(clicks, reset_clicks, saved_data, run_count, *config_values):
-    learners_ = learners[:7]
+    learners_ = learners[7:]
     if saved_data["clicks"] == clicks:
         if saved_data["reset_clicks"] == reset_clicks:
             raise PreventUpdate

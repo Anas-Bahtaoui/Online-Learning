@@ -1,6 +1,6 @@
-from typing import List
 import preamble
 
+from typing import List
 from entities import ProductConfig, SimulationConfig, CustomerTypeBased, Simulation, Dirichlet, \
     PositiveIntegerGaussian as PIG
 from learners import *
