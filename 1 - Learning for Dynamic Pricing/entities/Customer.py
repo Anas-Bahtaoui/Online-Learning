@@ -5,8 +5,10 @@ from typing import List, Dict, Set, Callable
 import numpy as np
 import scipy.stats
 
+import random_
+from random_ import np_random
 from Distribution import PositiveIntegerGaussian as PIG
-from basic_types import CustomerClass
+from basic_types import CustomerClass, Age
 
 """
     Each customer is belonging to one of the three customer classes. Each class an expected reservation price for each product.
@@ -54,6 +56,12 @@ class Customer:
         :param customer_config: customer configuration dictionary
         """
         self.class_ = class_
+        if self.class_ == CustomerClass.PROFESSIONAL:
+            self.age = list(Age)[random_.np_random.integers(2)]
+        else:
+            self.age = self.class_.value[1]
+        self.expertise = self.class_.value[0]
+
         self.products_clicked: List[int] = products_clicked or []
         self.products_bought: Dict[int, int] = products_bought or defaultdict(int)
         self.reservation_prices: List[Callable[[float], PIG]] = [
