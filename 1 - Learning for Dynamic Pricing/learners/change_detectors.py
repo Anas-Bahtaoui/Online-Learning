@@ -1,15 +1,21 @@
-from typing import List
+from typing import List, NamedTuple
 
 from entities import Customer
 
 
+class ChangeHistoryItem(NamedTuple):
+    g_plus: float
+    g_minus: float
+    sample: float
+
+
 class ChangeDetectionAlgorithm:
-    def has_changed(self, last_customers: List[Customer]) -> bool:
+    def has_changed(self) -> bool:
         # This approach works as only one detection for all cases
         # It is not arm specific
         raise NotImplementedError()
 
-    def update(self, last_customers: List[Customer]):
+    def update(self, last_customers: List[Customer]) -> NamedTuple:
         raise NotImplementedError()
 
     def reset(self):
@@ -17,11 +23,10 @@ class ChangeDetectionAlgorithm:
 
 
 class CumSum(ChangeDetectionAlgorithm):
-    def __init__(self, M, eps, h):
-        self.M = M
-        self.eps = eps
-        self.h = h
-        self.reference = 0
+    def __init__(self, collect_for_days, drift, threshold):
+        self.collect_for = collect_for_days
+        self.drift = drift
+        self.threshold = threshold
         self.reset()
 
     # TODO: This implementation is bad, do instead: https://nbviewer.ipython.org/github/demotu/BMC/blob/master/notebooks/DetectCUSUM.ipynb
@@ -37,37 +42,38 @@ class CumSum(ChangeDetectionAlgorithm):
 
         return sample
 
-    def update(self, last_customers: List[Customer]):
+    def update(self, last_customers: List[Customer]) -> ChangeHistoryItem:
+
         sample = self._calculate_sample(last_customers)
-        if self.t < self.M:
-            self.reference += sample / self.M
+        history_item = ChangeHistoryItem(0, 0, sample)
+        if self.t < self.collect_for:
+            self.samples[-1] += sample / self.collect_for
+            self.alerts.append(False)
         else:
-            s_plus = (sample - self.reference) - self.eps
-            s_minus = -(sample - self.reference) - self.eps
-            self.g_plus = max(0, self.g_plus + s_plus)
-            self.g_minus = max(0, self.g_minus + s_minus)
-
-
-    def has_changed(self, last_customers: List[Customer]) -> bool:
-        sample = self._calculate_sample(last_customers)
+            s = sample - self.samples[-1]
+            g_plus = max(self.g_pluses[-1] + s - self.drift, 0)
+            g_minus = max(self.g_minuses[-1] - s - self.drift, 0)
+            alert = g_plus > self.threshold or g_minus > self.threshold
+            if alert:
+                g_plus = 0
+                g_minus = 0
+            self.samples.append(sample)
+            self.g_pluses.append(g_plus)
+            self.g_minuses.append(g_minus)
+            self.alerts.append(alert)
+            history_item = ChangeHistoryItem(g_plus, g_minus, sample)
         self.t += 1
-        if self.t <= self.M:
-            return False
-        else:
-            s_plus = (sample - self.reference) - self.eps
-            s_minus = -(sample - self.reference) - self.eps
-            g_plus = max(0, self.g_plus + s_plus)
-            g_minus = max(0, self.g_minus + s_minus)
-            has_changed = g_plus > self.h or g_minus > self.h
-            if has_changed:
-                breakpoint()
-            return has_changed
+        return history_item
+
+    def has_changed(self) -> bool:
+        has_changed = self.alerts[-1]
+        if has_changed:
+            breakpoint()
+        return has_changed
 
     def reset(self):
         self.t = 0
-        # Because we call reset after one change has been detected.
-        # So we don't want to lose the reference. but why? Isn't it better to have a new reference to start afresh?
-        # TODO: original code doesn't have this line
-        # self.reference = 0
-        self.g_plus = 0
-        self.g_minus = 0
+        self.g_pluses = [0.0]
+        self.g_minuses = [0.0]
+        self.alerts = []
+        self.samples = [0.0]

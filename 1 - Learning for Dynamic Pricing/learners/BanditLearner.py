@@ -52,7 +52,7 @@ class BanditLearner(Learner):
 
     def log_experiment(self):
         if self._verbose:
-            _, selected_price_indexes, product_rewards, resetted = self._experiment_history[-1]
+            _, selected_price_indexes, product_rewards, resetted, change_detection = self._experiment_history[-1]
             customers = self._customer_history[-1]
             for product in self._products:
                 purchase_count = 0
@@ -172,19 +172,25 @@ class BanditLearner(Learner):
 
         self._customer_history.append(customers)
         product_rewards = self._calculate_product_rewards(selected_price_indexes)
-        self._experiment_history.append((sum(product_rewards), selected_price_indexes, product_rewards, False))
+        self._experiment_history.append((sum(product_rewards), selected_price_indexes, product_rewards, False, None))
 
     def _update_learner_state(self, selected_price_indexes, product_rewards, t):
         raise NotImplementedError()
 
     def _reset_and_rerun_for_last_n(self, n: int):
+        if n >= len(self._experiment_history):
+            return
         self._t = 0
         self._reset_parameters()
         for estimator in self._estimators:
             estimator.reset()
-        for i in range(-min(n, len(self._experiment_history)), 0, 1):
+        for i in range(-n, 0, 1):
             self._t += 1
-            _, selected_price_indexes, product_rewards, _ = self._experiment_history[i]
+            try:
+                self._experiment_history[i]
+            except Exception as e:
+                breakpoint()
+            _, selected_price_indexes, product_rewards, _, _ = self._experiment_history[i]
             if self._t > 1:
                 last_customers = self._customer_history[i - 1]
                 for estimator in self._estimators:
@@ -195,7 +201,7 @@ class BanditLearner(Learner):
 
     def _update(self):
         self._t += 1
-        _, selected_price_indexes, product_rewards, _ = self._experiment_history[-1]
+        _, selected_price_indexes, product_rewards, _, _ = self._experiment_history[-1]
         if self._t > 1:
             for estimator in self._estimators:
                 product_rewards = estimator.modify(product_rewards)
@@ -215,12 +221,13 @@ class BanditLearner(Learner):
         if isinstance(self.config.non_stationary, int):
             self._reset_and_rerun_for_last_n(self.config.non_stationary)
         elif isinstance(self.config.non_stationary, ChangeDetectionAlgorithm):
-            if self.config.non_stationary.has_changed(self._customer_history[-1]):
+            non_stationary_result = self.config.non_stationary.update(self._customer_history[-1])
+            if self.config.non_stationary.has_changed():
                 self.config.non_stationary.reset()
                 self._reset_parameters()
                 self._reset_and_rerun_for_last_n(1)
-                self._experiment_history[-1] = self._experiment_history[-1][:-1] + (True,)
-            self.config.non_stationary.update(self._customer_history[-1])
+                self._experiment_history[-1] = self._experiment_history[-1][:3] + (True,) + self._experiment_history[-1][4:]
+            self._experiment_history[-1] = self._experiment_history[-1][:4] + (non_stationary_result,) + self._experiment_history[-1][5:]
         else:
             self._update()
 

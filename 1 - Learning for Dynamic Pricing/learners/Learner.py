@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 import scipy.ndimage
 from matplotlib import pyplot as plt
@@ -12,6 +12,7 @@ Reward = float
 PriceIndexes = List[int]
 ProductRewards = List[float]
 ChangeDetected = bool
+ChangeDetectorParams = Optional[Tuple]
 
 
 def draw_reward_graph(rewards: List[Reward], name: str):
@@ -54,7 +55,7 @@ def draw_product_reward_graph(products: List[Product], product_rewards: List[Pro
     plt.show()
 
 
-ExperimentHistoryItem = Tuple[Reward, PriceIndexes, ProductRewards, ChangeDetected]
+ExperimentHistoryItem = Tuple[Reward, PriceIndexes, ProductRewards, ChangeDetected, ChangeDetectorParams]
 
 
 class Learner:
@@ -97,7 +98,7 @@ class Learner:
             pbar.set_description(f"Running {self.name}")
             while running and len(self._experiment_history) < max_days:
                 running = self.iterate_once()
-                current_reward, candidate_price_indexes, current_product_rewards, change_detected = self._experiment_history[-1]
+                current_reward, candidate_price_indexes, current_product_rewards, change_detected, _ = self._experiment_history[-1]
 
                 if log:
                     print(f"iteration {len(self._experiment_history)}:")
@@ -108,7 +109,7 @@ class Learner:
                         print("Change detected")
                 pbar.update(1)
 
-        final_reward, final_candidate_price_indexes, final_product_reward, _ = self._experiment_history[-1]
+        final_reward, final_candidate_price_indexes, final_product_reward, _, _ = self._experiment_history[-1]
         if log:
             print("Identified price indexes:", final_candidate_price_indexes)
             print("Final reward:", final_reward)

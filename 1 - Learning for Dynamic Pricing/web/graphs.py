@@ -7,6 +7,7 @@ from typing import List
 from Learner import PriceIndexes, ProductRewards
 from entities import Product
 from parameter_estimators import HistoryEntry
+from change_detectors import ChangeHistoryItem
 from web.common import SimulationResult
 
 
@@ -65,6 +66,18 @@ def render_for_estimator(products: List[Product], type_history: List[List[float]
     return dcc.Graph(figure=fig)
 
 
+def render_change_detection_graph_graph(change_detection_history: List[ChangeHistoryItem],
+                                        change_detected_at: List[int]):
+    x = list(range(1, len(change_detection_history) + 1))
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=x, y=[item[0] for item in change_detection_history], name="gplus", mode='markers'))
+    fig.add_trace(go.Scatter(x=x, y=[item[1] for item in change_detection_history], name="gminus", mode='markers'))
+    fig.add_trace(go.Scatter(x=x, y=[item[2] for item in change_detection_history], name="sample", mode='markers'))
+    for detected_i in change_detected_at:
+        fig.add_vline(detected_i)
+    return dcc.Graph(figure=fig)
+
+
 def render_for_learner(learner_name: str, learner_data: SimulationResult):
     graphs = [
         render_rewards(learner_name, learner_data.rewards, learner_data.change_detected_at),
@@ -85,6 +98,8 @@ def render_for_learner(learner_name: str, learner_data: SimulationResult):
                  render_for_estimator(learner_data.products, parameters, name, "Parameters factor"),
 
                  ])
+    if learner_data.change_history:
+        graphs.append(render_change_detection_graph_graph(learner_data.change_history, learner_data.change_detected_at))
     return dbc.Col([
         dbc.Row(row) for row in graphs
     ])
