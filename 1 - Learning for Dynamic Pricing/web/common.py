@@ -49,7 +49,7 @@ class SimulationResult(NamedTuple):
     def deserialize(data):
         customers = data.get("customers")
         if customers is not None:
-            customers = [[Customer(customer.values()) for customer in day] for day in customers]
+            customers = [[Customer(*customer.values()) for customer in day] for day in customers]
         return SimulationResult(
             rewards=data["rewards"],
             price_indexes=data["price_indexes"],

@@ -1,4 +1,5 @@
 import numpy as np
+from faker import Faker
 
 SEED = 42
 
@@ -15,3 +16,6 @@ class RandomGenerator:
 
 
 np_random = RandomGenerator()
+
+Faker.seed(SEED)
+faker = Faker("it-IT")

@@ -1,12 +1,11 @@
 from collections import defaultdict
 from functools import lru_cache
-from typing import List, Dict, Set, Callable
+from typing import List, Dict, Set, Callable, NamedTuple
 
 import numpy as np
 import scipy.stats
 
-import random_
-from random_ import np_random
+from random_ import np_random, faker
 from Distribution import PositiveIntegerGaussian as PIG
 from basic_types import CustomerClass, Age
 
@@ -55,9 +54,11 @@ class Customer:
         """
         :param customer_config: customer configuration dictionary
         """
+        if isinstance(class_, str):
+            class_ = [classe for classe in list(CustomerClass) if classe.name == class_][0]
         self.class_ = class_
         if self.class_ == CustomerClass.PROFESSIONAL:
-            self.age = list(Age)[random_.np_random.integers(2)]
+            self.age = list(Age)[np_random.integers(2)]
         else:
             self.age = self.class_.value[1]
         self.expertise = self.class_.value[0]
@@ -67,6 +68,8 @@ class Customer:
         self.reservation_prices: List[Callable[[float], PIG]] = [
             lambda price: reservation_price_distribution_from_curves(self.class_, product_id, price) for product_id in
             range(5)]
+        self.display_name = faker.name()
+        self.display_age = np_random.integers(20) + 16 if self.age == Age.YOUNG else np_random.integers(20) + 36
 
     def get_reservation_price_of(self, product_id: int, product_price: float) -> PIG:
         """
@@ -105,5 +108,7 @@ class Customer:
         return {
             "class": self.class_.name,
             "products_clicked": self.products_clicked,
-            "products_bought": self.products_bought
+            "products_bought": self.products_bought,
+            "display_name": self.display_name,
+            "display_age": self.display_age,
         }

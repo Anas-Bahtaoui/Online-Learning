@@ -67,8 +67,6 @@ class CumSum(ChangeDetectionAlgorithm):
 
     def has_changed(self) -> bool:
         has_changed = self.alerts[-1]
-        if has_changed:
-            breakpoint()
         return has_changed
 
     def reset(self):
