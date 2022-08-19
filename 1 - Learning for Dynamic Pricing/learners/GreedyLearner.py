@@ -26,7 +26,8 @@ class GreedyLearner(Learner):
     def iterate_once(self) -> ShallContinue:
         shall_continue = self._iterate_once()
         product_rewards = self._get_rewards_of_current_run()
-        self._experiment_history.append((self.current_reward, list(self.candidate_price_indexes), product_rewards))
+        self._experiment_history.append(
+            (self.current_reward, list(self.candidate_price_indexes), product_rewards, False, None))
         return shall_continue
 
     def __init__(self):

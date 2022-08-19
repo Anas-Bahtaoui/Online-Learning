@@ -99,7 +99,6 @@ class Learner:
             while running and len(self._experiment_history) < max_days:
                 running = self.iterate_once()
                 current_reward, candidate_price_indexes, current_product_rewards, change_detected, _ = self._experiment_history[-1]
-
                 if log:
                     print(f"iteration {len(self._experiment_history)}:")
                     print("Indexes", candidate_price_indexes)
@@ -115,11 +114,11 @@ class Learner:
             print("Final reward:", final_reward)
             print("Product rewards:", final_product_reward)
         if plot_graphs:
-            rewards = [reward for reward, _, _, _ in self._experiment_history]
+            rewards = [reward for reward, _, _, _, _ in self._experiment_history]
             draw_reward_graph(rewards, self.name)
 
-            selected_prices = [prices for _, prices, _, _ in self._experiment_history]
+            selected_prices = [prices for _, prices, _, _, _ in self._experiment_history]
             draw_selection_index_graph(self._products, selected_prices, self.name)
 
-            product_rewards = [product_reward for _, _, product_reward, _ in self._experiment_history]
+            product_rewards = [product_reward for _, _, product_reward, _, _ in self._experiment_history]
             draw_product_reward_graph(self._products, product_rewards, self.name)
