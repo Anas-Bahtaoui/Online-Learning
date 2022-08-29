@@ -29,8 +29,6 @@ class CumSum(ChangeDetectionAlgorithm):
         self.threshold = threshold
         self.reset()
 
-    # TODO: This implementation is bad, do instead: https://nbviewer.ipython.org/github/demotu/BMC/blob/master/notebooks/DetectCUSUM.ipynb
-
     def _calculate_sample(self, last_customers: List[Customer]) -> float:
         total_visits = 0
         total_purchases = 0

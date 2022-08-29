@@ -125,7 +125,7 @@ def render_for_learner(learner_name: str, learner_data: SimulationResult):
         render_product_rewards_graph(learner_data.products, learner_data.product_rewards, learner_name,
                                      learner_data.change_detected_at),
         dbc.FormText("Customers Day 0:"),
-        render_customer_table(learner_data.customers[0], learner_data.products, learner_data.price_indexes[0])
+        # render_customer_table(learner_data.customers[0], learner_data.products, learner_data.price_indexes[0])
     ]
     if learner_data.estimators is not None and learner_name.find("6") == -1:
         for name, n_items_history in list(learner_data.estimators.items()):  # [:2]:
