@@ -15,6 +15,7 @@ class IDs(NamedTuple):
     run_experiment: str = "run-experiment"
     reset_results: str = "reset-results"
     run_count: str = "run-count"
+    resolution_selector: str = "resolution-selector"
 
 
 ids = IDs()

@@ -11,8 +11,12 @@ from change_detectors import ChangeHistoryItem
 from web.common import SimulationResult
 
 
-def render_rewards(name, rewards, change_detected_at: List[int], clairvoyant_reward: float):
-    plot = plotly.express.line(x=range(1, len(rewards) + 1), y=scipy.ndimage.uniform_filter1d(rewards, size=10),
+def apply_resolution(y, resolution):
+    return scipy.ndimage.uniform_filter1d(y, size=resolution)
+
+
+def render_rewards(name, rewards, change_detected_at: List[int], clairvoyant_reward: float, resolution: int):
+    plot = plotly.express.line(x=range(1, len(rewards) + 1), y=apply_resolution(rewards, resolution),
                                labels={"x": "Iteration", "y": "Reward"},
                                title=f"{name} Reward", )
     for detected_i in change_detected_at:
@@ -25,14 +29,14 @@ colors = ["red", "blue", "yellow", "green", "purple"]
 
 
 def render_selection_indexes(products: List[Product], selected_price_indexes: List[PriceIndexes], name: str,
-                             change_detected_at: List[int]):
+                             change_detected_at: List[int], resolution: int):
     x_iteration = list(range(1, len(selected_price_indexes) + 1))
     fig = go.Figure()
     for product in products:
         prices = []
         for selected_price_index in selected_price_indexes:
             prices.append(product.candidate_prices[selected_price_index[product.id]])
-        fig.add_trace(go.Scatter(x=x_iteration, y=prices, name=product.name, line={"color": colors[product.id]}))
+        fig.add_trace(go.Scatter(x=x_iteration, y=apply_resolution(prices, resolution), name=product.name, line={"color": colors[product.id]}))
     fig.update_layout(title=f"{name} Prices", xaxis_title="Iteration", yaxis_title="Prices per product")
     for detected_i in change_detected_at:
         fig.add_vline(detected_i)
@@ -40,12 +44,12 @@ def render_selection_indexes(products: List[Product], selected_price_indexes: Li
 
 
 def render_product_rewards_graph(products: List[Product], product_rewards: List[ProductRewards], name: str,
-                                 change_detected_at: List[int]):
+                                 change_detected_at: List[int], resolution: int):
     x_iteration = list(range(1, len(product_rewards) + 1))
     fig = go.Figure()
     for product in products:
         fig.add_trace(
-            go.Scatter(x=x_iteration, y=[product_reward[product.id] for product_reward in product_rewards],
+            go.Scatter(x=x_iteration, y=apply_resolution([product_reward[product.id] for product_reward in product_rewards], resolution),
                        name=product.name, line={"color": colors[product.id]}))
 
     fig.update_layout(title=f"{name} Product rewards", xaxis_title="Iteration", yaxis_title="Product Rewards")
@@ -98,7 +102,8 @@ def render_customer_table(customers: List[Customer], products: List[Product], se
             class_=str(customer.class_),
             entered_from=products[customer.products_clicked[0]].name if customer.products_clicked else "(out)",
             profit=sum(
-                products[int(product_id)].candidate_prices[selected_price_index[int(product_id)]] * count for product_id, count in
+                products[int(product_id)].candidate_prices[selected_price_index[int(product_id)]] * count for
+                product_id, count in
                 customer.products_bought.items()),
             **{
                 str(product.id): f"{'C ' if product.id in customer.products_clicked else ''}{('& B: ' + str(customer.products_bought[str(product.id)]) if customer.products_bought[str(product.id)] > 0 else '')}"
@@ -118,13 +123,14 @@ Our offered price was: *{product.candidate_prices[selected_price_index[product.i
         filter_action='native',
     )
 
-def render_for_learner(learner_name: str, learner_data: SimulationResult):
+
+def render_for_learner(learner_name: str, learner_data: SimulationResult, resolution: int = 10):
     graphs = [
-        render_rewards(learner_name, learner_data.rewards, learner_data.change_detected_at, learner_data.clairvoyant),
+        render_rewards(learner_name, learner_data.rewards, learner_data.change_detected_at, learner_data.clairvoyant, resolution),
         render_selection_indexes(learner_data.products, learner_data.price_indexes, learner_name,
-                                 learner_data.change_detected_at),
+                                 learner_data.change_detected_at, resolution),
         render_product_rewards_graph(learner_data.products, learner_data.product_rewards, learner_name,
-                                     learner_data.change_detected_at),
+                                     learner_data.change_detected_at, resolution),
         dbc.FormText("Customers Day 0:"),
         # render_customer_table(learner_data.customers[0], learner_data.products, learner_data.price_indexes[0])
     ]

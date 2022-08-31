@@ -85,28 +85,30 @@ def update_experiment_selectors(data):
     Output(ids.result_div_left, "children"),
     Input(ids.storage, "data"),
     Input(ids.left_experiment_selector, "value"),
+    Input(ids.resolution_selector, "value"),
 )
-def update_result_div_left(data, selected_experiment):
+def update_result_div_left(data, selected_experiment, resolution):
     if data is None or data["results"] is None:
         return html.Div("Run a simulation to compare results")
     if selected_experiment is None:
         return html.Div("Pick an experiment from above to compare")
     results = SimulationResult.deserialize(data["results"][selected_experiment])
-    return render_for_learner(selected_experiment, results)
+    return render_for_learner(selected_experiment, results, resolution)
 
 
 @app.callback(
     Output(ids.result_div_right, "children"),
     Input(ids.storage, "data"),
     Input(ids.right_experiment_selector, "value"),
+    Input(ids.resolution_selector, "value"),
 )
-def update_result_div_right(data, selected_experiment):
+def update_result_div_right(data, selected_experiment, resolution):
     if data is None or data["results"] is None:
         return html.Div()
     if selected_experiment is None:
         return html.Div("Pick an experiment from above to compare")
     results = SimulationResult.deserialize(data["results"][selected_experiment])
-    return render_for_learner(selected_experiment, results)
+    return render_for_learner(selected_experiment, results, resolution)
 
 
 app.layout = layout

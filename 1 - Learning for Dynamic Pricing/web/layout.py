@@ -36,15 +36,31 @@ run_count_selector = dbc.Input(
 run_experiment_button = dbc.Button("Run Experiment", id=ids.run_experiment, n_clicks=0, color="primary")
 reset_results_button = dbc.Button("Reset Results", id=ids.reset_results, n_clicks=0, color="primary")
 
+resolution_selector = dcc.Dropdown(
+    id=ids.resolution_selector,
+    searchable=False,
+    clearable=False,
+    value=10,
+    options=[
+        {"label": "1", "value": 1},
+        {"label": "5", "value": 5},
+        {"label": "10", "value": 10},
+        {"label": "20", "value": 20},
+    ])
 second_row = dbc.Row([
     dbc.Col([
         html.P("How many days to run: "),
         run_count_selector,
-    ]),
+    ], md=3),
     dbc.Col([
         run_experiment_button,
         reset_results_button
-    ]),
+    ], md=3),
+    dbc.Col([
+        html.P("Result Resolution: "),
+        resolution_selector,
+        dbc.FormText("Can be changed after experiment is run"),
+    ], md={"offset": 3, "size": 3}),
 ])
 
 dropdownProps = dict(
