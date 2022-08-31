@@ -11,12 +11,13 @@ from change_detectors import ChangeHistoryItem
 from web.common import SimulationResult
 
 
-def render_rewards(name, rewards, change_detected_at: List[int]):
+def render_rewards(name, rewards, change_detected_at: List[int], clairvoyant_reward: float):
     plot = plotly.express.line(x=range(1, len(rewards) + 1), y=scipy.ndimage.uniform_filter1d(rewards, size=10),
                                labels={"x": "Iteration", "y": "Reward"},
                                title=f"{name} Reward", )
     for detected_i in change_detected_at:
         plot.add_vline(detected_i)
+    plot.add_hline(clairvoyant_reward, name="Clairvoyant reward")
     return dcc.Graph(figure=plot)
 
 
@@ -119,7 +120,7 @@ Our offered price was: *{product.candidate_prices[selected_price_index[product.i
 
 def render_for_learner(learner_name: str, learner_data: SimulationResult):
     graphs = [
-        render_rewards(learner_name, learner_data.rewards, learner_data.change_detected_at),
+        render_rewards(learner_name, learner_data.rewards, learner_data.change_detected_at, learner_data.clairvoyant),
         render_selection_indexes(learner_data.products, learner_data.price_indexes, learner_name,
                                  learner_data.change_detected_at),
         render_product_rewards_graph(learner_data.products, learner_data.product_rewards, learner_name,

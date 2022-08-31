@@ -35,18 +35,6 @@ class GreedyLearner(Learner):
         self.candidate_price_indexes = (0, 0, 0, 0, 0)
         self.current_reward = 0
 
-    @staticmethod
-    def _calculate_ratio_of_customer_buying(candidate_price: float, distribution: PIG) -> float:
-        """
-        This function calculates a value based on the inverse of the normal distribution function.
-        So, it calculates the ratio of the people who have the reservation price beneath their expectation.
-        We only need this in Greedy because we basically expect this to be something similar to emulating each customer.
-        :param candidate_price: The suggested price of the product
-        :param distribution: The distribution for the reservation price
-        :return: ratio of people who have the reservation price beneath their expectation
-        """
-        return 1 - scipy.stats.norm.cdf((candidate_price - distribution.get_expectation()) / distribution.variance)
-
     # We need to pass the price indexes of all products
     def calculate_reward_of_product(self, price_index: int, product: Product, class_: CustomerClass) -> float:
         current_price_indexes = self.candidate_price_indexes[:product.id] + (
@@ -61,8 +49,7 @@ class GreedyLearner(Learner):
             # We don't have simulated users but use expected values directly
             reservation_price_distribution = reservation_price_distribution_from_curves(class_, product.id,
                                                                                         product_price)
-            purchase_ratio = GreedyLearner._calculate_ratio_of_customer_buying(product_price,
-                                                                               reservation_price_distribution)
+            purchase_ratio = reservation_price_distribution.calculate_ratio_of(product_price)
 
             if self._verbose:
                 print(f"Purchased %{purchase_ratio * 100}, reservation price mean:",

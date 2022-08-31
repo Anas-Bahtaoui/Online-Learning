@@ -1,5 +1,9 @@
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import TypeVar, List
+
+import scipy
+
 from random_ import np_random
 import numpy as np
 from scipy.stats import dirichlet
@@ -30,6 +34,19 @@ class NormalGaussian(AbstractDistribution):
     def get_sample_value(self) -> float:
         return np_random.normal(self.mean, self.variance)
 
+    @lru_cache(maxsize=None)
+    def calculate_ratio_of(self, value: float) -> float:
+        """
+       This function calculates a value based on the inverse of the normal distribution function.
+       So, it calculates the ratio of the people who have the reservation price beneath their expectation.
+       We only need this in Greedy and in clairvoyant because we basically expect this to be something similar to emulating each customer.
+       :param value: The suggested price of the product
+       :return: ratio of people who have the reservation price beneath their expectation
+       """
+        return 1 - scipy.stats.norm.cdf((value - self.mean) / self.variance)
+
+    def __hash__(self):
+        return hash((self.mean, self.variance))
 
 class PositiveIntegerGaussian(NormalGaussian):
     def get_sample_value(self) -> int:

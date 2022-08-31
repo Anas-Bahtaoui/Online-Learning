@@ -4,7 +4,7 @@ import numpy as np
 
 from Learner import Learner, ShallContinue, ExperimentHistoryItem
 from change_detectors import ChangeDetectionAlgorithm, CumSum
-from entities import Environment, SimulationConfig, np_random
+from entities import Environment, SimulationConfig, np_random, reservation_price_distribution_from_curves
 from parameter_estimators import *
 
 
@@ -40,9 +40,9 @@ class BanditLearner(Learner):
         self._run_one_day()
         return True  # Bandit learner always runs
 
-    def _calculate_product_rewards(self, selected_price_indexes) -> List[float]:
+    def _calculate_product_rewards(self, selected_price_indexes, customers: List[Customer]) -> List[float]:
         rewards = [0 for _ in self._products]
-        customers = self._customer_history[-1]
+        # customers = self._customer_history[-1]
         for customer in customers:
             for product in self._products:
                 rewards[product.id] += product.candidate_prices[selected_price_indexes[product.id]] * \
@@ -122,7 +122,7 @@ class BanditLearner(Learner):
     def _select_price_criteria(self, product: Product) -> List[float]:
         raise NotImplementedError()
 
-    def _new_day(self, selected_price_indexes: List[int]):
+    def _new_day(self, selected_price_indexes: List[int], persist=True):
         """
         :param selected_price_indexes: List of price indexes that we select for this run, for each product
         """
@@ -169,10 +169,13 @@ class BanditLearner(Learner):
                         continue
                     print("Average reservation price for product", product.name, "for class", class_,
                           sum(prices) / len(prices))
-
-        self._customer_history.append(customers)
-        product_rewards = self._calculate_product_rewards(selected_price_indexes)
-        self._experiment_history.append((sum(product_rewards), selected_price_indexes, product_rewards, False, None))
+        product_rewards = self._calculate_product_rewards(selected_price_indexes, customers)
+        if persist:
+            self._customer_history.append(customers)
+            self._experiment_history.append(
+                (sum(product_rewards), selected_price_indexes, product_rewards, False, None))
+        else:
+            return product_rewards
 
     def _update_learner_state(self, selected_price_indexes, product_rewards, t):
         raise NotImplementedError()
@@ -226,8 +229,10 @@ class BanditLearner(Learner):
                 self.config.non_stationary.reset()
                 self._reset_parameters()
                 self._reset_and_rerun_for_last_n(1)
-                self._experiment_history[-1] = self._experiment_history[-1][:3] + (True,) + self._experiment_history[-1][4:]
-            self._experiment_history[-1] = self._experiment_history[-1][:4] + (non_stationary_result,) + self._experiment_history[-1][5:]
+                self._experiment_history[-1] = self._experiment_history[-1][:3] + (True,) + self._experiment_history[
+                                                                                                -1][4:]
+            self._experiment_history[-1] = self._experiment_history[-1][:4] + (non_stationary_result,) + \
+                                           self._experiment_history[-1][5:]
         else:
             self._update()
 
@@ -244,18 +249,3 @@ class BanditLearner(Learner):
     For each customer class calculate it and sum it up. Then get the maximum reward of all price indexes.
     """
 
-    def clairvoyant_reward(self):
-        selected_price_indexes = self._select_price_indexes()
-        expected_total_reward = 0
-        for customer_class in list(CustomerClass):
-            expected_customer = Customer(customer_class)
-            expected_customer_count = self._config.customer_counts[customer_class].get_expectation()
-            for product in self._products:
-                expected_product_price = product.candidate_prices[selected_price_indexes[product.id]]
-                expected_customer_reservation_price = expected_customer.get_reservation_price_of(product.id,
-                                                                                                 expected_product_price).get_sample_value()
-                if expected_product_price > expected_customer_reservation_price:
-                    reward = expected_product_price * expected_customer_count
-                    reward *= self._config.purchase_amounts[customer_class][product.id].get_expectation()
-                    expected_total_reward += reward
-        return expected_total_reward

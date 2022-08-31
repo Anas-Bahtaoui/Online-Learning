@@ -4,7 +4,8 @@ from typing import List, Tuple, Optional
 import scipy.ndimage
 from matplotlib import pyplot as plt
 
-from entities import Environment, Product, SimulationConfig
+from entities import Environment, Product, SimulationConfig, reservation_price_distribution_from_curves, CustomerClass, \
+    ObservationProbability
 from tqdm import tqdm
 
 ShallContinue = bool
@@ -63,11 +64,13 @@ class Learner:
     _products: List[Product]
     _environment: Environment
     _config: SimulationConfig
+    clairvoyant: Optional[float] = None
 
     def refresh_vars(self, products: List[Product], environment: Environment, config: SimulationConfig):
         self._products = products
         self._environment = environment
         self._config = config
+        self.clairvoyant = None
 
     def __init__(self):
         ## This mechanism is ugly, but let's keep it now :(
@@ -94,11 +97,16 @@ class Learner:
         running = True
         self._verbose = verbose
         self.update_experiment_days(max_days)
+        self.clairvoyant, best_indexes = self.clairvoyant_reward()
+        if log:
+            print(f"Clairvoyant reward for {self.name}: {self.clairvoyant}")
+            print(f"on product indexes: {best_indexes}")
         with tqdm(total=max_days, leave=False) as pbar:
             pbar.set_description(f"Running {self.name}")
             while running and len(self._experiment_history) < max_days:
                 running = self.iterate_once()
-                current_reward, candidate_price_indexes, current_product_rewards, change_detected, _ = self._experiment_history[-1]
+                current_reward, candidate_price_indexes, current_product_rewards, change_detected, _ = \
+                    self._experiment_history[-1]
                 if log:
                     print(f"iteration {len(self._experiment_history)}:")
                     print("Indexes", candidate_price_indexes)
@@ -122,3 +130,57 @@ class Learner:
 
             product_rewards = [product_reward for _, _, product_reward, _, _ in self._experiment_history]
             draw_product_reward_graph(self._products, product_rewards, self.name)
+
+    def calculate_reward_of_product_for_class(self, current_price_indexes: List[int], product: Product,
+                                              class_: CustomerClass) -> float:
+        n_users = self._config.customer_counts[class_].get_expectation()
+
+        def emulate_path(clicked_primaries: Tuple[int, ...], viewing_probability: float, current: Product):
+            # We already looked at this product, thus we can skip it
+            if current.id in clicked_primaries:
+                return 0
+            product_price = product.candidate_prices[current_price_indexes[product.id]]
+            # We don't have simulated users but use expected values directly
+            reservation_price_distribution = reservation_price_distribution_from_curves(class_, product.id,
+                                                                                        product_price)
+            purchase_ratio = reservation_price_distribution.calculate_ratio_of(product_price)
+
+            purchase_probability = purchase_ratio * viewing_probability
+            expected_purchase_count = self._config.purchase_amounts[class_][product.id].get_expectation()
+            result_ = product_price * purchase_probability * n_users * expected_purchase_count
+            result_ = round(result_, 2)  # 2 because we want cents :)
+            first_p: Optional[ObservationProbability]
+            second_p: Optional[ObservationProbability]
+            # Calculation of the primary product done
+            first_p, second_p = product.secondary_products[class_]
+            new_primaries = clicked_primaries + (current.id,)
+            if first_p is not None:
+                # first_p[1] is the graph weight, first_p[0] is the product
+                result_ += emulate_path(new_primaries, first_p[1] * purchase_probability * 1, first_p[0])
+            if second_p is not None:
+                # Now also Lambda has to be multiplied to the product because its a secondary product
+                result_ += emulate_path(new_primaries, second_p[1] * purchase_probability * self._config.lambda_,
+                                        second_p[0])
+            return result_
+
+        # Probability that the customer sees a given product depends on the alpha distribution
+        return round(emulate_path((), self._environment.get_expected_alpha(class_)[product.id + 1], product), 2)
+
+    def clairvoyant_reward(self):
+        from itertools import product
+        product_count = len(self._products)
+        price_index_count = len(self._products[0].candidate_prices)
+        max_reward = 0
+        best_indexes = ()
+        all_price_indexes = list(product(range(price_index_count), repeat=product_count))
+        with tqdm(total=len(all_price_indexes), leave=False) as pbar:
+            pbar.set_description(f"Clairvoyant for {self.name}")
+            for price_indexes in all_price_indexes:
+                total_reward = sum(
+                    self.calculate_reward_of_product_for_class(list(price_indexes), product, class_) for product, class_
+                    in product(self._products, list(CustomerClass)))
+                if total_reward > max_reward:
+                    max_reward = total_reward
+                    best_indexes = price_indexes
+                pbar.update(1)
+        return max_reward, best_indexes

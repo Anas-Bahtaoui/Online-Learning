@@ -29,6 +29,7 @@ class SimulationResult(NamedTuple):
     estimators: Optional[Dict[str, List[HistoryEntry]]]
     change_detected_at: List[int]
     change_history: Optional[List[ChangeHistoryItem]]
+    clairvoyant: float
 
     def serialize(self):
         result = {
@@ -38,6 +39,7 @@ class SimulationResult(NamedTuple):
             "products": [product.serialize() for product in self.products],
             "change_detected_at": self.change_detected_at,
             "change_history": self.change_history,
+            "clairvoyant": self.clairvoyant
         }
         if self.customers is not None:
             result["customers"] = [[customer.serialize() for customer in day] for day in self.customers]
@@ -58,7 +60,8 @@ class SimulationResult(NamedTuple):
             customers=customers,
             estimators=data.get("estimators"),
             change_detected_at=data["change_detected_at"],
-            change_history=data["change_history"]
+            change_history=data["change_history"],
+            clairvoyant=data["clairvoyant"]
         )
 
     @staticmethod
@@ -80,4 +83,5 @@ class SimulationResult(NamedTuple):
         else:
             change_history = []
         return SimulationResult(rewards, price_indexes, product_rewards, simulation.products, customer_history,
-                                estimators, change_detected_at=change_indexes, change_history=change_history)
+                                estimators, change_detected_at=change_indexes, change_history=change_history,
+                                clairvoyant=learner.clairvoyant)

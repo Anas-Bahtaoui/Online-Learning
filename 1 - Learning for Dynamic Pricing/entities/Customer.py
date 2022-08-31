@@ -15,6 +15,7 @@ from basic_types import CustomerClass, Age
 """
 
 
+@lru_cache(maxsize=None)
 def reservation_price_distribution_from_curves(customer_class: CustomerClass, product_id: int, price: float) -> PIG:
     graph_result = read_conversion_probability(price, f"DemandCurves/curves/{customer_class.name}_{product_id}.npy")
     std_norm = scipy.stats.norm.ppf(1 - graph_result)
@@ -50,7 +51,8 @@ def read_conversion_probability(price: float, file_path: str) -> float:
 
 
 class Customer:
-    def __init__(self, class_: CustomerClass, products_clicked=None, products_bought=None, display_name=None, display_age=None):
+    def __init__(self, class_: CustomerClass, products_clicked=None, products_bought=None, display_name=None,
+                 display_age=None):
         """
         :param customer_config: customer configuration dictionary
         """
@@ -69,7 +71,8 @@ class Customer:
             lambda price: reservation_price_distribution_from_curves(self.class_, product_id, price) for product_id in
             range(5)]
         self.display_name = display_name or faker.name()
-        self.display_age = display_age or int(np_random.integers(20) + 16 if self.age == Age.YOUNG else np_random.integers(20) + 36)
+        self.display_age = display_age or int(
+            np_random.integers(20) + 16 if self.age == Age.YOUNG else np_random.integers(20) + 36)
 
     def get_reservation_price_of(self, product_id: int, product_price: float) -> PIG:
         """
