@@ -48,15 +48,22 @@ class NormalGaussian(AbstractDistribution):
     def __hash__(self):
         return hash((self.mean, self.variance))
 
+
 class PositiveIntegerGaussian(NormalGaussian):
     def get_sample_value(self) -> int:
         result = -1
         while result <= 0:
-            result = round(super().get_sample_value())
+            try:
+                result = round(super().get_sample_value())
+            except:
+                breakpoint()
         return result
 
     def get_expectation(self) -> int:
-        return round(super().get_expectation())
+        try:
+            return round(super().get_expectation())
+        except:
+            breakpoint()
 
 
 @dataclass
@@ -79,6 +86,15 @@ class Constant(AbstractDistribution):
 
     def get_expectation(self) -> float:
         return self.value
+
+    @lru_cache(maxsize=None)
+    def calculate_ratio_of(self, value: float) -> float:
+        if value >= self.value:
+            return 1
+        return 0
+
+    def __hash__(self):
+        return hash(self.value)
 
 
 @dataclass

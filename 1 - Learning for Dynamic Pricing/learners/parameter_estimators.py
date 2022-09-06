@@ -91,7 +91,7 @@ class NumberOfItemsSoldEstimator(ParameterEstimator):
 
     def update(self, customer: Customer):
         for product_i, count in customer.products_bought.items():
-            self.product_buy_count[product_i] += count
+            self.product_buy_count[product_i] += count[0]
 
     def modify(self, criterias: List[float], register_history=True) -> List[float]:
         sum_product_buy_count = sum(self.product_buy_count)

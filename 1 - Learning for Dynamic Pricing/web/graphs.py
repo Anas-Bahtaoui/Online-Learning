@@ -102,15 +102,15 @@ def render_customer_table(customers: List[Customer], products: List[Product], se
             class_=str(customer.class_),
             entered_from=products[customer.products_clicked[0]].name if customer.products_clicked else "(out)",
             profit=sum(
-                products[int(product_id)].candidate_prices[selected_price_index[int(product_id)]] * count for
+                products[int(product_id)].candidate_prices[selected_price_index[int(product_id)]] * count[0] for
                 product_id, count in
                 customer.products_bought.items()),
             **{
-                str(product.id): f"{'C ' if product.id in customer.products_clicked else ''}{('& B: ' + str(customer.products_bought[str(product.id)]) if customer.products_bought[str(product.id)] > 0 else '')}"
+                str(product.id): f"{'C ' if product.id in customer.products_clicked else ''}{('& B: ' + str(customer.products_bought[str(product.id)][0]) if customer.products_bought[str(product.id)][0] > 0 else '')}"
                 for product in products},
         ))
         tooltips.append({product.id: dict(
-            value=f"""The customer's reservation price was: *{customer.get_reservation_price_of(product.id, product.candidate_prices[selected_price_index[product.id]])}*
+            value=f"""The customer's reservation price was: *{customer.products_bought[str(product.id)][1]}* from distribution *{customer.get_reservation_price_of(product.id, product.candidate_prices[selected_price_index[product.id]])}*.
 Our offered price was: *{product.candidate_prices[selected_price_index[product.id]]}*
 """, type="markdown") for product in products})
     return dash_table.DataTable(
@@ -131,9 +131,12 @@ def render_for_learner(learner_name: str, learner_data: SimulationResult, resolu
                                  learner_data.change_detected_at, resolution),
         render_product_rewards_graph(learner_data.products, learner_data.product_rewards, learner_name,
                                      learner_data.change_detected_at, resolution),
-        dbc.FormText("Customers Day 0:"),
-        # render_customer_table(learner_data.customers[0], learner_data.products, learner_data.price_indexes[0])
     ]
+    if "Greedy" not in learner_name:
+        graphs.extend([
+            dbc.FormText("Customers Day 10:"),
+            render_customer_table(learner_data.customers[10], learner_data.products, learner_data.price_indexes[10])
+        ])
     if learner_data.estimators is not None and learner_name.find("6") == -1:
         for name, n_items_history in list(learner_data.estimators.items()):  # [:2]:
             n_items_history = [HistoryEntry(*item) for item in n_items_history]

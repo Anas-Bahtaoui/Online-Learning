@@ -40,7 +40,7 @@ resolution_selector = dcc.Dropdown(
     id=ids.resolution_selector,
     searchable=False,
     clearable=False,
-    value=10,
+    value=1,
     options=[
         {"label": "1", "value": 1},
         {"label": "5", "value": 5},

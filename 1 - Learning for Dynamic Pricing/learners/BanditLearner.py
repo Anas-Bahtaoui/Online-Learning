@@ -46,7 +46,7 @@ class BanditLearner(Learner):
         for customer in customers:
             for product in self._products:
                 rewards[product.id] += product.candidate_prices[selected_price_indexes[product.id]] * \
-                                       customer.products_bought[product.id]
+                                       customer.products_bought[product.id][0]
 
         return rewards
 
@@ -60,7 +60,7 @@ class BanditLearner(Learner):
                 for class_ in CustomerClass:
                     custs_ = [customer for customer in customers if customer.class_ == class_]
                     for customer in custs_:
-                        purchase_count += customer.products_bought[product.id]
+                        purchase_count += customer.products_bought[product.id][0]
                         product_click_count += 1 if customer.is_product_clicked(product.id) else 0
                 print("For product", product.name, "selected index",
                       selected_price_indexes[product.id],
@@ -140,6 +140,7 @@ class BanditLearner(Learner):
                 product_price = product.candidate_prices[selected_price_indexes[product.id]]
                 reservation_price = round(
                     customer.get_reservation_price_of(product.id, product_price).get_sample_value(), 2)
+                customer.see_product(product.id, reservation_price)
                 if reservation_price < product_price:
                     return reservation_price
                 buy_count = self._config.purchase_amounts[customer.class_][product.id].get_sample_value()

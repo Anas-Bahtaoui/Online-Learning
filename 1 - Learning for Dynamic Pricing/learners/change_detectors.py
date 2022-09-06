@@ -34,7 +34,7 @@ class CumSum(ChangeDetectionAlgorithm):
         total_purchases = 0
         for customer in last_customers:
             total_visits += len(customer.products_clicked)
-            total_purchases += sum(1 if value > 0 else 0 for value in customer.products_bought.values())
+            total_purchases += sum(1 if value[0] > 0 else 0 for value in customer.products_bought.values())
 
         sample = total_purchases / total_visits
 

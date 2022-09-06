@@ -1,12 +1,12 @@
 from collections import defaultdict
 from functools import lru_cache
-from typing import List, Dict, Set, Callable, NamedTuple
+from typing import List, Dict, Set, Callable, NamedTuple, Tuple
 
 import numpy as np
 import scipy.stats
 
 from random_ import np_random, faker
-from Distribution import PositiveIntegerGaussian as PIG
+from Distribution import PositiveIntegerGaussian as PIG, Constant, AbstractDistribution
 from basic_types import CustomerClass, Age
 
 """
@@ -17,12 +17,21 @@ from basic_types import CustomerClass, Age
 
 @lru_cache(maxsize=None)
 def reservation_price_distribution_from_curves(customer_class: CustomerClass, product_id: int, price: float) -> PIG:
-    graph_result = read_conversion_probability(price, f"DemandCurves/curves/{customer_class.name}_{product_id}.npy")
+    total_prices = 0
+    prices_until_current = 0
+    for _price in range(1, 98):
+        res = read_conversion_probability(price, f"DemandCurves/curves/{customer_class.name}_{product_id}.npy")
+        if _price <= price:
+            prices_until_current += res
+        total_prices += res
+    graph_result = 1 - prices_until_current / total_prices
     std_norm = scipy.stats.norm.ppf(1 - graph_result)
     sigma = 2  # TODO: Do we really want to always set the variance to two?
     # We at first wanted to fit this into 2 variances to cover 97 percent of the interval, but the sigma directly being the variance doesn't mean anything.
     mu = price - sigma * std_norm
-    return PIG(mu, sigma)
+    if abs(mu) > 123123132123123:
+        breakpoint()
+    return PIG(round(mu, 2), sigma)
 
 
 """
@@ -66,7 +75,7 @@ class Customer:
         self.expertise = self.class_.value[0]
 
         self.products_clicked: List[int] = products_clicked or []
-        self.products_bought: Dict[int, int] = products_bought or defaultdict(int)
+        self.products_bought: Dict[int, List[float]] = products_bought or defaultdict(lambda: [0.0, 0.0])
         self.reservation_prices: List[Callable[[float], PIG]] = [
             lambda price: reservation_price_distribution_from_curves(self.class_, product_id, price) for product_id in
             range(5)]
@@ -101,11 +110,18 @@ class Customer:
     def is_product_clicked(self, product_id):
         return product_id in self.products_clicked
 
+    def see_product(self, product_id: int, reservation_price: float):
+        """
+        :param product_id: product id.
+        :param reservation_price: reservation price.
+        """
+        self.products_bought[product_id] = [0, reservation_price]
+
     def buy_product(self, product_id: int, product_count: int):
         """
         :param product_id: product id.
         """
-        self.products_bought[product_id] += product_count
+        self.products_bought[product_id][0] = product_count
 
     def serialize(self):
         return {

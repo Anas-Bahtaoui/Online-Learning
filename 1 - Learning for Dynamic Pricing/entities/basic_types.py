@@ -90,8 +90,8 @@ class SimulationConfig:
                 for to_ in from_:
                     if to_ < 0 or to_ >= 1:
                         raise Exception(f"The probability of {to_} is not in range [0, 1).")
-                if sum(1 for to_ in from_ if to_ > 0) > 2:
-                    raise Exception(f"The number of non-zero probabilities of {from_} is not in range [0, 2].")
+                # if sum(1 for to_ in from_ if to_ > 0) > 2:
+                #     raise Exception(f"The number of non-zero probabilities of {from_} is not in range [0, 2].")
         # Lambda
         if self.lambda_ < 0 or self.lambda_ > 1:
             raise Exception(f"The lambda is not in range [0, 1].")

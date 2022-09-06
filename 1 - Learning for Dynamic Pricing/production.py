@@ -2,18 +2,18 @@ import preamble
 
 from typing import List
 from entities import ProductConfig, SimulationConfig, CustomerTypeBased, Simulation, Dirichlet, \
-    PositiveIntegerGaussian as PIG
+    PositiveIntegerGaussian as PIG, Constant
 from learners import *
 
 LAMBDA_ = 0.1
 
 product_configs: List[ProductConfig] = [
-    ProductConfig("T-shirt", [3, 12, 20, 40]),  # Also here.
-    ProductConfig("Shorts", [5, 13, 22, 35]),
-    ProductConfig("Towel", [2, 10, 15, 20]),
-    ProductConfig("Dumbbells", [5, 16, 34, 45]),
+    ProductConfig("T-shirt", [3, 20, 50, 96]),  # Also here.
+    ProductConfig("Shorts", [10, 25, 70, 90]),
+    ProductConfig("Towel", [1, 3, 5, 7]),
+    ProductConfig("Dumbbells", [5, 10, 15, 30]),
     # TODO: The previous price created an unstability, this one makes uncertainty
-    ProductConfig("Protein Powder", [15, 18, 25, 35]),
+    ProductConfig("Protein Powder", [15, 30, 60, 80]),
 
 ]
 # @formatter:off
@@ -39,17 +39,17 @@ secondaries = CustomerTypeBased(
 
 purchase_amounts: CustomerTypeBased[List[PIG]] = CustomerTypeBased(
     # TODO: Values for how many are bought
-    professional=(PIG(2, 1), PIG(1, 1), PIG(3, 1), PIG(1, 1), PIG(1, 1)),
-    young_beginner=(PIG(3, 1), PIG(2, 1), PIG(6, 1), PIG(1, 1), PIG(2, 1)),
-    old_beginner=(PIG(4, 2), PIG(4, 1), PIG(8, 1), PIG(2, 1), PIG(8, 1)),
+    professional=(Constant(2), Constant(1), Constant(3), Constant(1), Constant(1)),
+    young_beginner=(Constant(3), Constant(2), Constant(6), Constant(1), Constant(2)),
+    old_beginner=(Constant(4), Constant(4), Constant(8), Constant(2), Constant(8)),
 )
 
 # TODO: Assign ratios based on one number, so we can control convergence
 customer_counts: CustomerTypeBased[PIG] = CustomerTypeBased(
     # TODO: Values here
-    professional=PIG(mean=50, variance=4),
-    young_beginner=PIG(mean=100, variance=6),
-    old_beginner=PIG(mean=30, variance=5),
+    professional=Constant(50),
+    young_beginner=Constant(100),
+    old_beginner=Constant(30),
 )
 dirichlets: CustomerTypeBased[Dirichlet] = CustomerTypeBased(
     # TODO: We want class specific values
@@ -70,8 +70,8 @@ learners: List[Learner] = [
     GreedyLearner()
 ]
 
-for step in [step3, step4, step5, step6_sliding_window, step6_change_detection, step7]:
-    for Learner in [NewGTSLearner, UCBLearner]:
+for step in [step3, step4, step5, ]:#step6_sliding_window, step6_change_detection, step7]:
+    for Learner in [UCBLearner, NewerGTSLearner]:
         learners.append(Learner(step))
 
 RUN_COUNT = 50
