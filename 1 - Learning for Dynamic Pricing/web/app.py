@@ -86,14 +86,15 @@ def update_experiment_selectors(data):
     Input(ids.storage, "data"),
     Input(ids.left_experiment_selector, "value"),
     Input(ids.resolution_selector, "value"),
+    Input(ids.customer_day_selector, "value"),
 )
-def update_result_div_left(data, selected_experiment, resolution):
+def update_result_div_left(data, selected_experiment, resolution, day_cnt):
     if data is None or data["results"] is None:
         return html.Div("Run a simulation to compare results")
     if selected_experiment is None:
         return html.Div("Pick an experiment from above to compare")
     results = SimulationResult.deserialize(data["results"][selected_experiment])
-    return render_for_learner(selected_experiment, results, resolution)
+    return render_for_learner(selected_experiment, results, int(day_cnt), resolution)
 
 
 @app.callback(
@@ -101,14 +102,15 @@ def update_result_div_left(data, selected_experiment, resolution):
     Input(ids.storage, "data"),
     Input(ids.right_experiment_selector, "value"),
     Input(ids.resolution_selector, "value"),
+    Input(ids.customer_day_selector, "value"),
 )
-def update_result_div_right(data, selected_experiment, resolution):
+def update_result_div_right(data, selected_experiment, resolution, day_cnt):
     if data is None or data["results"] is None:
         return html.Div()
     if selected_experiment is None:
         return html.Div("Pick an experiment from above to compare")
     results = SimulationResult.deserialize(data["results"][selected_experiment])
-    return render_for_learner(selected_experiment, results, resolution)
+    return render_for_learner(selected_experiment, results, int(day_cnt), resolution)
 
 
 app.layout = layout

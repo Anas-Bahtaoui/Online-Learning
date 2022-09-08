@@ -16,6 +16,7 @@ class IDs(NamedTuple):
     reset_results: str = "reset-results"
     run_count: str = "run-count"
     resolution_selector: str = "resolution-selector"
+    customer_day_selector: str = "customer-day-selector"
 
 
 ids = IDs()

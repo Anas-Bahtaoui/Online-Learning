@@ -1,3 +1,4 @@
+import numpy as np
 import plotly.express
 import plotly.graph_objs as go
 import scipy.ndimage
@@ -15,10 +16,46 @@ def apply_resolution(y, resolution):
     return scipy.ndimage.uniform_filter1d(y, size=resolution)
 
 
-def render_rewards(name, rewards, change_detected_at: List[int], clairvoyant_reward: float, resolution: int):
+def render_rewards(name, rewards, change_detected_at: List[int], clairvoyant_reward: float, resolution: int, std_dev):
     plot = plotly.express.line(x=range(1, len(rewards) + 1), y=apply_resolution(rewards, resolution),
                                labels={"x": "Iteration", "y": "Reward"},
                                title=f"{name} Reward", )
+    lower = rewards - std_dev
+    upper = rewards + std_dev
+    plot.add_trace(
+        go.Scatter(x=list(range(1, len(rewards) + 1)), y=apply_resolution(lower, resolution), fill=None, mode='lines',
+                   line={"color": "#000000"}))
+    plot.add_trace(
+        go.Scatter(x=list(range(1, len(rewards) + 1)), y=apply_resolution(upper, resolution), fill=None, mode='lines',
+                   line={"color": "#000000"}))
+    for detected_i in change_detected_at:
+        plot.add_vline(detected_i)
+    plot.add_hline(clairvoyant_reward, name="Clairvoyant reward")
+    return dcc.Graph(figure=plot)
+
+
+def render_regrets(name, regrets, change_detected_at: List[int], clairvoyant_reward: float, resolution: int, std_dev):
+    plot = plotly.express.line(x=range(1, len(regrets) + 1), y=apply_resolution(regrets, resolution),
+                               labels={"x": "Iteration", "y": "Regret"},
+                               title=f"{name} Regret", )
+    lower = regrets - std_dev
+    upper = regrets + std_dev
+    plot.add_trace(
+        go.Scatter(x=list(range(1, len(regrets) + 1)), y=apply_resolution(lower, resolution), fill=None, mode='lines',
+                   line={"color": "#000000"}))
+    plot.add_trace(
+        go.Scatter(x=list(range(1, len(regrets) + 1)), y=apply_resolution(upper, resolution), fill=None, mode='lines',
+                   line={"color": "#000000"}))
+    for detected_i in change_detected_at:
+        plot.add_vline(detected_i)
+    plot.add_hline(clairvoyant_reward, name="Clairvoyant reward")
+    return dcc.Graph(figure=plot)
+
+
+def render_avg_regrets(name, avg_regrets, change_detected_at: List[int], clairvoyant_reward: float, resolution: int):
+    plot = plotly.express.line(x=range(1, len(avg_regrets) + 1), y=apply_resolution(avg_regrets, resolution),
+                               labels={"x": "Iteration", "y": "Average Regret"},
+                               title=f"{name} Average Regret", )
     for detected_i in change_detected_at:
         plot.add_vline(detected_i)
     plot.add_hline(clairvoyant_reward, name="Clairvoyant reward")
@@ -36,7 +73,8 @@ def render_selection_indexes(products: List[Product], selected_price_indexes: Li
         prices = []
         for selected_price_index in selected_price_indexes:
             prices.append(product.candidate_prices[selected_price_index[product.id]])
-        fig.add_trace(go.Scatter(x=x_iteration, y=apply_resolution(prices, resolution), name=product.name, line={"color": colors[product.id]}))
+        fig.add_trace(go.Scatter(x=x_iteration, y=apply_resolution(prices, resolution), name=product.name,
+                                 line={"color": colors[product.id]}))
     fig.update_layout(title=f"{name} Prices", xaxis_title="Iteration", yaxis_title="Prices per product")
     for detected_i in change_detected_at:
         fig.add_vline(detected_i)
@@ -49,7 +87,9 @@ def render_product_rewards_graph(products: List[Product], product_rewards: List[
     fig = go.Figure()
     for product in products:
         fig.add_trace(
-            go.Scatter(x=x_iteration, y=apply_resolution([product_reward[product.id] for product_reward in product_rewards], resolution),
+            go.Scatter(x=x_iteration,
+                       y=apply_resolution([product_reward[product.id] for product_reward in product_rewards],
+                                          resolution),
                        name=product.name, line={"color": colors[product.id]}))
 
     fig.update_layout(title=f"{name} Product rewards", xaxis_title="Iteration", yaxis_title="Product Rewards")
@@ -124,9 +164,21 @@ Our offered price was: *{product.candidate_prices[selected_price_index[product.i
     )
 
 
-def render_for_learner(learner_name: str, learner_data: SimulationResult, resolution: int = 10):
+def render_for_learner(learner_name: str, learner_data: SimulationResult, day_cnt: int, resolution: int = 10):
+    rewards = learner_data.rewards
+    clairvoyant = learner_data.clairvoyant
+    regrets = np.cumsum(clairvoyant - np.array(rewards))
+    average_regrets = np.mean(np.sum(regrets, axis=0))
+    sd_prof = np.std(rewards, axis=0)
+
+    sd_reg = np.std(regrets, axis=0)
     graphs = [
-        render_rewards(learner_name, learner_data.rewards, learner_data.change_detected_at, learner_data.clairvoyant, resolution),
+        render_rewards(learner_name, np.array(rewards), learner_data.change_detected_at, learner_data.clairvoyant,
+                       resolution, sd_prof),
+        render_regrets(learner_name, regrets, learner_data.change_detected_at, learner_data.clairvoyant,
+                       resolution, sd_reg),
+        # render_avg_regrets(learner_name, average_regrets, learner_data.change_detected_at, learner_data.clairvoyant,
+        #                    resolution),
         render_selection_indexes(learner_data.products, learner_data.price_indexes, learner_name,
                                  learner_data.change_detected_at, resolution),
         render_product_rewards_graph(learner_data.products, learner_data.product_rewards, learner_name,
@@ -134,8 +186,9 @@ def render_for_learner(learner_name: str, learner_data: SimulationResult, resolu
     ]
     if "Greedy" not in learner_name:
         graphs.extend([
-            dbc.FormText("Customers Day 10:"),
-            render_customer_table(learner_data.customers[10], learner_data.products, learner_data.price_indexes[10])
+            dbc.FormText(f"Customers Day {day_cnt}:"),
+            render_customer_table(learner_data.customers[day_cnt], learner_data.products,
+                                  learner_data.price_indexes[day_cnt])
         ])
     if learner_data.estimators is not None and learner_name.find("6") == -1:
         for name, n_items_history in list(learner_data.estimators.items()):  # [:2]:

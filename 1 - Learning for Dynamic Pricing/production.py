@@ -17,6 +17,8 @@ product_configs: List[ProductConfig] = [
 
 ]
 # @formatter:off
+# Rows: from
+# Columns: to
 secondary_product_professional: List[List[float]] = [
     [0,    0,    0.4,  0,    0],
     [0.3,  0,    0,    0.1,  0],
@@ -39,9 +41,9 @@ secondaries = CustomerTypeBased(
 
 purchase_amounts: CustomerTypeBased[List[PIG]] = CustomerTypeBased(
     # TODO: Values for how many are bought
-    professional=(Constant(2), Constant(1), Constant(3), Constant(1), Constant(1)),
-    young_beginner=(Constant(3), Constant(2), Constant(6), Constant(1), Constant(2)),
-    old_beginner=(Constant(4), Constant(4), Constant(8), Constant(2), Constant(8)),
+    professional=(Constant(2), Constant(1), Constant(3), Constant(3), Constant(1)),
+    young_beginner=(Constant(1), Constant(2), Constant(6), Constant(1), Constant(2)),
+    old_beginner=(Constant(2), Constant(2), Constant(8), Constant(2), Constant(3)),
 )
 
 # TODO: Assign ratios based on one number, so we can control convergence
@@ -53,9 +55,9 @@ customer_counts: CustomerTypeBased[PIG] = CustomerTypeBased(
 )
 dirichlets: CustomerTypeBased[Dirichlet] = CustomerTypeBased(
     # TODO: We want class specific values
-    professional=Dirichlet([0.5, 0.5,  0.5, 0.5, 0.5, 0.5]),
-    young_beginner=Dirichlet([0.5, 0.5,  0.5, 0.5, 0.5, 0.5]),
-    old_beginner=Dirichlet([0.5, 0.5,  0.5, 0.5, 0.5, 0.5]),
+    professional=Dirichlet([100, 90,  110, 200, 200, 90]),
+    young_beginner=Dirichlet([100, 110,  130, 190, 180, 120]),
+    old_beginner=Dirichlet([100, 100,  140, 210, 190, 100]),
 )
 
 config = SimulationConfig(
@@ -77,4 +79,4 @@ for step in [step3, step4, step5, step6_sliding_window]:#step6_sliding_window, s
 RUN_COUNT = 50
 if __name__ == '__main__':
     simulation = Simulation(config, learners)
-    simulation.run(RUN_COUNT, log=False, plot_graphs=True, verbose=False)
+    simulation.run(RUN_COUNT, log=True, plot_graphs=True, verbose=False)

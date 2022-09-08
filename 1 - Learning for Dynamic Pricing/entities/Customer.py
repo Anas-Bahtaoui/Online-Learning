@@ -28,7 +28,7 @@ def reservation_price_distribution_from_curves(customer_class: CustomerClass, pr
     std_norm = scipy.stats.norm.ppf(1 - graph_result)
     sigma = 2  # TODO: Do we really want to always set the variance to two?
     # We at first wanted to fit this into 2 variances to cover 97 percent of the interval, but the sigma directly being the variance doesn't mean anything.
-    mu = price - sigma * std_norm
+    mu = price #  - (sigma * std_norm / 2)
     if abs(mu) > 123123132123123:
         breakpoint()
     return PIG(round(mu, 2), sigma)

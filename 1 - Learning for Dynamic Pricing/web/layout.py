@@ -57,10 +57,15 @@ second_row = dbc.Row([
         reset_results_button
     ], md=3),
     dbc.Col([
+        html.P("Customer Day: "),
+        dbc.Input(id=ids.customer_day_selector, type="number", min=0, max=1000, value=0),
+        dbc.FormText("For the customer table"),
+    ], md=3),
+    dbc.Col([
         html.P("Result Resolution: "),
         resolution_selector,
         dbc.FormText("Can be changed after experiment is run"),
-    ], md={"offset": 3, "size": 3}),
+    ], md={"size": 3}),
 ])
 
 dropdownProps = dict(
