@@ -169,9 +169,10 @@ def render_for_learner(learner_name: str, learner_data: SimulationResult, day_cn
     clairvoyant = learner_data.clairvoyant
     regrets = np.cumsum(clairvoyant - np.array(rewards))
     average_regrets = np.mean(np.sum(regrets, axis=0))
-    sd_prof = np.std(rewards, axis=0)
+    sd_prof = np.std(rewards, axis=0)/np.sqrt(len(rewards))
 
-    sd_reg = np.std(regrets, axis=0)
+    sd_reg = np.std(regrets, axis=0)/np.sqrt(len(rewards))
+    
     graphs = [
         render_rewards(learner_name, np.array(rewards), learner_data.change_detected_at, learner_data.clairvoyant,
                        resolution, sd_prof),
