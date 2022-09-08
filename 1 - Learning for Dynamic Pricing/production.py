@@ -5,7 +5,7 @@ from entities import ProductConfig, SimulationConfig, CustomerTypeBased, Simulat
     PositiveIntegerGaussian as PIG, Constant
 from learners import *
 
-LAMBDA_ = 0.1
+LAMBDA_ = 0.85
 
 product_configs: List[ProductConfig] = [
     ProductConfig("T-shirt", [3, 20, 50, 96]),  # Also here.
@@ -53,9 +53,9 @@ customer_counts: CustomerTypeBased[PIG] = CustomerTypeBased(
 )
 dirichlets: CustomerTypeBased[Dirichlet] = CustomerTypeBased(
     # TODO: We want class specific values
-    professional=Dirichlet([1, 10, 10, 1, 1, 1]),
-    young_beginner=Dirichlet([1, 10, 10, 1, 1, 1]),
-    old_beginner=Dirichlet([1, 10, 10, 1, 1, 1]),
+    professional=Dirichlet([0.5, 0.5,  0.5, 0.5, 0.5, 0.5]),
+    young_beginner=Dirichlet([0.5, 0.5,  0.5, 0.5, 0.5, 0.5]),
+    old_beginner=Dirichlet([0.5, 0.5,  0.5, 0.5, 0.5, 0.5]),
 )
 
 config = SimulationConfig(
@@ -70,7 +70,7 @@ learners: List[Learner] = [
     GreedyLearner()
 ]
 
-for step in [step3, step4, step5, ]:#step6_sliding_window, step6_change_detection, step7]:
+for step in [step3, step4, step5, step6_sliding_window]:#step6_sliding_window, step6_change_detection, step7]:
     for Learner in [UCBLearner, NewerGTSLearner]:
         learners.append(Learner(step))
 

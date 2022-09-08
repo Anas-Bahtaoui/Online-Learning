@@ -1,7 +1,8 @@
 from entities import Dirichlet, CustomerTypeBased, PositiveIntegerGaussian as PIG, Constant
 from production import dirichlets, customer_counts, purchase_amounts, secondaries
 
-dirichlet = Dirichlet([100, 100, 100, 100, 100, 100])
+#dirichlet = Dirichlet([0.5, 0.5,  0.5, 0.5, 0.5, 0.5])
+dirichlet = Dirichlet([1, 1,  1, 1, 1, 1])
 same_diriclets: CustomerTypeBased[Dirichlet] = CustomerTypeBased(
     professional=dirichlet,
     young_beginner=dirichlet,
