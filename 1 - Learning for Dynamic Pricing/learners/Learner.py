@@ -7,6 +7,7 @@ from matplotlib import pyplot as plt
 from entities import Environment, Product, SimulationConfig, reservation_price_distribution_from_curves, CustomerClass, \
     ObservationProbability
 from tqdm import tqdm
+import numpy as np
 
 ShallContinue = bool
 Reward = float
@@ -19,7 +20,14 @@ ChangeDetectorParams = Optional[Tuple]
 def draw_reward_graph(rewards: List[Reward], name: str):
     # Plot the current_reward over iterations
     x_iteration = list(range(1, len(rewards) + 1))
+    # Plot the standard deviation over iterations
+    for i in range(1,len(x_iteration)):
+        sd_reward = np.std(rewards, axis=0)/np.sqrt(i)
+        plt.plot(i, scipy.ndimage.uniform_filter1d(rewards, size=10) + sd_reward)
+        plt.plot(i, scipy.ndimage.uniform_filter1d(rewards, size=10) - sd_reward)
+   
     plt.plot(x_iteration, scipy.ndimage.uniform_filter1d(rewards, size=10))
+    
     plt.xlabel("Iteration")
     plt.ylabel("Reward")
     plt.title(f"{name} Reward")
