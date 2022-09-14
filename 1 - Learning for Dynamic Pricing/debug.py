@@ -1,6 +1,7 @@
 from typing import List
 import preamble
-from learners import step3, NewGTSLearner, GreedyLearner, UCBLearner, Learner, step4, step5
+from learners import step3, GreedyLearner, UCBLearner, Learner, step4, step5, BranchingLearner, step7, \
+    NewerGTSLearner
 from entities import Dirichlet, Simulation, CustomerTypeBased, SimulationConfig
 from production import LAMBDA_, product_configs, purchase_amounts, customer_counts
 
@@ -33,11 +34,6 @@ config = SimulationConfig(
 learners: List[Learner] = [
     GreedyLearner(),
     UCBLearner(step3),
-    NewGTSLearner(step3),
-    UCBLearner(step4),
-    NewGTSLearner(step4),
-    UCBLearner(step5),
-    NewGTSLearner(step5),
 ]
 if __name__ == '__main__':
     simulation = Simulation(config, learners)

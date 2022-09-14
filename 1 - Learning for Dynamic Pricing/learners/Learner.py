@@ -1,16 +1,17 @@
 from collections import defaultdict
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict, Union
 
 import scipy.ndimage
 from matplotlib import pyplot as plt
 
+from basic_types import Experience, Age
 from entities import Environment, Product, SimulationConfig, reservation_price_distribution_from_curves, CustomerClass, \
     ObservationProbability
 from tqdm import tqdm
 
 ShallContinue = bool
 Reward = float
-PriceIndexes = List[int]
+PriceIndexes = Union[Dict[Tuple[Experience, Age], List[int]], List[int]]
 ProductRewards = List[float]
 ChangeDetected = bool
 ChangeDetectorParams = Optional[Tuple]

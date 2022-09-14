@@ -1,8 +1,9 @@
 from collections import defaultdict
-from typing import NamedTuple, Union, Optional
+from typing import NamedTuple, Union, Optional, Dict
 import numpy as np
 
-from Learner import Learner, ShallContinue, ExperimentHistoryItem
+from Learner import Learner, ShallContinue, ExperimentHistoryItem, PriceIndexes
+from basic_types import Experience, Age
 from change_detectors import ChangeDetectionAlgorithm, CumSum
 from entities import Environment, SimulationConfig, np_random, reservation_price_distribution_from_curves
 from parameter_estimators import *
@@ -44,8 +45,9 @@ class BanditLearner(Learner):
         rewards = [0 for _ in self._products]
         # customers = self._customer_history[-1]
         for customer in customers:
+            _selected_p_index = selected_price_indexes[customer.class_.value] if isinstance(selected_price_indexes, dict) else selected_price_indexes
             for product in self._products:
-                rewards[product.id] += product.candidate_prices[selected_price_indexes[product.id]] * \
+                rewards[product.id] += product.candidate_prices[_selected_p_index[product.id]] * \
                                        customer.products_bought[product.id][0]
 
         return rewards
@@ -63,7 +65,7 @@ class BanditLearner(Learner):
                         purchase_count += customer.products_bought[product.id][0]
                         product_click_count += 1 if customer.is_product_clicked(product.id) else 0
                 print("For product", product.name, "selected index",
-                      selected_price_indexes[product.id],
+                      selected_price_indexes,
                       "Actual reward:", product_rewards[product.id], "Actual amount of customers", len(customers),
                       "Actual clicked #customers", product_click_count, "Actual bought #customers", purchase_count)
 
@@ -111,7 +113,7 @@ class BanditLearner(Learner):
         if isinstance(self.config.non_stationary, int):
             self.config = self.config._replace(non_stationary=int(days ** 0.5))
 
-    def _select_price_indexes(self) -> List[int]:
+    def _select_price_indexes(self) -> PriceIndexes:
         result = []
         for product in self._products:
             price_vals = self._select_price_criteria(product)
@@ -119,10 +121,10 @@ class BanditLearner(Learner):
             result.append(selected_index)
         return result
 
-    def _select_price_criteria(self, product: Product) -> List[float]:
+    def _select_price_criteria(self, product: Product) -> Union[List[float], Dict[Tuple[Experience, Age], List[float]]]:
         raise NotImplementedError()
 
-    def _new_day(self, selected_price_indexes: List[int], persist=True):
+    def _new_day(self, selected_price_indexes: PriceIndexes, persist=True):
         """
         :param selected_price_indexes: List of price indexes that we select for this run, for each product
         """
@@ -133,11 +135,12 @@ class BanditLearner(Learner):
                  range(self._config.customer_counts[customer_class].get_sample_value())])
         total_reservation_prices = defaultdict(list)
         for customer in customers:
+            _selected_p_index = selected_price_indexes[customer.class_.value] if isinstance(selected_price_indexes, dict) else selected_price_indexes
             def run_on_product(product: Product):
                 if customer.is_product_clicked(product.id):
                     return
                 customer.click_product(product.id)
-                product_price = product.candidate_prices[selected_price_indexes[product.id]]
+                product_price = product.candidate_prices[_selected_p_index[product.id]]
                 reservation_price = round(
                     customer.get_reservation_price_of(product.id, product_price).get_sample_value(), 2)
                 customer.see_product(product.id, reservation_price)
@@ -178,7 +181,7 @@ class BanditLearner(Learner):
         else:
             return product_rewards
 
-    def _update_learner_state(self, selected_price_indexes, product_rewards, t):
+    def _update_learner_state(self, selected_price_indexes: PriceIndexes, product_rewards, t):
         raise NotImplementedError()
 
     def _reset_and_rerun_for_last_n(self, n: int):
@@ -249,4 +252,3 @@ class BanditLearner(Learner):
     TODO We will write a new one similiar to the GREEDY but w/o the constraints.
     For each customer class calculate it and sum it up. Then get the maximum reward of all price indexes.
     """
-

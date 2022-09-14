@@ -72,11 +72,13 @@ learners: List[Learner] = [
     GreedyLearner()
 ]
 
-for step in [step3, step4, step5, step6_sliding_window]:#step6_sliding_window, step6_change_detection, step7]:
+for step in [step3]:#, step4, step5, step6_sliding_window]:#step6_sliding_window, step6_change_detection, step7]:
     for Learner in [UCBLearner, NewerGTSLearner]:
         learners.append(Learner(step))
 
+# learners.append(BranchingLearner(step7._replace(name="Step 7 with UCB"), UCBLearner))
+# learners.append(BranchingLearner(step7._replace(name="Step 7 with GTS"), NewerGTSLearner))
 RUN_COUNT = 50
 if __name__ == '__main__':
     simulation = Simulation(config, learners)
-    simulation.run(RUN_COUNT, log=True, plot_graphs=True, verbose=False)
+    simulation.run(RUN_COUNT, log=False, plot_graphs=False, verbose=False)

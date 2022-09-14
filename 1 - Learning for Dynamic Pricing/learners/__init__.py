@@ -4,3 +4,4 @@ from UCBLearner import UCBLearner
 from Learner import Learner
 from NewerGTSLearner import NewerGTSLearner
 from SlidingUCBLearner import SlidingUCBLearner
+from BranchingLearner import BranchingLearner
