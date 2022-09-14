@@ -1,6 +1,8 @@
 import preamble
 
 from typing import List
+
+from SlidingUCBLearner import SlidingUCBLearner
 from entities import ProductConfig, SimulationConfig, CustomerTypeBased, Simulation, Dirichlet, \
     PositiveIntegerGaussian as PIG, Constant
 from learners import *
@@ -72,9 +74,17 @@ learners: List[Learner] = [
     GreedyLearner()
 ]
 
-for step in [step3, step4, step5, step6_sliding_window]:#step6_sliding_window, step6_change_detection, step7]:
+for step in [
+    step3,
+    # step4,
+    # step5,
+    step6_sliding_window,
+    step6_change_detection,
+]:#step6_sliding_window, step6_change_detection, step7]:
     for Learner in [UCBLearner, NewerGTSLearner]:
         learners.append(Learner(step))
+
+learners.append(SlidingUCBLearner(step6_sliding_window._replace(non_stationary=None)))
 
 RUN_COUNT = 50
 if __name__ == '__main__':

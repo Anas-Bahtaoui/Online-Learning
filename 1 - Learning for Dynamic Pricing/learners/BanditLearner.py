@@ -190,10 +190,6 @@ class BanditLearner(Learner):
             estimator.reset()
         for i in range(-n, 0, 1):
             self._t += 1
-            try:
-                self._experiment_history[i]
-            except Exception as e:
-                breakpoint()
             _, selected_price_indexes, product_rewards, _, _ = self._experiment_history[i]
             if self._t > 1:
                 last_customers = self._customer_history[i - 1]
