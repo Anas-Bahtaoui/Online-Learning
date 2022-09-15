@@ -55,9 +55,9 @@ customer_counts: CustomerTypeBased[PIG] = CustomerTypeBased(
 )
 dirichlets: CustomerTypeBased[Dirichlet] = CustomerTypeBased(
     # TODO: We want class specific values
-    professional=Dirichlet([100, 90,  110, 200, 200, 90]),
-    young_beginner=Dirichlet([100, 110,  130, 190, 180, 120]),
-    old_beginner=Dirichlet([100, 100,  140, 210, 190, 100]),
+    professional=Dirichlet([100, 90, 110, 200, 200, 90]),
+    young_beginner=Dirichlet([100, 110, 130, 190, 180, 120]),
+    old_beginner=Dirichlet([100, 100, 140, 210, 190, 100]),
 )
 
 config = SimulationConfig(
@@ -72,12 +72,12 @@ learners: List[Learner] = [
     GreedyLearner()
 ]
 
-for step in [step3]:#, step4, step5, step6_sliding_window]:#step6_sliding_window, step6_change_detection, step7]:
-    for Learner in [UCBLearner, NewerGTSLearner]:
-        learners.append(Learner(step))
+# for step in [step3]:  # , step4, step5, step6_sliding_window]:#step6_sliding_window, step6_change_detection, step7]:
+#     for Learner in [UCBLearner, NewerGTSLearner]:
+#         learners.append(Learner(step))
 
-# learners.append(BranchingLearner(step7._replace(name="Step 7 with UCB"), UCBLearner))
-# learners.append(BranchingLearner(step7._replace(name="Step 7 with GTS"), NewerGTSLearner))
+learners.append(BranchingLearner(step7._replace(name="Step 7 with UCB"), UCBLearner))
+learners.append(BranchingLearner(step7._replace(name="Step 7 with GTS"), NewerGTSLearner))
 RUN_COUNT = 50
 if __name__ == '__main__':
     simulation = Simulation(config, learners)

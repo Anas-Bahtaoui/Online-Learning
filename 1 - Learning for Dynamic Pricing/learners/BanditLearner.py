@@ -43,9 +43,8 @@ class BanditLearner(Learner):
 
     def _calculate_product_rewards(self, selected_price_indexes, customers: List[Customer]) -> List[float]:
         rewards = [0 for _ in self._products]
-        # customers = self._customer_history[-1]
         for customer in customers:
-            _selected_p_index = selected_price_indexes[customer.class_.value] if isinstance(selected_price_indexes, dict) else selected_price_indexes
+            _selected_p_index = selected_price_indexes[(customer.expertise, customer.age)] if isinstance(selected_price_indexes, dict) else selected_price_indexes
             for product in self._products:
                 rewards[product.id] += product.candidate_prices[_selected_p_index[product.id]] * \
                                        customer.products_bought[product.id][0]
@@ -114,11 +113,19 @@ class BanditLearner(Learner):
             self.config = self.config._replace(non_stationary=int(days ** 0.5))
 
     def _select_price_indexes(self) -> PriceIndexes:
-        result = []
+        from itertools import product as product_
+        if self.config.with_context:
+            result = {val: [0, 0, 0, 0, 0] for val in product_(Experience, Age)}
+        else:
+            result = []
         for product in self._products:
             price_vals = self._select_price_criteria(product)
-            selected_index = int(np.argmax(price_vals))
-            result.append(selected_index)
+            if isinstance(price_vals, dict):
+                for key, val in price_vals.items():
+                    result[key][product.id] = int(np.argmax(val))
+            else:
+                selected_index = int(np.argmax(price_vals))
+                result.append(selected_index)
         return result
 
     def _select_price_criteria(self, product: Product) -> Union[List[float], Dict[Tuple[Experience, Age], List[float]]]:
@@ -135,7 +142,7 @@ class BanditLearner(Learner):
                  range(self._config.customer_counts[customer_class].get_sample_value())])
         total_reservation_prices = defaultdict(list)
         for customer in customers:
-            _selected_p_index = selected_price_indexes[customer.class_.value] if isinstance(selected_price_indexes, dict) else selected_price_indexes
+            _selected_p_index = selected_price_indexes[(customer.expertise, customer.age)] if isinstance(selected_price_indexes, dict) else selected_price_indexes
             def run_on_product(product: Product):
                 if customer.is_product_clicked(product.id):
                     return

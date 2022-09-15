@@ -1,6 +1,7 @@
 from typing import NamedTuple, List, Optional, Dict
 
 from Learner import Reward, PriceIndexes, ProductRewards, Learner
+from basic_types import Experience, Age
 from change_detectors import ChangeHistoryItem
 from entities import Product, Customer, Simulation
 from parameter_estimators import HistoryEntry
@@ -47,6 +48,11 @@ class SimulationResult(NamedTuple):
             result["customers"] = [[customer.serialize() for customer in day] for day in self.customers]
         if self.estimators is not None:
             result["estimators"] = self.estimators
+        if isinstance(self.price_indexes[0], dict):
+            serialized = []
+            for price_index in self.price_indexes:
+                serialized.append([[k[0].value, k[1].value, v] for k, v in price_index.items()])
+            result["price_indexes"] = serialized
         return result
 
     @staticmethod
@@ -54,9 +60,12 @@ class SimulationResult(NamedTuple):
         customers = data.get("customers")
         if customers is not None:
             customers = [[Customer(*customer.values()) for customer in day] for day in customers]
+        price_indexes = data.get("price_indexes")
+        if isinstance(price_indexes[0], list):
+            price_indexes = [{(Experience(x[0]), Age(x[1])): x[2] for x in price_index} for price_index in price_indexes]
         return SimulationResult(
             rewards=data["rewards"],
-            price_indexes=data["price_indexes"],
+            price_indexes=price_indexes,
             product_rewards=data["product_rewards"],
             products=[Product(*product.values()) for product in data["products"]],
             customers=customers,

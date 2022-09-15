@@ -59,7 +59,7 @@ class Simulation:
         price_index_count = len(self.products[0].candidate_prices)
         max_reward = 0
         best_indexes = ()
-        all_price_indexes = list(product(range(price_index_count), repeat=product_count))
+        all_price_indexes = list(product(range(price_index_count), repeat=product_count))[:1]
         with tqdm(total=len(all_price_indexes), leave=False) as pbar:
             pbar.set_description(f"Clairvoyant")
             for price_indexes in all_price_indexes:

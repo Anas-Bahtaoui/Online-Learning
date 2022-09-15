@@ -38,11 +38,11 @@ class BranchingLearner(BanditLearner):
         customers = self._customer_history[-1]
         classes = {k: [] for k in selected_price_indexes.keys()}
         for customer in customers:
-            classes[customer.class_].append(customer)
+            classes[(customer.expertise, customer.age)].append(customer)
 
         for class_, customers_ in classes.items():
-            self._select_learner(class_.experience, class_.age)._update_learner_state(
-                selected_price_indexes[class_],
+            self._select_learner(class_[0], class_[1])._update_learner_state(
+                selected_price_indexes[(class_[0], class_[1])],
                 self._calculate_product_rewards(selected_price_indexes, customers_),
                 t)
         if t % 14 != 13:
@@ -52,7 +52,7 @@ class BranchingLearner(BanditLearner):
         historical_customers = {k: [[] for _ in range(14)] for k in selected_price_indexes.keys()}
         for i, day in enumerate(bi_weekly_customer_history):
             for customer in day:
-                historical_customers[customer.class_][i].append(customer)
+                historical_customers[(customer.expertise, customer.age)][i].append(customer)
 
         bi_weekly_experiment_history = self._experiment_history[-14:]
 
@@ -134,15 +134,18 @@ class BranchingLearner(BanditLearner):
 
     def _reset_parameters(self):
         new_learner = self._learner_factory(self.config)
-        if hasattr(self, '__config'):
-            new_learner.refresh_vars(**self.__config)
-        new_learner._reset_parameters()
+        if hasattr(self, "_vars"):
+            new_learner.refresh_vars(*self._vars)
+            new_learner._reset_parameters()
         self._learners: Dict[Tuple[Optional[Experience], Optional[Age]], BanditLearner] = {
             (None, None): new_learner}
 
-    def refresh_vars(self, **kwargs):
-        self.__config = kwargs
-        (learner.refresh_vars(**kwargs) for learner in self._learners.values())
+    def refresh_vars(self, _products, _environment, _config):
+        self._vars = (_products, _environment, _config)
+        self._environment = _environment
+        self._config = _config
+        self._products = _products
+        [learner.refresh_vars(*self._vars) for learner in self._learners.values()]
 
     def reset(self):
         self.__init__(self.config, self._learner_factory)
