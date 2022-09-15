@@ -7,7 +7,7 @@ import dash_bootstrap_components as dbc
 from typing import List
 from Learner import PriceIndexes, ProductRewards
 from entities import Product, Customer
-from parameter_estimators import HistoryEntry
+from parameter_estimators import ParameterHistoryEntry
 from change_detectors import ChangeHistoryItem
 from web.common import SimulationResult
 
@@ -164,7 +164,7 @@ Our offered price was: *{product.candidate_prices[selected_price_index[product.i
     )
 
 
-def render_for_learner(learner_name: str, learner_data: SimulationResult, day_cnt: int, resolution: int = 10):
+def render_for_learner(learner_name: str, learner_data: List[SimulationResult], day_cnt: int, resolution: int = 10):
     rewards = learner_data.rewards
     clairvoyant = learner_data.clairvoyant
     regrets = np.cumsum(clairvoyant - np.array(rewards))
@@ -193,7 +193,7 @@ def render_for_learner(learner_name: str, learner_data: SimulationResult, day_cn
         ])
     if learner_data.estimators is not None and learner_name.find("6") == -1:
         for name, n_items_history in list(learner_data.estimators.items()):  # [:2]:
-            n_items_history = [HistoryEntry(*item) for item in n_items_history]
+            n_items_history = [ParameterHistoryEntry(*item) for item in n_items_history]
             incoming_list = [item.incoming_prices for item in n_items_history]
             result_list = [item.outgoing_prices for item in n_items_history]
             parameters = [item.parameter for item in n_items_history]

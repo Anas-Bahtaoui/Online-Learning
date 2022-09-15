@@ -7,7 +7,7 @@ from entities import Customer, CustomerTypeBased, AbstractDistribution, Customer
 T = TypeVar("T")
 
 
-class HistoryEntry(NamedTuple):
+class ParameterHistoryEntry(NamedTuple):
     incoming_prices: List[float]
     outgoing_prices: List[float]
     parameter: T
@@ -20,7 +20,7 @@ def safe_div(a, b):
 
 
 class ParameterEstimator:
-    _history: List[HistoryEntry]
+    _history: List[ParameterHistoryEntry]
 
     def __init__(self):
         self._history = []
@@ -60,7 +60,7 @@ class AlphaEstimator(ParameterEstimator):
             result.append(criterias[i] * first_visit_ratio)
             ratios.append(first_visit_ratio)
         if register_history:
-            self._history.append(HistoryEntry(criterias, result, ratios))
+            self._history.append(ParameterHistoryEntry(criterias, result, ratios))
         return result
 
 
@@ -75,7 +75,7 @@ class KnownAlphaEstimator(ParameterEstimator):
     def modify(self, criterias: List[float], register_history=True) -> List[float]:
         result = [criterias[i] * self.alpha[i] for i in range(5)]
         if register_history:
-            self._history.append(HistoryEntry(criterias, result, list(self.alpha)))
+            self._history.append(ParameterHistoryEntry(criterias, result, list(self.alpha)))
         return result
 
 
@@ -103,7 +103,7 @@ class NumberOfItemsSoldEstimator(ParameterEstimator):
             result.append(criterias[i] * product_ratio)
             ratios.append(product_ratio)
         if register_history:
-            self._history.append(HistoryEntry(criterias, result, ratios))
+            self._history.append(ParameterHistoryEntry(criterias, result, ratios))
         return result
 
 
@@ -133,7 +133,7 @@ class KnownItemsSoldEstimator(ParameterEstimator):
         assert all(criteria != 0 for criteria in self.items_sold_ratio)
         result = [criterias[i] * self.items_sold_ratio[i] for i in range(5)]
         if register_history:
-            self._history.append(HistoryEntry(criterias, result, list(self.items_sold_ratio)))
+            self._history.append(ParameterHistoryEntry(criterias, result, list(self.items_sold_ratio)))
         return result
 
 
@@ -162,7 +162,7 @@ class GraphWeightsEstimator(ParameterEstimator):
 
         result = [weights[i] * criterias[i] for i in range(5)]
         if register_history:
-            self._history.append(HistoryEntry(criterias, result, weights))
+            self._history.append(ParameterHistoryEntry(criterias, result, weights))
         return criterias
 
     def reset(self):
@@ -225,5 +225,5 @@ class KnownGraphWeightsEstimator(ParameterEstimator):
         result = [criterias[i] * self.product_weights[i] for i in
                   range(5)]  # Since the weight indicates how much it will be visited in total, so multiply not divide
         if register_history:
-            self._history.append(HistoryEntry(criterias, result, list(self.product_weights)))
+            self._history.append(ParameterHistoryEntry(criterias, result, list(self.product_weights)))
         return result

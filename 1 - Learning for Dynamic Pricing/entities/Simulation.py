@@ -1,12 +1,16 @@
 from dataclasses import dataclass, field
 from operator import itemgetter
-from typing import List, Callable
+from typing import List, Callable, Tuple, Dict, Union
 
 from tqdm import tqdm
 
+from BanditLearner import BanditLearner
 from Environment import Environment
+from Learner import ExperimentHistoryItem
 from Product import Product
 from basic_types import SimulationConfig, CustomerClass
+from entities import Customer
+from learners import Learner, GreedyLearner
 from random_ import np_random
 
 
@@ -16,7 +20,9 @@ class Simulation:
     learners: List['Learner']
     products: List[Product] = field(init=False)
     environment: Environment = field(init=False)
+    experiments: Dict[str, List[Tuple[float, List['ExperimentHistoryItem']]]] = field(init=False)
 
+    # Structure: learner_name -> experiment_index -> (absolute_clairvoyant, day_index -> (experiment_history))
     def __post_init__(self):
 
         # Create products
@@ -37,23 +43,25 @@ class Simulation:
 
         # Create environment
         self.environment = Environment(self.config.dirichlets)
+        self.experiments = {}
 
-    def run(self, days: int, *, log: bool, plot_graphs: bool, verbose: bool):
-        clairvoyant_reward = 0
+    def run(self, days: int, experiment_count: int = 1, *, plot_graphs: bool):
         for learner in self.learners:
-            np_random.reset_seed()
-            learner.refresh_vars(self.products, self.environment, self.config)
-            self.environment.reset_day()
-            learner.reset()
-            learner.run_experiment(days, log=log, plot_graphs=plot_graphs, verbose=verbose)
-            if not clairvoyant_reward and hasattr(learner, "_new_day"):
-                clairvoyant_reward, best_indexes = self.run_clairvoyant(lambda x: learner._new_day(x, False))
-        for learner in self.learners:
-            learner.clairvoyant = clairvoyant_reward
-        if log:
-            print(f"Clairvoyant: {clairvoyant_reward}")
-            print(f"on product indexes: {best_indexes}")
-    def run_clairvoyant(self, calculate: Callable[[List[int]], List[float]]):
+            n_experiment = experiment_count
+            if "Greedy" in learner.name:
+                n_experiment = 1  # Greedy is deterministic
+            self.experiments[learner.name] = []
+            for experiment_index in range(n_experiment):
+                np_random.reset_seed()
+                learner.refresh_vars(self.products, self.environment, self.config)
+                self.environment.reset_day()
+                learner.reset()
+                learner.absolute_clairvoyant, learner.clairvoyant_indexes = self.run_clairvoyant(learner)
+                learner.run_experiment(days, plot_graphs=plot_graphs)
+                self.experiments[learner.name].append((learner.absolute_clairvoyant, learner._experiment_history))
+
+    def run_clairvoyant(self, learner: Learner):
+        calculate = learner._clairvoyant_reward_calculate
         from itertools import product
         product_count = len(self.products)
         price_index_count = len(self.products[0].candidate_prices)

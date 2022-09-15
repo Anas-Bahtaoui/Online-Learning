@@ -48,9 +48,11 @@ def run_experiment(clicks, reset_clicks, saved_data, run_count, *config_values):
     else:
         output_data = {}
         simulation = Simulation(config, learners_)
-        simulation.run(run_count, log=False, plot_graphs=False, verbose=False)
+        simulation.run(run_count, plot_graphs=False)
         for learner in learners_:
-            output_data[learner.name] = SimulationResult.from_result(learner, simulation).serialize()
+            output_data[learner.name] = [
+                SimulationResult.from_result(history, simulation.products, absolute_clairvoyant).serialize() for
+                absolute_clairvoyant, history in simulation.experiments[learner.name]]
         save_results(output_data, cache_key)
     saved_data["results"] = output_data
     return saved_data
