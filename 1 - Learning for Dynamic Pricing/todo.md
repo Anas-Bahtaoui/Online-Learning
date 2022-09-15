@@ -15,6 +15,6 @@
   * We need descriptions for the slides (step 6 and 7).
   * We need the plots and comment on them in the presentation.
   * The way we make parameter estimators.
-
+* Performance Improvements!
 * Experiment with having different distributions in the end.
 
