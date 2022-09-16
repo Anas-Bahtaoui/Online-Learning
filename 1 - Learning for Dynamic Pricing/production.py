@@ -29,6 +29,26 @@ secondary_product_professional: List[List[float]] = [
     [0,    0,    0,    0,    0],
 ]
 # TODO: Custom values for these
+
+"""
+secondary_product_beginner_young: List[List[float]] = [
+    [0,    0.4,   0,  0,    0],
+    [0.3,  0,    0,    0,  0],
+    [0.25,  0, 0,    0.05, 0],
+    [0, 0,    0,    0,    0.15],
+    [0,    0,    0,    0.15,  0],
+]
+
+secondary_product_beginner_old: List[List[float]] = [
+    [0,    0.3,    0.2,  0,    0],
+    [0.3,  0,    0.15,    0,  0],
+    [0.05,    0.25, 0,    0, 0],
+    [0, 0,    0,    0,    0],
+    [0,    0,    0,    0.15,  0],
+]
+
+"""
+
 secondary_product_beginner_young = secondary_product_professional
 secondary_product_beginner_old = secondary_product_professional
 # @formatter:on
