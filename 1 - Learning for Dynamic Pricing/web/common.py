@@ -61,11 +61,8 @@ class SimulationResult(NamedTuple):
         if customers is not None:
             customers = [[Customer(*customer.values()) for customer in day] for day in customers]
         price_indexes = data.get("price_indexes")
-        if isinstance(price_indexes, list) and isinstance(price_indexes[0], list):
-            try:
-                price_indexes = [{(Experience(x[0]), Age(x[1])): x[2] for x in price_index} for price_index in price_indexes]
-            except:
-                breakpoint()
+        if isinstance(price_indexes[0], list) and isinstance(price_indexes[0][0], list):
+            price_indexes = [{(Experience(x[0]), Age(x[1])): x[2] for x in price_index} for price_index in price_indexes]
         return SimulationResult(
             rewards=data["rewards"],
             price_indexes=price_indexes,

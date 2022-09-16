@@ -16,6 +16,24 @@ class BranchingLearner(BanditLearner):
         self._learner_factory = learner_factory
         self._reset_parameters()
 
+    def _reset_parameters(self):
+        new_learner = self._learner_factory(self.config)
+        if hasattr(self, "_vars"):
+            new_learner.refresh_vars(*self._vars)
+            new_learner._reset_parameters()
+        self._learners: Dict[Tuple[Optional[Experience], Optional[Age]], BanditLearner] = {
+            (None, None): new_learner}
+
+    def refresh_vars(self, _products, _environment, _config):
+        self._vars = (_products, _environment, _config)
+        self._environment = _environment
+        self._config = _config
+        self._products = _products
+        [learner.refresh_vars(*self._vars) for learner in self._learners.values()]
+
+    def reset(self):
+        self.__init__(self.config, self._learner_factory)
+
     def _select_learner(self, e: Experience, a: Age):
         if (e, a) in self._learners:
             return self._learners[(e, a)]
@@ -39,12 +57,42 @@ class BranchingLearner(BanditLearner):
         classes = {k: [] for k in selected_price_indexes.keys()}
         for customer in customers:
             classes[(customer.expertise, customer.age)].append(customer)
+        ran_for = set()
 
-        for class_, customers_ in classes.items():
-            self._select_learner(class_[0], class_[1])._update_learner_state(
-                selected_price_indexes[(class_[0], class_[1])],
-                self._calculate_product_rewards(selected_price_indexes, customers_),
-                t)
+        for exp in list(Experience):
+            for age in list(Age):
+                if (exp, age) in self._learners:
+                    self._select_learner(exp, age)._update_learner_state(
+                        selected_price_indexes[(exp, age)],
+                        self._calculate_product_rewards(selected_price_indexes, classes[(exp, age)]),
+                        t)
+                    ran_for.add((exp, age))
+                elif (exp, None) in self._learners and not (exp,) in ran_for:
+                    assert selected_price_indexes[(exp, Age.OLD)] == selected_price_indexes[(exp, Age.YOUNG)]
+                    self._select_learner(exp, age)._update_learner_state(
+                        selected_price_indexes[(exp, Age.OLD)],
+                        # If there is one learner, there can't be two different selected prices so whichever
+                        self._calculate_product_rewards(selected_price_indexes,
+                                                        classes[(exp, Age.OLD)] + classes[(exp, Age.YOUNG)]),
+                        t)
+                    ran_for.add((exp,))
+                elif (None, age) in self._learners and not (age,) in ran_for:
+                    assert selected_price_indexes[(Experience.PROFESSIONAL, age)] == selected_price_indexes[
+                        (Experience.BEGINNER, age)]
+                    self._select_learner(exp, age)._update_learner_state(
+                        selected_price_indexes[(Experience.PROFESSIONAL, age)],
+                        # If there is one learner, there can't be two different selected prices so both are same
+                        self._calculate_product_rewards(selected_price_indexes,
+                                                        classes[(Experience.PROFESSIONAL, age)] + classes[
+                                                            (Experience.BEGINNER, age)]),
+                        t)
+                    ran_for.add((age,))
+        if not ran_for:
+            # There is only the default learner, no splitting yet
+            self._learners[(None, None)]._update_learner_state(
+                selected_price_indexes[(Experience.PROFESSIONAL, Age.OLD)],
+                self._calculate_product_rewards(selected_price_indexes, customers),t
+            )
         if t % 14 != 13:
             return
 
@@ -92,7 +140,11 @@ class BranchingLearner(BanditLearner):
         base_criteria = sum(product_rewards)
         if split_experience_criteria > base_criteria and (
                 split_age_criteria <= base_criteria or split_experience_criteria > split_age_criteria):
-            beginner_learner, professional_learner = split_learners(merge(historical_customers[(Experience.BEGINNER,Age.YOUNG)], historical_customers[(Experience.BEGINNER,Age.OLD)]), merge(historical_customers[(Experience.PROFESSIONAL,Age.YOUNG)], historical_customers[(Experience.PROFESSIONAL,Age.OLD)]))
+            beginner_learner, professional_learner = split_learners(
+                merge(historical_customers[(Experience.BEGINNER, Age.YOUNG)],
+                      historical_customers[(Experience.BEGINNER, Age.OLD)]),
+                merge(historical_customers[(Experience.PROFESSIONAL, Age.YOUNG)],
+                      historical_customers[(Experience.PROFESSIONAL, Age.OLD)]))
             split_age_beginner = split_criteria(classes[(Experience.BEGINNER, Age.YOUNG)],
                                                 classes[(Experience.BEGINNER, Age.OLD)]) > sum(
                 self._calculate_product_rewards(selected_price_indexes, experience_split_beginner))
@@ -102,17 +154,23 @@ class BranchingLearner(BanditLearner):
             if split_age_beginner:
                 self._learners[(Experience.BEGINNER, Age.YOUNG)], self._learners[
                     (Experience.BEGINNER, Age.OLD)] = split_learners(
-                    historical_customers[(Experience.BEGINNER, Age.YOUNG)], historical_customers[(Experience.BEGINNER, Age.OLD)])
+                    historical_customers[(Experience.BEGINNER, Age.YOUNG)],
+                    historical_customers[(Experience.BEGINNER, Age.OLD)])
             else:
                 self._learners[(Experience.BEGINNER, None)] = beginner_learner
             if split_age_pros:
                 self._learners[(Experience.PROFESSIONAL, Age.YOUNG)], self._learners[
                     (Experience.PROFESSIONAL, Age.OLD)] = split_learners(
-                    historical_customers[(Experience.PROFESSIONAL, Age.YOUNG)], historical_customers[(Experience.PROFESSIONAL, Age.OLD)])
+                    historical_customers[(Experience.PROFESSIONAL, Age.YOUNG)],
+                    historical_customers[(Experience.PROFESSIONAL, Age.OLD)])
             else:
                 self._learners[(Experience.PROFESSIONAL, None)] = professional_learner
         elif split_age_criteria > base_criteria:
-            young_learner, old_learner = split_learners(merge(historical_customers[(Experience.BEGINNER,Age.YOUNG)], historical_customers[(Experience.PROFESSIONAL,Age.YOUNG)]), merge(historical_customers[(Experience.BEGINNER,Age.OLD)], historical_customers[(Experience.PROFESSIONAL,Age.OLD)]))
+            young_learner, old_learner = split_learners(merge(historical_customers[(Experience.BEGINNER, Age.YOUNG)],
+                                                              historical_customers[
+                                                                  (Experience.PROFESSIONAL, Age.YOUNG)]),
+                                                        merge(historical_customers[(Experience.BEGINNER, Age.OLD)],
+                                                              historical_customers[(Experience.PROFESSIONAL, Age.OLD)]))
             split_experience_young = split_criteria(classes[(Experience.BEGINNER, Age.YOUNG)],
                                                     classes[(Experience.PROFESSIONAL, Age.YOUNG)]) > sum(
                 self._calculate_product_rewards(selected_price_indexes, age_split_young))
@@ -122,30 +180,14 @@ class BranchingLearner(BanditLearner):
             if split_experience_young:
                 self._learners[(Experience.BEGINNER, Age.YOUNG)], self._learners[
                     (Experience.PROFESSIONAL, Age.YOUNG)] = split_learners(
-                    historical_customers[(Experience.BEGINNER, Age.YOUNG)], historical_customers[(Experience.PROFESSIONAL, Age.YOUNG)])
+                    historical_customers[(Experience.BEGINNER, Age.YOUNG)],
+                    historical_customers[(Experience.PROFESSIONAL, Age.YOUNG)])
             else:
                 self._learners[(None, Age.YOUNG)] = young_learner
             if split_experience_old:
                 self._learners[(Experience.BEGINNER, Age.OLD)], self._learners[
                     (Experience.PROFESSIONAL, Age.OLD)] = split_learners(
-                    historical_customers[(Experience.BEGINNER, Age.OLD)], historical_customers[(Experience.PROFESSIONAL, Age.OLD)])
+                    historical_customers[(Experience.BEGINNER, Age.OLD)],
+                    historical_customers[(Experience.PROFESSIONAL, Age.OLD)])
             else:
                 self._learners[(None, Age.OLD)] = old_learner
-
-    def _reset_parameters(self):
-        new_learner = self._learner_factory(self.config)
-        if hasattr(self, "_vars"):
-            new_learner.refresh_vars(*self._vars)
-            new_learner._reset_parameters()
-        self._learners: Dict[Tuple[Optional[Experience], Optional[Age]], BanditLearner] = {
-            (None, None): new_learner}
-
-    def refresh_vars(self, _products, _environment, _config):
-        self._vars = (_products, _environment, _config)
-        self._environment = _environment
-        self._config = _config
-        self._products = _products
-        [learner.refresh_vars(*self._vars) for learner in self._learners.values()]
-
-    def reset(self):
-        self.__init__(self.config, self._learner_factory)

@@ -63,7 +63,7 @@ def render_avg_regrets(name, avg_regrets, change_detected_at: List[int], clairvo
     return dcc.Graph(figure=plot)
 
 
-colors = ["red", "blue", "yellow", "green", "purple"]
+colors = ["red", "blue", "yellow", "green", "purple", "orange", "pink", "brown", "olive", "cyan"]
 
 
 def render_selection_indexes(products: List[Product], selected_price_indexes: List[PriceIndexes], name: str,
@@ -77,10 +77,10 @@ def render_selection_indexes(products: List[Product], selected_price_indexes: Li
             for price_indexes in selected_price_indexes:
                 for k, v in price_indexes.items():
                     prices[k].append(product.candidate_prices[v[product.id]])
-            for k in price_indexes.keys():
+            for i, k in enumerate(price_indexes.keys(),start=1):
                 fig.add_trace(
-                    go.Scatter(x=x_iteration, y=apply_resolution(prices[k], resolution), name=f"{product.name} {k[0].value} {k[1].value}",
-                               line={"color": colors[product.id]}))
+                    go.Scatter(x=x_iteration, y=apply_resolution(prices[k], resolution), name=f"{product.name} {k[0].value[:2]} {k[1].value[:2]}",
+                               line={"color": colors[(product.id + i) % len(colors)]}))
         else:
             prices = []
             for selected_price_index in selected_price_indexes:

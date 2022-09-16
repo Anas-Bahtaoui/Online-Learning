@@ -72,9 +72,9 @@ learners: List[Learner] = [
     GreedyLearner()
 ]
 
-# for step in [step3]:  # , step4, step5, step6_sliding_window]:#step6_sliding_window, step6_change_detection, step7]:
-#     for Learner in [UCBLearner, NewerGTSLearner]:
-#         learners.append(Learner(step))
+for step in [step3]:  # , step4, step5, step6_sliding_window]:#step6_sliding_window, step6_change_detection, step7]:
+    for Learner in [UCBLearner, NewerGTSLearner]:
+        learners.append(Learner(step))
 
 learners.append(BranchingLearner(step7._replace(name="Step 7 with UCB"), UCBLearner))
 learners.append(BranchingLearner(step7._replace(name="Step 7 with GTS"), NewerGTSLearner))
