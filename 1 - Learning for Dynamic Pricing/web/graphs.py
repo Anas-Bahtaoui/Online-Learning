@@ -6,6 +6,7 @@ from dash import dcc, dash_table
 import dash_bootstrap_components as dbc
 from typing import List
 from Learner import PriceIndexes, ProductRewards
+from basic_types import Experience, Age
 from entities import Product, Customer
 from parameter_estimators import HistoryEntry
 from change_detectors import ChangeHistoryItem
@@ -69,11 +70,22 @@ def render_selection_indexes(products: List[Product], selected_price_indexes: Li
                              change_detected_at: List[int], resolution: int):
     x_iteration = list(range(1, len(selected_price_indexes) + 1))
     fig = go.Figure()
+    from itertools import product as product_
     for product in products:
-        prices = []
-        for selected_price_index in selected_price_indexes:
-            prices.append(product.candidate_prices[selected_price_index[product.id]])
-        fig.add_trace(go.Scatter(x=x_iteration, y=apply_resolution(prices, resolution), name=product.name,
+        if isinstance(selected_price_indexes[0], dict):
+            prices = {(e, a): [] for e, a in product_(Experience, Age)}
+            for price_indexes in selected_price_indexes:
+                for k, v in price_indexes.items():
+                    prices[k].append(product.candidate_prices[v[product.id]])
+            for k in price_indexes.keys():
+                fig.add_trace(
+                    go.Scatter(x=x_iteration, y=apply_resolution(prices[k], resolution), name=f"{product.name} {k[0].value} {k[1].value}",
+                               line={"color": colors[product.id]}))
+        else:
+            prices = []
+            for selected_price_index in selected_price_indexes:
+                prices.append(product.candidate_prices[selected_price_index[product.id]])
+            fig.add_trace(go.Scatter(x=x_iteration, y=apply_resolution(prices, resolution), name=product.name,
                                  line={"color": colors[product.id]}))
     fig.update_layout(title=f"{name} Prices", xaxis_title="Iteration", yaxis_title="Prices per product")
     for detected_i in change_detected_at:
@@ -123,7 +135,7 @@ def render_change_detection_graph_graph(change_detection_history: List[ChangeHis
     return dcc.Graph(figure=fig)
 
 
-def render_customer_table(customers: List[Customer], products: List[Product], selected_price_index: PriceIndexes):
+def render_customer_table(customers: List[Customer], products: List[Product], selected_price_indexes: PriceIndexes):
     data = []
     tooltips = []
     columns = {
@@ -135,6 +147,11 @@ def render_customer_table(customers: List[Customer], products: List[Product], se
         **{str(product.id): product.name for product in products},
     }
     columns_ = [{"name": v, "id": k} for k, v in columns.items()]
+    from itertools import product as product_
+    if isinstance(selected_price_indexes, list):
+        selected_price_indexes = {
+            (k, v): selected_price_indexes for k, v in product_(Experience, Age)
+        }
     for customer in customers:
         data.append(dict(
             name=customer.display_name,
@@ -142,7 +159,7 @@ def render_customer_table(customers: List[Customer], products: List[Product], se
             class_=str(customer.class_),
             entered_from=products[customer.products_clicked[0]].name if customer.products_clicked else "(out)",
             profit=sum(
-                products[int(product_id)].candidate_prices[selected_price_index[int(product_id)]] * count[0] for
+                products[int(product_id)].candidate_prices[selected_price_indexes[(customer.expertise, customer.age)][int(product_id)]] * count[0] for
                 product_id, count in
                 customer.products_bought.items()),
             **{
@@ -150,8 +167,8 @@ def render_customer_table(customers: List[Customer], products: List[Product], se
                 for product in products},
         ))
         tooltips.append({product.id: dict(
-            value=f"""The customer's reservation price was: *{customer.products_bought[str(product.id)][1]}* from distribution *{customer.get_reservation_price_of(product.id, product.candidate_prices[selected_price_index[product.id]])}*.
-Our offered price was: *{product.candidate_prices[selected_price_index[product.id]]}*
+            value=f"""The customer's reservation price was: *{customer.products_bought[str(product.id)][1]}* from distribution *{customer.get_reservation_price_of(product.id, product.candidate_prices[selected_price_indexes[(customer.expertise, customer.age)][product.id]])}*.
+Our offered price was: *{product.candidate_prices[selected_price_indexes[(customer.expertise, customer.age)][product.id]]}*
 """, type="markdown") for product in products})
     return dash_table.DataTable(
         columns=columns_,
@@ -169,10 +186,10 @@ def render_for_learner(learner_name: str, learner_data: SimulationResult, day_cn
     clairvoyant = learner_data.clairvoyant
     regrets = np.cumsum(clairvoyant - np.array(rewards))
     average_regrets = np.mean(np.sum(regrets, axis=0))
-    sd_prof = np.std(rewards, axis=0)/np.sqrt(len(rewards))
+    sd_prof = np.std(rewards, axis=0) / np.sqrt(len(rewards))
 
-    sd_reg = np.std(regrets, axis=0)/np.sqrt(len(rewards))
-    
+    sd_reg = np.std(regrets, axis=0) / np.sqrt(len(rewards))
+
     graphs = [
         render_rewards(learner_name, np.array(rewards), learner_data.change_detected_at, learner_data.clairvoyant,
                        resolution, sd_prof),
