@@ -62,7 +62,7 @@ class Simulation:
         all_price_indexes = list(product(range(price_index_count), repeat=product_count))
         with tqdm(total=len(all_price_indexes), leave=False) as pbar:
             pbar.set_description(f"Clairvoyant")
-            for price_indexes in all_price_indexes:
+            for price_indexes in all_price_indexes[:1]:
                 total_reward = sum(calculate(list(price_indexes)))
                 if total_reward > max_reward:
                     max_reward = total_reward

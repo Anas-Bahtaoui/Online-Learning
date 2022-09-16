@@ -72,7 +72,8 @@ learners: List[Learner] = [
     GreedyLearner()
 ]
 
-for step in [step3]:  # , step4, step5, step6_sliding_window]:#step6_sliding_window, step6_change_detection, step7]:
+for step in [
+    step4]:  # [step3]:  # , step4, step5, step6_sliding_window]:#step6_sliding_window, step6_change_detection, step7]:
     for Learner in [UCBLearner, NewerGTSLearner]:
         learners.append(Learner(step))
 
