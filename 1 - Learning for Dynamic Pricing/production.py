@@ -28,29 +28,24 @@ secondary_product_professional: List[List[float]] = [
     [0.15, 0,    0,    0,    0],
     [0,    0,    0,    0,    0],
 ]
-# TODO: Custom values for these
 
-"""
 secondary_product_beginner_young: List[List[float]] = [
-    [0,    0.4,   0,  0,    0],
-    [0.3,  0,    0,    0,  0],
-    [0.25,  0, 0,    0.05, 0],
-    [0, 0,    0,    0,    0.15],
-    [0,    0,    0,    0.15,  0],
+    [0,    0.4,  0,    0,    0],
+    [0.3,  0,    0,    0,    0],
+    [0.25, 0,    0,    0.05, 0],
+    [0,    0,    0,    0,    0.15],
+    [0,    0,    0,    0.15, 0],
 ]
 
 secondary_product_beginner_old: List[List[float]] = [
-    [0,    0.3,    0.2,  0,    0],
-    [0.3,  0,    0.15,    0,  0],
-    [0.05,    0.25, 0,    0, 0],
-    [0, 0,    0,    0,    0],
-    [0,    0,    0,    0.15,  0],
+    [0,    0.3,  0.2,  0,    0],
+    [0.3,  0,    0.15, 0,    0],
+    [0.05, 0.25, 0,    0,    0],
+    [0,    0,    0,    0,    0],
+    [0,    0,    0,    0.15, 0],
 ]
 
-"""
 
-secondary_product_beginner_young = secondary_product_professional
-secondary_product_beginner_old = secondary_product_professional
 # @formatter:on
 
 secondaries = CustomerTypeBased(
@@ -77,9 +72,9 @@ customer_counts: CustomerTypeBased[PIG] = CustomerTypeBased(
 )
 dirichlets: CustomerTypeBased[Dirichlet] = CustomerTypeBased(
     # TODO: We want class specific values
-    professional=Dirichlet([100, 90,  110, 200, 200, 90]),
-    young_beginner=Dirichlet([100, 110,  130, 190, 180, 120]),
-    old_beginner=Dirichlet([100, 100,  140, 210, 190, 100]),
+    professional=Dirichlet([100, 90, 110, 200, 200, 90]),
+    young_beginner=Dirichlet([100, 110, 130, 190, 180, 120]),
+    old_beginner=Dirichlet([100, 100, 140, 210, 190, 100]),
 )
 
 config = SimulationConfig(
@@ -100,7 +95,7 @@ for step in [
     # step5,
     step6_sliding_window,
     step6_change_detection,
-]:#step6_sliding_window, step6_change_detection, step7]:
+]:  # step6_sliding_window, step6_change_detection, step7]:
     for Learner in [UCBLearner, NewerGTSLearner]:
         learners.append(Learner(step))
 
