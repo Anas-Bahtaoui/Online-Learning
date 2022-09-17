@@ -45,6 +45,19 @@ secondary_product_beginner_old: List[List[float]] = [
     [0,    0,    0,    0.15, 0],
 ]
 
+"""
+
+# fully connected graph transition matrix
+secondary_product_fully_connected: List[List[float]] = [
+    [0, 0.3, 0.3, 0.1, 0.1],
+    [0.3, 0, 0.3, 0.1, 0.1],
+    [0.3, 0.3, 0, 0.1, 0.1],
+    [0.1, 0.1, 0.1, 0, 0.4],
+    [0.1, 0.1, 0.1, 0.4, 0],
+]
+
+"""
+
 
 # @formatter:on
 
