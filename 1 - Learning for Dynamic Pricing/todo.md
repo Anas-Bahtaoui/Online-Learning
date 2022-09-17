@@ -1,7 +1,6 @@
 ### TODO
 
 * We need multiple experiments.
-* We need to except for step 6 have the same customers on all simulations.
 * Step 7: We need it.
 * Fully-connected graphs, we need a logic for different weights for graphs, it is just another preset for weights.
 * New Demand curves for step 6 abrupt changes.
@@ -12,9 +11,15 @@
 
 * We want to have similar but different weights for classes.
 * We need obv. the slides:
-  * We need descriptions for the slides (step 6 and 7).
-  * We need the plots and comment on them in the presentation.
-  * The way we make parameter estimators.
+    * Shorten the text
+    * Take code for CumSum and learners maybe?
+    * Conclusions
+    * Maybe a bit prettier formulas
+    * More code and graphs for presentation hehe
+    * We need descriptions for the slides (step 6 and 7).
+    * We need the plots and comment on them in the presentation.
+    * The way we make parameter estimators.
+* We need to except for step 6 have the same customers on all simulations.
 * Performance Improvements!
 * Experiment with having different distributions in the end.
 
