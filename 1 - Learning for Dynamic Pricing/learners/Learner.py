@@ -1,13 +1,13 @@
-from collections import defaultdict
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, NamedTuple, Dict
 
 import scipy.ndimage
 from matplotlib import pyplot as plt
 
-from entities import Environment, Product, SimulationConfig, reservation_price_distribution_from_curves, CustomerClass, \
-    ObservationProbability
+from entities import Environment, Product, SimulationConfig, Customer
 from tqdm import tqdm
 import numpy as np
+
+from parameter_estimators import ParameterHistoryEntry
 
 ShallContinue = bool
 Reward = float
@@ -15,19 +15,20 @@ PriceIndexes = List[int]
 ProductRewards = List[float]
 ChangeDetected = bool
 ChangeDetectorParams = Optional[Tuple]
+ClairvoyantReward = float
 
 
 def draw_reward_graph(rewards: List[Reward], name: str):
     # Plot the current_reward over iterations
     x_iteration = list(range(1, len(rewards) + 1))
     # Plot the standard deviation over iterations
-    for i in range(1,len(x_iteration)):
-        sd_reward = np.std(rewards, axis=0)/np.sqrt(i)
+    for i in range(1, len(x_iteration)):
+        sd_reward = np.std(rewards, axis=0) / np.sqrt(i)
         plt.plot(i, scipy.ndimage.uniform_filter1d(rewards, size=10) + sd_reward)
         plt.plot(i, scipy.ndimage.uniform_filter1d(rewards, size=10) - sd_reward)
-   
+
     plt.plot(x_iteration, scipy.ndimage.uniform_filter1d(rewards, size=10))
-    
+
     plt.xlabel("Iteration")
     plt.ylabel("Reward")
     plt.title(f"{name} Reward")
@@ -64,7 +65,15 @@ def draw_product_reward_graph(products: List[Product], product_rewards: List[Pro
     plt.show()
 
 
-ExperimentHistoryItem = Tuple[Reward, PriceIndexes, ProductRewards, ChangeDetected, ChangeDetectorParams]
+class ExperimentHistoryItem(NamedTuple):
+    reward: Reward
+    selected_price_indexes: PriceIndexes
+    product_rewards: ProductRewards
+    change_detected: ChangeDetected
+    change_detector_params: ChangeDetectorParams
+    clairvoyant_reward: ClairvoyantReward
+    customers: Optional[List["Customer"]] # For some reason typing resolves the module, not the class
+    estimators: Optional[Dict[str, ParameterHistoryEntry]]
 
 
 class Learner:
@@ -72,19 +81,20 @@ class Learner:
     _products: List[Product]
     _environment: Environment
     _config: SimulationConfig
-    clairvoyant: Optional[float] = None
+    absolute_clairvoyant: Optional[float] = None
+    clairvoyant_indexes: Optional[List[int]] = None
 
     def refresh_vars(self, products: List[Product], environment: Environment, config: SimulationConfig):
         self._products = products
         self._environment = environment
         self._config = config
-        self.clairvoyant = None
+        self.absolute_clairvoyant = None
+        self.clairvoyant_indexes = None
 
     def __init__(self):
         ## This mechanism is ugly, but let's keep it now :(
         if not hasattr(self, "_products"):
             self._products = []
-        self._verbose = False
         self._experiment_history: List[ExperimentHistoryItem] = []
 
     def reset(self):
@@ -99,32 +109,16 @@ class Learner:
     def update_experiment_days(self, days: int):
         raise NotImplementedError()
 
-    def run_experiment(self, max_days: int, *, log: bool = False, plot_graphs: bool = True,
-                       verbose: bool = True) -> None:
+    def run_experiment(self, max_days: int, *, plot_graphs: bool = True, current_n: Optional[int] = None) -> None:
         ## TODO: This is a very bad way, we want more presentable results :)
         running = True
-        self._verbose = verbose
         self.update_experiment_days(max_days)
         with tqdm(total=max_days, leave=False) as pbar:
-            pbar.set_description(f"Running {self.name}")
+            pbar.set_description(f"Running {self.name}{' for experiment ' + str(current_n) if current_n is not None else ''}")
             while running and len(self._experiment_history) < max_days:
                 running = self.iterate_once()
-                current_reward, candidate_price_indexes, current_product_rewards, change_detected, _ = \
-                    self._experiment_history[-1]
-                if log:
-                    print(f"iteration {len(self._experiment_history)}:")
-                    print("Indexes", candidate_price_indexes)
-                    print("Reward", current_reward)
-                    print("Product rewards", current_product_rewards)
-                    if change_detected:
-                        print("Change detected")
                 pbar.update(1)
 
-        final_reward, final_candidate_price_indexes, final_product_reward, _, _ = self._experiment_history[-1]
-        if log:
-            print("Identified price indexes:", final_candidate_price_indexes)
-            print("Final reward:", final_reward)
-            print("Product rewards:", final_product_reward)
         if plot_graphs:
             rewards = [reward for reward, _, _, _, _ in self._experiment_history]
             draw_reward_graph(rewards, self.name)
@@ -134,3 +128,6 @@ class Learner:
 
             product_rewards = [product_reward for _, _, product_reward, _, _ in self._experiment_history]
             draw_product_reward_graph(self._products, product_rewards, self.name)
+
+    def _clairvoyant_reward_calculate(self, price_indexes) -> float:
+        raise NotImplementedError()

@@ -117,4 +117,4 @@ learners.append(SlidingUCBLearner(step6_sliding_window._replace(non_stationary=N
 RUN_COUNT = 50
 if __name__ == '__main__':
     simulation = Simulation(config, learners)
-    simulation.run(RUN_COUNT, log=True, plot_graphs=True, verbose=False)
+    simulation.run(RUN_COUNT, plot_graphs=True)

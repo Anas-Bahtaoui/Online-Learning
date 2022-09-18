@@ -15,7 +15,7 @@ class ChangeDetectionAlgorithm:
         # It is not arm specific
         raise NotImplementedError()
 
-    def update(self, last_customers: List[Customer]) -> NamedTuple:
+    def update(self, last_customers: List["Customer"]) -> NamedTuple:
         raise NotImplementedError()
 
     def reset(self):
@@ -29,7 +29,7 @@ class CumSum(ChangeDetectionAlgorithm):
         self.threshold = threshold
         self.reset()
 
-    def _calculate_sample(self, last_customers: List[Customer]) -> float:
+    def _calculate_sample(self, last_customers: List["Customer"]) -> float:
         total_visits = 0
         total_purchases = 0
         for customer in last_customers:
@@ -40,7 +40,7 @@ class CumSum(ChangeDetectionAlgorithm):
 
         return sample
 
-    def update(self, last_customers: List[Customer]) -> ChangeHistoryItem:
+    def update(self, last_customers: List["Customer"]) -> ChangeHistoryItem:
 
         sample = self._calculate_sample(last_customers)
         history_item = ChangeHistoryItem(0, 0, sample)
