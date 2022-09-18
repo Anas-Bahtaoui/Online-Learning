@@ -1,11 +1,9 @@
-from collections import defaultdict
 from typing import List, Tuple, Optional, NamedTuple, Dict
 
 import scipy.ndimage
 from matplotlib import pyplot as plt
 
-from entities import Environment, Product, SimulationConfig, reservation_price_distribution_from_curves, CustomerClass, \
-    ObservationProbability, Customer
+from entities import Environment, Product, SimulationConfig, Customer
 from tqdm import tqdm
 import numpy as np
 
@@ -74,7 +72,7 @@ class ExperimentHistoryItem(NamedTuple):
     change_detected: ChangeDetected
     change_detector_params: ChangeDetectorParams
     clairvoyant_reward: ClairvoyantReward
-    customers: Optional[List[Customer]]
+    customers: Optional[List["Customer"]] # For some reason typing resolves the module, not the class
     estimators: Optional[Dict[str, ParameterHistoryEntry]]
 
 
@@ -111,12 +109,12 @@ class Learner:
     def update_experiment_days(self, days: int):
         raise NotImplementedError()
 
-    def run_experiment(self, max_days: int, *, plot_graphs: bool = True) -> None:
+    def run_experiment(self, max_days: int, *, plot_graphs: bool = True, current_n: Optional[int] = None) -> None:
         ## TODO: This is a very bad way, we want more presentable results :)
         running = True
         self.update_experiment_days(max_days)
         with tqdm(total=max_days, leave=False) as pbar:
-            pbar.set_description(f"Running {self.name}")
+            pbar.set_description(f"Running {self.name}{' for experiment ' + str(current_n) if current_n is not None else ''}")
             while running and len(self._experiment_history) < max_days:
                 running = self.iterate_once()
                 pbar.update(1)
@@ -131,5 +129,5 @@ class Learner:
             product_rewards = [product_reward for _, _, product_reward, _, _ in self._experiment_history]
             draw_product_reward_graph(self._products, product_rewards, self.name)
 
-    def _clairvoyant_reward_calculate(self, price_indexes) -> List[float]:
+    def _clairvoyant_reward_calculate(self, price_indexes) -> float:
         raise NotImplementedError()

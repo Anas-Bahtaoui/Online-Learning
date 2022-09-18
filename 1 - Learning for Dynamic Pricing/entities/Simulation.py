@@ -1,16 +1,12 @@
 from dataclasses import dataclass, field
 from operator import itemgetter
-from typing import List, Callable, Tuple, Dict, Union
+from typing import List, Tuple, Dict
 
 from tqdm import tqdm
 
-from BanditLearner import BanditLearner
 from Environment import Environment
-from Learner import ExperimentHistoryItem
 from Product import Product
 from basic_types import SimulationConfig, CustomerClass
-from entities import Customer
-from learners import Learner, GreedyLearner
 from random_ import np_random
 
 
@@ -47,31 +43,31 @@ class Simulation:
 
     def run(self, days: int, experiment_count: int = 1, *, plot_graphs: bool):
         for learner in self.learners:
+            np_random.reset_seed()
             n_experiment = experiment_count
             if "Greedy" in learner.name:
                 n_experiment = 1  # Greedy is deterministic
             self.experiments[learner.name] = []
             for experiment_index in range(n_experiment):
-                np_random.reset_seed()
                 learner.refresh_vars(self.products, self.environment, self.config)
                 self.environment.reset_day()
                 learner.reset()
                 learner.absolute_clairvoyant, learner.clairvoyant_indexes = self.run_clairvoyant(learner)
-                learner.run_experiment(days, plot_graphs=plot_graphs)
+                learner.run_experiment(days, plot_graphs=plot_graphs, current_n=experiment_index + 1)
                 self.experiments[learner.name].append((learner.absolute_clairvoyant, learner._experiment_history))
 
-    def run_clairvoyant(self, learner: Learner):
+    def run_clairvoyant(self, learner: "Learner"):
         calculate = learner._clairvoyant_reward_calculate
         from itertools import product
         product_count = len(self.products)
         price_index_count = len(self.products[0].candidate_prices)
         max_reward = 0
         best_indexes = ()
-        all_price_indexes = list(product(range(price_index_count), repeat=product_count))
+        all_price_indexes = list(product(range(price_index_count), repeat=product_count))[:1]
         with tqdm(total=len(all_price_indexes), leave=False) as pbar:
             pbar.set_description(f"Clairvoyant")
             for price_indexes in all_price_indexes:
-                total_reward = sum(calculate(list(price_indexes)))
+                total_reward = calculate(list(price_indexes))
                 if total_reward > max_reward:
                     max_reward = total_reward
                     best_indexes = price_indexes

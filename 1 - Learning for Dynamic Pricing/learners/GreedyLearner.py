@@ -26,7 +26,7 @@ class GreedyLearner(Learner):
     def iterate_once(self) -> ShallContinue:
         shall_continue = self._iterate_once()
         product_rewards = self._get_rewards_of_current_run()
-        clairvoyant = sum(self._clairvoyant_reward_calculate(self.clairvoyant_indexes))
+        clairvoyant = self._clairvoyant_reward_calculate(self.clairvoyant_indexes)
         self._experiment_history.append(
             ExperimentHistoryItem(self.current_reward, list(self.candidate_price_indexes), product_rewards, False, None, clairvoyant, None, None))
         return shall_continue
@@ -80,7 +80,7 @@ class GreedyLearner(Learner):
                 result += self.calculate_reward_of_product(price_indexes[product.id], product, class_)
         return result
 
-    def _clairvoyant_reward_calculate(self, price_indexes):
+    def _clairvoyant_reward_calculate(self, price_indexes) -> float:
         return self.calculate_total_expected_reward(price_indexes)
 
     def calculate_potential_candidate(self, pulled_arm: int):

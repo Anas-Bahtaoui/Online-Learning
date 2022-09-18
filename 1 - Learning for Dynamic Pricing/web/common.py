@@ -15,8 +15,12 @@ class IDs(NamedTuple):
     run_experiment: str = "run-experiment"
     reset_results: str = "reset-results"
     run_count: str = "run-count"
+    experiment_count: str = "experiment-count"
     resolution_selector: str = "resolution-selector"
     customer_day_selector: str = "customer-day-selector"
+    experiment_aggregate_selector: str = "experiment-aggregate-selector"
+    experiment_day_selector: str = "experiment-day-selector"
+    experiment_toggle: str = "experiment-toggle"
 
 
 ids = IDs()
@@ -30,7 +34,7 @@ class SimulationResult(NamedTuple):
     price_indexes: List[PriceIndexes]
     product_rewards: List[ProductRewards]
     products: List[Product]
-    customers: Optional[List[List[Customer]]]
+    customers: Optional[List[List[dict]]]
     estimators: Optional[Dict[str, List[ParameterHistoryEntry]]]
     change_detected_at: List[int]
     change_history: Optional[List[ChangeHistoryItem]]
@@ -48,22 +52,18 @@ class SimulationResult(NamedTuple):
             "absolute_clairvoyant": self.absolute_clairvoyant,
             "clairvoyants": self.clairvoyants,
             "estimators": self.estimators,
+            "customers": self.customers,
         }
-        if self.customers is not None:
-            result["customers"] = [[customer.serialize() for customer in day] for day in self.customers]
         return result
 
     @staticmethod
     def deserialize(data):
-        customers = data.get("customers")
-        if customers is not None:
-            customers = [[Customer(*customer.values()) for customer in day] for day in customers]
         return SimulationResult(
             rewards=data["rewards"],
             price_indexes=data["price_indexes"],
             product_rewards=data["product_rewards"],
             products=[Product(*product.values()) for product in data["products"]],
-            customers=customers,
+            customers=data.get("customers"),
             estimators=data.get("estimators"),
             change_detected_at=data["change_detected_at"],
             change_history=data["change_history"],
@@ -82,7 +82,7 @@ class SimulationResult(NamedTuple):
             price_indexes=list(price_indexes),
             product_rewards=list(product_rewards),
             products=products,
-            customers=customers if customers[0] is not None else None,
+            customers=[[customer.serialize() for customer in day] for day in customers] if customers[0] is not None else None,
             estimators=estimators if estimators[0] is not None else None,
             change_detected_at=change_indexes,
             change_history=change_history if change_history[0] is not None else [],

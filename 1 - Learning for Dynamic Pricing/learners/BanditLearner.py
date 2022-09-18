@@ -1,10 +1,10 @@
 from collections import defaultdict
-from typing import NamedTuple, Union, Optional
+from typing import Optional
 import numpy as np
 
 from Learner import Learner, ShallContinue, ExperimentHistoryItem
 from change_detectors import ChangeDetectionAlgorithm, CumSum
-from entities import Environment, SimulationConfig, np_random, reservation_price_distribution_from_curves
+from entities import Environment, SimulationConfig, np_random
 from parameter_estimators import *
 
 
@@ -36,7 +36,7 @@ class BanditLearner(Learner):
         self._run_one_day()
         return True  # Bandit learner always runs
 
-    def _calculate_product_rewards(self, selected_price_indexes, customers: List[Customer]) -> List[float]:
+    def _calculate_product_rewards(self, selected_price_indexes, customers: List["Customer"]) -> List[float]:
         rewards = [0 for _ in self._products]
         for customer in customers:
             for product in self._products:
@@ -141,7 +141,7 @@ class BanditLearner(Learner):
         product_rewards = self._calculate_product_rewards(selected_price_indexes, customers)
         if persist:
             clairvoyant = self._clairvoyant_reward_calculate(self.clairvoyant_indexes)
-            self._experiment_history.append(ExperimentHistoryItem(sum(product_rewards), selected_price_indexes, product_rewards, False, None, sum(clairvoyant), customers, {estimator.__name__: estimator._history[-1] for estimator in self._estimators}))
+            self._experiment_history.append(ExperimentHistoryItem(sum(product_rewards), selected_price_indexes, product_rewards, False, None, clairvoyant, customers, {estimator.__class__.__name__: {} for estimator in self._estimators}))
         else:
             return product_rewards
 
@@ -172,11 +172,12 @@ class BanditLearner(Learner):
         if self._t > 1:
             for estimator in self._estimators:
                 product_rewards = estimator.modify(product_rewards)
+
+            self._experiment_history[-1] = self._experiment_history[-1]._replace(estimators={estimator.__class__.__name__: estimator._history[-1] for estimator in self._estimators})
         self._update_learner_state(selected_price_indexes, product_rewards, self._t)
 
     def _update_parameter_estimators(self):
         customers = self._experiment_history[-1].customers
-
         for customer in customers:
             [estimator.update(customer) for estimator in self._estimators]
 
@@ -206,8 +207,8 @@ class BanditLearner(Learner):
     def _reset_parameters(self):
         raise NotImplementedError()
 
-    def _clairvoyant_reward_calculate(self, price_indexes):
-        return self._new_day(price_indexes, persist=False)
+    def _clairvoyant_reward_calculate(self, price_indexes) -> float:
+        return sum(self._new_day(price_indexes, persist=False))
 
     """
     Might not work ...
