@@ -1,15 +1,17 @@
 ### TODO
 
-* We need multiple experiments.
 * Step 7: We need it.
-* Fully-connected graphs, we need a logic for different weights for graphs, it is just another preset for weights.
 * New Demand curves for step 6 abrupt changes.
+##### Description
   * People buys more home equipment to do sports, 
   * Professionals buys more than beginners,
   * Young people buy more t-shirts and shorts also dumbbells because they have the rush for health
   * Old people are discouraged because they don't trust online shops anymore, they transmit 5G signals for COVID from a Chinese airbase.
+##### TODO
+  * Implement the abrupt change logic
+  * Test CumSum
 
-* We want to have similar but different weights for classes.
+
 * We need obv. the slides:
     * Shorten the text
     * Take code for CumSum and learners maybe?
