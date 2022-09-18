@@ -7,6 +7,13 @@ from entities import Product, np_random
 
 
 class NewerGTSLearner(BanditLearner):
+    def _upper_bound(self):
+        n_arms = len(self._rewards_per_arm[0])
+        return self._C * np.sqrt(n_arms * self.total_days * np.log(n_arms))
+
+    def update_experiment_days(self, days: int):
+        self.total_days = days
+
     def _reset_parameters(self):
         n_products = len(self._config.product_configs)
         n_arms = len(self._config.product_configs[0].prices)
@@ -14,6 +21,7 @@ class NewerGTSLearner(BanditLearner):
         self.mu_0s = [np.full(n_arms, 1) for _ in range(n_products)]
         self.tau_0s = [np.full(n_arms, 1e-4) for _ in range(n_products)]
         self._rewards_per_arm = [[[] for _ in range(n_arms)] for _ in range(n_products)]
+        self._C = 100
 
     def __init__(self, config: BanditConfiguration):
         super().__init__(config)

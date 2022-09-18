@@ -9,7 +9,7 @@ from dash import dcc, dash_table
 import dash_bootstrap_components as dbc
 from typing import List, Callable, Optional
 from Learner import PriceIndexes, ProductRewards
-from entities import Product, Customer, reservation_price_distribution_from_curves
+from entities import Product, reservation_price_distribution_from_curves
 from change_detectors import ChangeHistoryItem
 from web.common import SimulationResult
 
@@ -20,25 +20,26 @@ def apply_resolution(y, resolution):
 
 def render_rewards(name, rewards, change_detected_at: List[int], clairvoyant_rewards: List[float],
                    absolute_clairvoyant: float, resolution: int, std_dev):
+    x = list(range(1, len(rewards) + 1))
     try:
-        plot = plotly.express.line(x=range(1, len(rewards) + 1), y=apply_resolution(rewards, resolution),
+        plot = plotly.express.line(x=x, y=apply_resolution(rewards, resolution),
                                    labels={"x": "Iteration", "y": "Reward"},
                                    title=f"{name} Reward", )
     except:
         time.sleep(0.1)
-        plot = plotly.express.line(x=range(1, len(rewards) + 1), y=apply_resolution(rewards, resolution),
+        plot = plotly.express.line(x=x, y=apply_resolution(rewards, resolution),
                                    labels={"x": "Iteration", "y": "Reward"},
                                    title=f"{name} Reward", )
     lower = rewards - std_dev
     upper = rewards + std_dev
     plot.add_trace(
-        go.Scatter(x=list(range(1, len(rewards) + 1)), y=apply_resolution(lower, resolution), fill=None, mode='lines',
+        go.Scatter(x=x, y=apply_resolution(lower, resolution), fill=None, mode='lines',
                    line={"color": "#000000"}, name="Lower bound"))
     plot.add_trace(
-        go.Scatter(x=list(range(1, len(rewards) + 1)), y=apply_resolution(upper, resolution), fill=None, mode='lines',
+        go.Scatter(x=x, y=apply_resolution(upper, resolution), fill=None, mode='lines',
                    line={"color": "#000000"}, name="Upper bound"))
     plot.add_trace(
-        go.Scatter(x=list(range(1, len(rewards) + 1)), y=apply_resolution(clairvoyant_rewards, resolution), fill=None,
+        go.Scatter(x=x, y=apply_resolution(clairvoyant_rewards, resolution), fill=None,
                    mode='lines',
                    line={"color": "darkblue"}, name="Clairvoyant reward"))
     for detected_i in change_detected_at:
@@ -48,35 +49,43 @@ def render_rewards(name, rewards, change_detected_at: List[int], clairvoyant_rew
 
 
 def render_regrets(name, regrets, change_detected_at: List[int], clairvoyant_rewards: List[float],
-                   absolute_clairvoyant: float, resolution: int, std_dev):
-    plot = plotly.express.line(x=range(1, len(regrets) + 1), y=apply_resolution(regrets, resolution),
+                   absolute_clairvoyant: float, resolution: int, std_dev, ub=None):
+    x = list(range(1, len(regrets) + 1))
+    plot = plotly.express.line(x=x, y=apply_resolution(regrets, resolution),
                                labels={"x": "Iteration", "y": "Regret"},
                                title=f"{name} Regret", )
     lower = regrets - std_dev
     upper = regrets + std_dev
     plot.add_trace(
-        go.Scatter(x=list(range(1, len(regrets) + 1)), y=apply_resolution(lower, resolution), fill=None, mode='lines',
-                   line={"color": "#000000"}))
+        go.Scatter(x=x, y=apply_resolution(lower, resolution), fill=None, mode='lines',
+                   line={"color": "#000000"}, name="Lower Bound"), )
     plot.add_trace(
-        go.Scatter(x=list(range(1, len(regrets) + 1)), y=apply_resolution(upper, resolution), fill=None, mode='lines',
-                   line={"color": "#000000"}))
+        go.Scatter(x=x, y=apply_resolution(upper, resolution), fill=None, mode='lines',
+                   line={"color": "#000000"}, name="Upper Bound"))
     plot.add_trace(
-        go.Scatter(x=list(range(1, len(regrets) + 1)), y=apply_resolution(clairvoyant_rewards, resolution), fill=None,
+        go.Scatter(x=x, y=apply_resolution(clairvoyant_rewards, resolution), fill=None,
                    mode='lines',
-                   line={"color": "darkblue"}, name="Clairvoyant reward"))
+                   line={"color": "darkblue"}, name="Clairvoyant regret"))
+    if ub is not None and "Greedy" not in name:
+        plot.add_trace(
+            go.Scatter(x=x, y=apply_resolution(ub, resolution), fill=None,
+                       mode='lines',
+                       line={"color": "red"}, name="Upper Bound"))
+
     for detected_i in change_detected_at:
         plot.add_vline(detected_i)
-    plot.add_hline(absolute_clairvoyant, name="Absolute Clairvoyant reward")
+    plot.add_hline(absolute_clairvoyant, name="Absolute Clairvoyant regret")
     return dcc.Graph(figure=plot)
 
 
 def render_avg_regrets(name, avg_regrets, change_detected_at: List[int], clairvoyant_rewards: List[float],
                        absolute_clairvoyant: float, resolution: int):
-    plot = plotly.express.line(x=range(1, len(avg_regrets) + 1), y=apply_resolution(avg_regrets, resolution),
+    x = list(range(1, len(avg_regrets) + 1))
+    plot = plotly.express.line(x=x, y=apply_resolution(avg_regrets, resolution),
                                labels={"x": "Iteration", "y": "Average Regret"},
                                title=f"{name} Average Regret", )
     plot.add_trace(
-        go.Scatter(x=list(range(1, len(avg_regrets) + 1)), y=apply_resolution(clairvoyant_rewards, resolution),
+        go.Scatter(x=x, y=apply_resolution(clairvoyant_rewards, resolution),
                    fill=None,
                    mode='lines',
                    line={"color": "darkblue"}, name="Clairvoyant reward"))
@@ -91,13 +100,13 @@ colors = ["red", "blue", "yellow", "green", "purple"]
 
 def render_selection_indexes(products: List[Product], selected_price_indexes: List[PriceIndexes], name: str,
                              change_detected_at: List[int], resolution: int):
-    x_iteration = list(range(1, len(selected_price_indexes) + 1))
+    x = list(range(1, len(selected_price_indexes) + 1))
     fig = go.Figure()
     for product in products:
         prices = []
         for selected_price_index in selected_price_indexes:
             prices.append(product.candidate_prices[selected_price_index[product.id]])
-        fig.add_trace(go.Scatter(x=x_iteration, y=apply_resolution(prices, resolution), name=product.name,
+        fig.add_trace(go.Scatter(x=x, y=apply_resolution(prices, resolution), name=product.name,
                                  line={"color": colors[product.id]}))
     fig.update_layout(title=f"{name} Prices", xaxis_title="Iteration", yaxis_title="Prices per product")
     for detected_i in change_detected_at:
@@ -107,11 +116,11 @@ def render_selection_indexes(products: List[Product], selected_price_indexes: Li
 
 def render_product_rewards_graph(products: List[Product], product_rewards: List[ProductRewards], name: str,
                                  change_detected_at: List[int], resolution: int):
-    x_iteration = list(range(1, len(product_rewards) + 1))
+    x = list(range(1, len(product_rewards) + 1))
     fig = go.Figure()
     for product in products:
         fig.add_trace(
-            go.Scatter(x=x_iteration,
+            go.Scatter(x=x,
                        y=apply_resolution([product_reward[product.id] for product_reward in product_rewards],
                                           resolution),
                        name=product.name, line={"color": colors[product.id]}))
@@ -123,11 +132,11 @@ def render_product_rewards_graph(products: List[Product], product_rewards: List[
 
 
 def render_for_estimator(products: List[Product], type_history: List[List[float]], name: str, type_name: str):
-    x_iteration = list(range(1, len(type_history[0]) + 1))
+    x = list(range(1, len(type_history[0]) + 1))
     fig = go.Figure()
     for product in products:
         fig.add_trace(
-            go.Scatter(x=x_iteration, y=type_history[product.id],
+            go.Scatter(x=x, y=type_history[product.id],
                        name=product.name, line={"color": colors[product.id]}))
 
     fig.update_layout(title=f"{type_name} for estimator {name}", xaxis_title="Iteration",
@@ -191,27 +200,49 @@ Our offered price was: *{product.candidate_prices[selected_price_index[product.i
 def render_for_learner(learner_name: str, learner_data: List[SimulationResult], day_cnt: int, resolution: int = 10,
                        experiment_aggregator: Callable[[np.array], np.array] = None,
                        i_experiment: Optional[int] = None):
-    rewards = experiment_aggregator(np.array([data.rewards for data in learner_data]))  # 1d float
-    clairvoyant = experiment_aggregator(np.array([data.clairvoyants for data in learner_data]))  # 1d float
-    absolute_clairvoyant = float(
-        experiment_aggregator(np.array([data.absolute_clairvoyant for data in learner_data])))  # constant float
+    mohammed_rewards = np.array([data.rewards for data in learner_data])  # np.array[experiment, day]
+    cumulative_rewards = mohammed_rewards  # np.cumsum(mohammed_rewards, axis=1)
+    mean_cum_rewards = np.mean(cumulative_rewards, axis=0)
+    std_cum_rewards = np.std(cumulative_rewards, axis=0) / np.sqrt(len(learner_data))
+
+    mohammed_abs_clairvoyant = np.array(
+        [data.absolute_clairvoyant for data in learner_data])  # np.array[experiment, day]
+    mean_abs_clairvoyant = np.mean(mohammed_abs_clairvoyant, axis=0)
+
+    mohammed_clairvoyant = np.array([data.clairvoyants for data in learner_data])  # np.array[experiment, day]
+    mean_clairvoyant = np.mean(mohammed_clairvoyant, axis=0)
+    mean_clairvoyant_regret = mean_abs_clairvoyant - mean_clairvoyant
+
+    mohammed_regrets = mean_abs_clairvoyant - mohammed_rewards
+    mean_regrets = np.mean(mohammed_regrets, axis=0)
+    std_regrets = np.std(mohammed_regrets, axis=0) / np.sqrt(len(learner_data))
+
+    cumulative_regrets = np.cumsum(mohammed_regrets, axis=1)  # np.array[experiment, day]
+    mean_cum_regrets = np.mean(cumulative_regrets, axis=0)  # np.array[day]
+    std_cum_regrets = np.std(cumulative_regrets, axis=0) / np.sqrt(len(learner_data))
+
+    mohammed_ub = np.array([data.upper_bounds for data in learner_data])
+    mean_ub = np.mean(mohammed_ub, axis=0)
+
     change_detected_at = list(
         experiment_aggregator(np.array([data.change_detected_at for data in learner_data])).astype(
             int))  # 1d int
+
     product_rewards = experiment_aggregator(np.array([data.product_rewards for data in learner_data]))  # 2d float
     price_indexes = experiment_aggregator(np.array([data.price_indexes for data in learner_data])).astype(int)  # 2d int
     products = learner_data[0].products
-    regrets = np.cumsum(clairvoyant - rewards)
-    # average_regrets = np.mean(np.sum(regrets, axis=0))
-    sd_prof = np.std(rewards, axis=0) / np.sqrt(len(rewards))
-
-    sd_reg = np.std(regrets, axis=0) / np.sqrt(len(rewards))
 
     graphs = [
-        render_rewards(learner_name, np.array(rewards), change_detected_at, clairvoyant, absolute_clairvoyant,
-                       resolution, sd_prof),
-        render_regrets(learner_name, regrets, change_detected_at, clairvoyant, absolute_clairvoyant,
-                       resolution, sd_reg),
+        render_rewards(learner_name, mean_cum_rewards, change_detected_at, mean_clairvoyant, mean_abs_clairvoyant,
+                       resolution, std_cum_rewards),
+        render_regrets(learner_name, mean_regrets, change_detected_at, mean_clairvoyant_regret,
+                       mean_abs_clairvoyant - mean_abs_clairvoyant, resolution, std_regrets, mean_ub),
+        render_regrets(learner_name + " Cum ", mean_cum_regrets, change_detected_at, mean_clairvoyant_regret,
+                       mean_abs_clairvoyant - mean_abs_clairvoyant, resolution, std_cum_regrets),
+        # render_rewards(learner_name, np.array(rewards), change_detected_at, clairvoyant, absolute_clairvoyant,
+        #               resolution, sd_prof),
+        # render_regrets(learner_name, regrets, change_detected_at, clairvoyant, absolute_clairvoyant,
+        #               resolution, sd_reg),
         # render_avg_regrets(learner_name, average_regrets, change_detected_at, clairvoyant, absolute_clairvoyant,
         #                   resolution),
         render_selection_indexes(products, price_indexes, learner_name,

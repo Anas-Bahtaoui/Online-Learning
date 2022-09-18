@@ -7,6 +7,15 @@ from entities import Product
 
 
 class UCBLearner(BanditLearner):
+    def _upper_bound(self):
+        suboptimal_diffs = []
+        for product in self._products:
+            diff = self.clairvoyant_product_rewards[product.id] - self._experiment_history[-1].product_rewards[product.id]
+            if diff > 0:
+                suboptimal_diffs.append(diff)
+        delta_a = [4 * np.log(self.total_days) / suboptimal_diff + 8 * suboptimal_diff for suboptimal_diff in suboptimal_diffs]
+        return sum(delta_a)
+
     def _reset_parameters(self):
         self.means = [[0 for _ in product.candidate_prices] for product in self._products]
         self.widths = [[np.inf for _ in product.candidate_prices] for product in self._products]
@@ -17,7 +26,8 @@ class UCBLearner(BanditLearner):
 
     def __init__(self, config: BanditConfiguration):
         super().__init__(config)
-
+    def update_experiment_days(self, days: int):
+        self.total_days = days
     def _update_learner_state(self, selected_price_indexes, product_rewards, t):
         for product_id, product_reward in enumerate(product_rewards):
             pulled_arm = selected_price_indexes[product_id]

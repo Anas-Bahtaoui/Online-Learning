@@ -114,6 +114,7 @@ def update_result_div_left(data, selected_experiment, resolution, day_cnt, is_ag
         return html.Div("Pick an experiment from above to compare")
     results = [SimulationResult.deserialize(result) for result in data["results"][selected_experiment]]
     aggregator = aggregators[aggregate] if is_aggregating else lambda x: x[int(day)]
+    day_cnt = min(int(day_cnt), len(results) - 1)
     return render_for_learner(selected_experiment, results, int(day_cnt), resolution, aggregator,
                               day if not is_aggregating else None)
 
@@ -134,6 +135,7 @@ def update_result_div_right(data, selected_experiment, resolution, day_cnt, is_a
     if selected_experiment is None:
         return html.Div("Pick an experiment from above to compare")
     results = [SimulationResult.deserialize(result) for result in data["results"][selected_experiment]]
+    day_cnt = min(int(day_cnt), len(results) - 1)
     aggregator = aggregators[aggregate] if is_aggregating else lambda x: x[int(day)]
     return render_for_learner(selected_experiment, results, int(day_cnt), resolution, aggregator,
                               day if not is_aggregating else None)

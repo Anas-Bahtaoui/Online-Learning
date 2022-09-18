@@ -141,7 +141,9 @@ class BanditLearner(Learner):
         product_rewards = self._calculate_product_rewards(selected_price_indexes, customers)
         if persist:
             clairvoyant = self._clairvoyant_reward_calculate(self.clairvoyant_indexes)
-            self._experiment_history.append(ExperimentHistoryItem(sum(product_rewards), selected_price_indexes, product_rewards, False, None, clairvoyant, customers, {estimator.__class__.__name__: {} for estimator in self._estimators}))
+            self._experiment_history.append(ExperimentHistoryItem(sum(product_rewards), selected_price_indexes, product_rewards, False, None, clairvoyant, customers, {estimator.__class__.__name__: {} for estimator in self._estimators}, 0))
+            upper_bound = self._upper_bound()
+            self._experiment_history[-1] = self._experiment_history[-1]._replace(upper_bound=upper_bound)
         else:
             return product_rewards
 
@@ -207,8 +209,8 @@ class BanditLearner(Learner):
     def _reset_parameters(self):
         raise NotImplementedError()
 
-    def _clairvoyant_reward_calculate(self, price_indexes) -> float:
-        return sum(self._new_day(price_indexes, persist=False))
+    def _clairvoyant_reward_calculate(self, price_indexes) -> List[float]:
+        return self._new_day(price_indexes, persist=False)
 
     """
     Might not work ...

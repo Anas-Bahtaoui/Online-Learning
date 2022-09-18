@@ -38,7 +38,7 @@ experiment_count_selector = dbc.Input(
     type="number",
     min=0,
     max=1000,
-    value=1,
+    value=4,
 )
 
 run_experiment_button = dbc.Button("Run Experiment", id=ids.run_experiment, n_clicks=0, color="primary")

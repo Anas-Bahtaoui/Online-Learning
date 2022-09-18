@@ -72,8 +72,9 @@ class ExperimentHistoryItem(NamedTuple):
     change_detected: ChangeDetected
     change_detector_params: ChangeDetectorParams
     clairvoyant_reward: ClairvoyantReward
-    customers: Optional[List["Customer"]] # For some reason typing resolves the module, not the class
+    customers: Optional[List["Customer"]]  # For some reason typing resolves the module, not the class
     estimators: Optional[Dict[str, ParameterHistoryEntry]]
+    upper_bound: float
 
 
 class Learner:
@@ -83,6 +84,7 @@ class Learner:
     _config: SimulationConfig
     absolute_clairvoyant: Optional[float] = None
     clairvoyant_indexes: Optional[List[int]] = None
+    clairvoyant_product_rewards: Optional[ProductRewards] = None
 
     def refresh_vars(self, products: List[Product], environment: Environment, config: SimulationConfig):
         self._products = products
@@ -90,6 +92,10 @@ class Learner:
         self._config = config
         self.absolute_clairvoyant = None
         self.clairvoyant_indexes = None
+        self.clairvoyant_product_rewards = None
+
+    def _upper_bound(self):
+        raise NotImplementedError()
 
     def __init__(self):
         ## This mechanism is ugly, but let's keep it now :(
@@ -103,9 +109,6 @@ class Learner:
     def iterate_once(self) -> ShallContinue:
         raise NotImplementedError()
 
-    def log_experiment(self):
-        raise NotImplementedError()
-
     def update_experiment_days(self, days: int):
         raise NotImplementedError()
 
@@ -114,7 +117,8 @@ class Learner:
         running = True
         self.update_experiment_days(max_days)
         with tqdm(total=max_days, leave=False) as pbar:
-            pbar.set_description(f"Running {self.name}{' for experiment ' + str(current_n) if current_n is not None else ''}")
+            pbar.set_description(
+                f"Running {self.name}{' for experiment ' + str(current_n) if current_n is not None else ''}")
             while running and len(self._experiment_history) < max_days:
                 running = self.iterate_once()
                 pbar.update(1)

@@ -40,6 +40,7 @@ class SimulationResult(NamedTuple):
     change_history: Optional[List[ChangeHistoryItem]]
     clairvoyants: List[float]
     absolute_clairvoyant: float
+    upper_bounds: List[float]
 
     def serialize(self):
         result = {
@@ -53,6 +54,7 @@ class SimulationResult(NamedTuple):
             "clairvoyants": self.clairvoyants,
             "estimators": self.estimators,
             "customers": self.customers,
+            "upper_bounds": self.upper_bounds,
         }
         return result
 
@@ -69,11 +71,12 @@ class SimulationResult(NamedTuple):
             change_history=data["change_history"],
             clairvoyants=data["clairvoyants"],
             absolute_clairvoyant=data["absolute_clairvoyant"],
+            upper_bounds=data["upper_bounds"],
         )
 
     @staticmethod
     def from_result(exps: List[ExperimentHistoryItem], products: List[Product], absolute_clairvoyant: float):
-        rewards, price_indexes, product_rewards, change_detected_at, change_history, clairvoyants, customers, estimators = zip(
+        rewards, price_indexes, product_rewards, change_detected_at, change_history, clairvoyants, customers, estimators, upper_bounds = zip(
             *exps)
         change_indexes = [ind for ind, value in enumerate(change_detected_at) if value]
         customers, estimators, change_history = list(customers), list(estimators), list(change_history)
@@ -88,4 +91,5 @@ class SimulationResult(NamedTuple):
             change_history=change_history if change_history[0] is not None else [],
             clairvoyants=list(clairvoyants),
             absolute_clairvoyant=absolute_clairvoyant,
+            upper_bounds=list(upper_bounds),
         )
