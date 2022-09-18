@@ -1,6 +1,6 @@
 import os
 import shutil
-from entities.Customer import CustomerClass
+from entities.Customer_ import CustomerClass
 src = os.path.join(os.path.dirname(__file__), "test.npy")
 for class_ in list(CustomerClass):
     for i in range(5):

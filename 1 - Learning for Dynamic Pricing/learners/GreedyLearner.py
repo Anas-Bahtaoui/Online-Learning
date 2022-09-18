@@ -3,7 +3,7 @@ from typing import Tuple, Optional, List
 
 import scipy.stats
 
-from Learner import Learner, ShallContinue, Reward, PriceIndexes
+from Learner import Learner, ShallContinue, Reward, PriceIndexes, ExperimentHistoryItem
 from entities import Product, ObservationProbability, CustomerClass, reservation_price_distribution_from_curves, \
     PositiveIntegerGaussian as PIG
 
@@ -26,8 +26,9 @@ class GreedyLearner(Learner):
     def iterate_once(self) -> ShallContinue:
         shall_continue = self._iterate_once()
         product_rewards = self._get_rewards_of_current_run()
+        clairvoyant = self._clairvoyant_reward_calculate(self.clairvoyant_indexes)
         self._experiment_history.append(
-            (self.current_reward, list(self.candidate_price_indexes), product_rewards, False, None))
+            ExperimentHistoryItem(self.current_reward, list(self.candidate_price_indexes), product_rewards, False, None, clairvoyant, None, None))
         return shall_continue
 
     def __init__(self):
@@ -51,9 +52,6 @@ class GreedyLearner(Learner):
                                                                                         product_price)
             purchase_ratio = reservation_price_distribution.calculate_ratio_of(product_price)
 
-            if self._verbose:
-                print(f"Purchased %{purchase_ratio * 100}, reservation price mean:",
-                      reservation_price_distribution.get_expectation(), "product price:", product_price)
             purchase_probability = purchase_ratio * viewing_probability
             expected_purchase_count = self._config.purchase_amounts[class_][product.id].get_expectation()
             result_ = product_price * purchase_probability * n_users * expected_purchase_count
@@ -75,24 +73,15 @@ class GreedyLearner(Learner):
         # Probability that the customer sees a given product depends on the alpha distribution
         return round(emulate_path((), self._environment.get_expected_alpha(class_)[product.id + 1], product), 2)
 
-    def log_experiment(self):
-        if self._verbose:
-            price_indexes = self.candidate_price_indexes
-            for product in self._products:
-                for class_ in list(CustomerClass):
-                    inter = self.calculate_reward_of_product(price_indexes[product.id], product, class_)
-                    print("For product", product.name, "user class", class_, "selected index",
-                          price_indexes[product.id],
-                          "expected reward:", inter, "expected customer count:",
-                          self._config.customer_counts[class_].get_expectation(),
-                          "")
-
     def calculate_total_expected_reward(self, price_indexes: Tuple[int, ...]) -> float:
         result = 0
         for product in self._products:
             for class_ in list(CustomerClass):
                 result += self.calculate_reward_of_product(price_indexes[product.id], product, class_)
         return result
+
+    def _clairvoyant_reward_calculate(self, price_indexes) -> float:
+        return self.calculate_total_expected_reward(price_indexes)
 
     def calculate_potential_candidate(self, pulled_arm: int):
         x = self.candidate_price_indexes

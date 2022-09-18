@@ -1,12 +1,12 @@
 from collections import defaultdict
 from functools import lru_cache
-from typing import List, Dict, Set, Callable, NamedTuple, Tuple
+from typing import List, Dict,  Callable
 
 import numpy as np
 import scipy.stats
 
 from random_ import np_random, faker
-from Distribution import PositiveIntegerGaussian as PIG, Constant, AbstractDistribution
+from Distribution import PositiveIntegerGaussian as PIG
 from basic_types import CustomerClass, Age
 
 """

@@ -1,6 +1,8 @@
 import preamble
 
 from typing import List
+
+from SlidingUCBLearner import SlidingUCBLearner
 from entities import ProductConfig, SimulationConfig, CustomerTypeBased, Simulation, Dirichlet, \
     PositiveIntegerGaussian as PIG, Constant
 from learners import *
@@ -26,9 +28,37 @@ secondary_product_professional: List[List[float]] = [
     [0.15, 0,    0,    0,    0],
     [0,    0,    0,    0,    0],
 ]
-# TODO: Custom values for these
-secondary_product_beginner_young = secondary_product_professional
-secondary_product_beginner_old = secondary_product_professional
+
+secondary_product_beginner_young: List[List[float]] = [
+    [0,    0.4,  0,    0,    0],
+    [0.3,  0,    0,    0,    0],
+    [0.25, 0,    0,    0.05, 0],
+    [0,    0,    0,    0,    0.15],
+    [0,    0,    0,    0.15, 0],
+]
+
+secondary_product_beginner_old: List[List[float]] = [
+    [0,    0.3,  0.2,  0,    0],
+    [0.3,  0,    0.15, 0,    0],
+    [0.05, 0.25, 0,    0,    0],
+    [0,    0,    0,    0,    0],
+    [0,    0,    0,    0.15, 0],
+]
+
+"""
+
+# fully connected graph transition matrix
+secondary_product_fully_connected: List[List[float]] = [
+    [0, 0.3, 0.3, 0.1, 0.1],
+    [0.3, 0, 0.3, 0.1, 0.1],
+    [0.3, 0.3, 0, 0.1, 0.1],
+    [0.1, 0.1, 0.1, 0, 0.4],
+    [0.1, 0.1, 0.1, 0.4, 0],
+]
+
+"""
+
+
 # @formatter:on
 
 secondaries = CustomerTypeBased(
@@ -73,13 +103,20 @@ learners: List[Learner] = [
 ]
 
 for step in [
-    step4]:  # [step3]:  # , step4, step5, step6_sliding_window]:#step6_sliding_window, step6_change_detection, step7]:
+    step3,
+    # step4,
+    # step5,
+    step6_sliding_window,
+    step6_change_detection,
+]:  # step6_sliding_window, step6_change_detection, step7]:
     for Learner in [UCBLearner, NewerGTSLearner]:
         learners.append(Learner(step))
 
+learners.append(SlidingUCBLearner(step6_sliding_window._replace(non_stationary=None)))
 learners.append(BranchingLearner(step7._replace(name="Step 7 with UCB"), UCBLearner))
 learners.append(BranchingLearner(step7._replace(name="Step 7 with GTS"), NewerGTSLearner))
+
 RUN_COUNT = 50
 if __name__ == '__main__':
     simulation = Simulation(config, learners)
-    simulation.run(RUN_COUNT, log=False, plot_graphs=False, verbose=False)
+    simulation.run(RUN_COUNT, plot_graphs=True)
