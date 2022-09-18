@@ -48,12 +48,28 @@ secondary_product_beginner_old: List[List[float]] = [
 """
 
 # fully connected graph transition matrix
-secondary_product_fully_connected: List[List[float]] = [
+fully_connected_professional: List[List[float]] = [
     [0, 0.3, 0.3, 0.1, 0.1],
     [0.3, 0, 0.3, 0.1, 0.1],
     [0.3, 0.3, 0, 0.1, 0.1],
     [0.1, 0.1, 0.1, 0, 0.4],
     [0.1, 0.1, 0.1, 0.4, 0],
+]
+
+fully_connected_beginner_young: List[List[float]] = [
+    [0,    0.4,  0.1,    0.1,    0.1],
+    [0.3,  0,    0.1,    0.1,    0.1],
+    [0.25, 0.1,    0,    0.15,   0.1],
+    [0.1,    0.1,    0.1,   0,  0.25],
+    [0.1,    0.1,    0.1,    0.35, 0],
+]
+
+fully_connected_beginner_old: List[List[float]] = [
+    [0,    0.3,  0.2,  0.1,    0.1],
+    [0.3,  0,    0.15, 0.1,    0.1],
+    [0.05, 0.25, 0,    0.1,    0.1],
+    [0.1,    0.1,    0.1,    0,    0.1],
+    [0.1,    0.1,    0.1,    0.15, 0],
 ]
 
 """
