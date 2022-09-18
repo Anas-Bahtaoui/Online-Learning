@@ -45,34 +45,30 @@ secondary_product_beginner_old: List[List[float]] = [
     [0,    0,    0,    0.15, 0],
 ]
 
-"""
-
 # fully connected graph transition matrix
 fully_connected_professional: List[List[float]] = [
-    [0, 0.3, 0.3, 0.1, 0.1],
-    [0.3, 0, 0.3, 0.1, 0.1],
-    [0.3, 0.3, 0, 0.1, 0.1],
-    [0.1, 0.1, 0.1, 0, 0.4],
+    [0,   0.3, 0.3, 0.1, 0.1],
+    [0.3, 0,   0.3, 0.1, 0.1],
+    [0.3, 0.3, 0,   0.1, 0.1],
+    [0.1, 0.1, 0.1, 0,   0.4],
     [0.1, 0.1, 0.1, 0.4, 0],
 ]
 
 fully_connected_beginner_young: List[List[float]] = [
-    [0,    0.4,  0.1,    0.1,    0.1],
-    [0.3,  0,    0.1,    0.1,    0.1],
-    [0.25, 0.1,    0,    0.15,   0.1],
-    [0.1,    0.1,    0.1,   0,  0.25],
-    [0.1,    0.1,    0.1,    0.35, 0],
+    [0,    0.4,  0.1,  0.1,  0.1],
+    [0.3,  0,    0.1,  0.1,  0.1],
+    [0.25, 0.1,  0,    0.15, 0.1],
+    [0.1,  0.1,  0.1,  0,    0.25],
+    [0.1,  0.1,  0.1,  0.35, 0],
 ]
 
 fully_connected_beginner_old: List[List[float]] = [
-    [0,    0.3,  0.2,  0.1,    0.1],
-    [0.3,  0,    0.15, 0.1,    0.1],
-    [0.05, 0.25, 0,    0.1,    0.1],
-    [0.1,    0.1,    0.1,    0,    0.1],
-    [0.1,    0.1,    0.1,    0.15, 0],
+    [0,    0.3,  0.2,  0.1,  0.1],
+    [0.3,  0,    0.15, 0.1,  0.1],
+    [0.05, 0.25, 0,    0.1,  0.1],
+    [0.1,  0.1,  0.1,  0,    0.1],
+    [0.1,  0.1,  0.1,  0.15, 0],
 ]
-
-"""
 
 
 # @formatter:on
@@ -83,24 +79,26 @@ secondaries = CustomerTypeBased(
     old_beginner=secondary_product_beginner_old
 )
 
-# TODO: is the Integer Gaussian good for this
+fully_connected_secondaries = CustomerTypeBased(
+    professional=fully_connected_professional,
+    young_beginner=fully_connected_beginner_young,
+    old_beginner=fully_connected_beginner_old
+)
+
+
 
 purchase_amounts: CustomerTypeBased[List[PIG]] = CustomerTypeBased(
-    # TODO: Values for how many are bought
     professional=(Constant(2), Constant(1), Constant(3), Constant(3), Constant(1)),
     young_beginner=(Constant(1), Constant(2), Constant(6), Constant(1), Constant(2)),
     old_beginner=(Constant(2), Constant(2), Constant(8), Constant(2), Constant(3)),
 )
 
-# TODO: Assign ratios based on one number, so we can control convergence
 customer_counts: CustomerTypeBased[PIG] = CustomerTypeBased(
-    # TODO: Values here
     professional=Constant(50),
     young_beginner=Constant(100),
     old_beginner=Constant(30),
 )
 dirichlets: CustomerTypeBased[Dirichlet] = CustomerTypeBased(
-    # TODO: We want class specific values
     professional=Dirichlet([100, 90, 110, 200, 200, 90]),
     young_beginner=Dirichlet([100, 110, 130, 190, 180, 120]),
     old_beginner=Dirichlet([100, 100, 140, 210, 190, 100]),

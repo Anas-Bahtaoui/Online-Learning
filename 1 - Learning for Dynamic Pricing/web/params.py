@@ -1,5 +1,5 @@
 from entities import Dirichlet, CustomerTypeBased, PositiveIntegerGaussian as PIG, Constant
-from production import dirichlets, customer_counts, purchase_amounts, secondaries
+from production import dirichlets, customer_counts, purchase_amounts, secondaries, fully_connected_secondaries
 
 #dirichlet = Dirichlet([0.5, 0.5,  0.5, 0.5, 0.5, 0.5])
 dirichlet = Dirichlet([1, 1,  1, 1, 1, 1])
@@ -48,6 +48,7 @@ potential_purchase_amounts = {
 zero_secondaries = [[0 for _ in range(5)] for _ in range(5)]
 potential_secondaries = {
     "Production": secondaries,
+    "Fully Connected": fully_connected_secondaries,
     "Disabled": CustomerTypeBased(
         professional=zero_secondaries,
         young_beginner=zero_secondaries,
