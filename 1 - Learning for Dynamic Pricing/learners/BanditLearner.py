@@ -19,7 +19,7 @@ class BanditConfiguration(NamedTuple):
     graph_weights_known: bool
     # Stationary, sliding window size, or change detection algorithm
     non_stationary: Union[None, int, ChangeDetectionAlgorithm] = None
-    context_generation: bool = False  # First is the amount of days
+    context_generation: bool = False
 
 
 step3 = BanditConfiguration("Step 3", True, True, True)
@@ -91,7 +91,7 @@ class BanditLearner(Learner):
 
     def _select_price_indexes(self) -> PriceIndexes:
         from itertools import product as product_
-        if self.config.with_context:
+        if self.config.context_generation:
             result = {val: [0, 0, 0, 0, 0] for val in product_(Experience, Age)}
         else:
             result = []

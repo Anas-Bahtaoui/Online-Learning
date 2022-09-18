@@ -8,7 +8,7 @@ from entities import Environment, Product, SimulationConfig, Customer
 from tqdm import tqdm
 import numpy as np
 
-from parameter_estimators import HistoryEntry
+from parameter_estimators import ParameterHistoryEntry
 
 ShallContinue = bool
 Reward = float
@@ -74,7 +74,7 @@ class ExperimentHistoryItem(NamedTuple):
     change_detector_params: ChangeDetectorParams
     clairvoyant_reward: ClairvoyantReward
     customers: Optional[List["Customer"]] # For some reason typing resolves the module, not the class
-    estimators: Optional[Dict[str, HistoryEntry]]
+    estimators: Optional[Dict[str, ParameterHistoryEntry]]
 
 
 class Learner:

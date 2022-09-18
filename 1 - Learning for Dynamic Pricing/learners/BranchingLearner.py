@@ -79,7 +79,7 @@ class BranchingLearner(BanditLearner):
                 product_rewards_ = estimator.modify(product_rewards_)
             return product_rewards_
 
-        customers = self._customer_history[-1]
+        customers = self._experiment_history[-1].customers
         classes = {k: [] for k in selected_price_indexes.keys()}
         for customer in customers:
             classes[(customer.expertise, customer.age)].append(customer)
@@ -128,7 +128,7 @@ class BranchingLearner(BanditLearner):
         if t % 14 != 0:
             return
 
-        bi_weekly_customer_history = self._customer_history[-14:]
+        bi_weekly_customer_history = [exp.customers for exp in self._experiment_history[-14:]]
         historical_customers = {k: [[] for _ in range(14)] for k in selected_price_indexes.keys()}
         for i, day in enumerate(bi_weekly_customer_history):
             for customer in day:

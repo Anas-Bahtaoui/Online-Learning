@@ -1,10 +1,9 @@
 from typing import NamedTuple, List, Optional, Dict
 
 from basic_types import Experience, Age
-from Learner import Reward, PriceIndexes, ProductRewards, Learner, ExperimentHistoryItem
+from Learner import Reward, PriceIndexes, ProductRewards, ExperimentHistoryItem, ParameterHistoryEntry
 from change_detectors import ChangeHistoryItem
-from entities import Product, Customer, Simulation
-from parameter_estimators import HistoryEntry
+from entities import Product
 
 
 class IDs(NamedTuple):

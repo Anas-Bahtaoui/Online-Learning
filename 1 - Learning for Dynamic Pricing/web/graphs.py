@@ -183,7 +183,7 @@ def render_customer_table(customers: List[dict], products: List[Product], select
             class_=str(customer["class"]),
             entered_from=products[customer["products_clicked"][0]].name if customer["products_clicked"] else "(out)",
             profit=sum(
-                products[int(product_id)].candidate_prices[selected_price_indexes[(customer.expertise, customer.age)][int(product_id)]] * count[0] for
+                products[int(product_id)].candidate_prices[selected_price_indexes[(Experience[customer["expertise"]], Age[customer["age"]])][int(product_id)]] * count[0] for
                 product_id, count in
                 customer["products_bought"].items()),
             **{
@@ -191,8 +191,8 @@ def render_customer_table(customers: List[dict], products: List[Product], select
                 for product in products},
         ))
         tooltips.append({product.id: dict(
-            value=f"""The customer's reservation price was: *{customer['products_bought'][str(product.id)][1]}* from distribution *{reservation_price_distribution_from_curves(namedtuple("temp", ["name"])(customer['class']), product.id, product.candidate_prices[selected_price_indexes[(customer.expertise, customer.age)][product.id]])}*.
-Our offered price was: *{product.candidate_prices[selected_price_indexes[(customer.expertise, customer.age)][product.id]]}*
+            value=f"""The customer's reservation price was: *{customer['products_bought'][str(product.id)][1]}* from distribution *{reservation_price_distribution_from_curves(namedtuple("temp", ["name"])(customer['class']), product.id, product.candidate_prices[selected_price_indexes[(Experience[customer['expertise']], Age[customer['age']])][product.id]])}*.
+Our offered price was: *{product.candidate_prices[selected_price_indexes[(Experience[customer["expertise"]], Age[customer["age"]])][product.id]]}*
 """, type="markdown") for product in products})
     return dash_table.DataTable(
         columns=columns_,
@@ -216,7 +216,7 @@ def render_for_learner(learner_name: str, learner_data: List[SimulationResult], 
         experiment_aggregator(np.array([data.change_detected_at for data in learner_data])).astype(
             int))  # 1d int
     product_rewards = experiment_aggregator(np.array([data.product_rewards for data in learner_data]))  # 2d float
-    price_indexes = experiment_aggregator(np.array([data.price_indexes for data in learner_data])).astype(int)  # 2d int
+    price_indexes = experiment_aggregator(np.array([data.price_indexes for data in learner_data]))  # 2d int
     products = learner_data[0].products
     regrets = np.cumsum(clairvoyant - rewards)
     # average_regrets = np.mean(np.sum(regrets, axis=0))

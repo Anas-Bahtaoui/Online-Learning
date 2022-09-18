@@ -130,4 +130,6 @@ class Customer:
             "products_bought": self.products_bought,
             "display_name": self.display_name,
             "display_age": self.display_age,
+            "expertise": self.expertise.name,
+            "age": self.age.name,
         }
