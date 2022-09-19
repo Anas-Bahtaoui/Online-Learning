@@ -227,9 +227,8 @@ def render_for_learner(learner_name: str, learner_data: List[SimulationResult], 
     mean_ub = np.mean(mohammed_ub, axis=0)
 
     change_detected_at = list(
-        experiment_aggregator(np.array([data.change_detected_at for data in learner_data])).astype(
-            int))  # 1d int
-    rewards = experiment_aggregator(np.array([data.product_rewards for data in learner_data]))
+        experiment_aggregator(np.array([data.change_detected_at for data in learner_data])))  # 1d int
+    rewards = experiment_aggregator(np.array([data.rewards for data in learner_data]))
     product_rewards = experiment_aggregator(np.array([data.product_rewards for data in learner_data]))  # 2d float
     price_indexes = experiment_aggregator(np.array([data.price_indexes for data in learner_data])).astype(int)  # 2d int
     clairvoyants = experiment_aggregator(np.array([data.clairvoyants for data in learner_data]))
@@ -273,7 +272,7 @@ def render_for_learner(learner_name: str, learner_data: List[SimulationResult], 
                  render_for_estimator(products, estimators[:, 2].T, name, "Parameters factor"),
 
                  ])
-    if i_experiment and learner_data[i_experiment].change_history:
+    if i_experiment is not None and learner_data[i_experiment].change_history:
         graphs.append(render_change_detection_graph_graph(learner_data[i_experiment].change_history,
                                                           learner_data[i_experiment].change_detected_at))
     return dbc.Col([

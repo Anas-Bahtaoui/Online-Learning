@@ -34,7 +34,7 @@ step5 = BanditConfiguration("Step 5", True, True, False)
 step6_sliding_window = BanditConfiguration("Step 6 with Sliding Window", False, False, False,
                                            NonStationaryConfig(30, 30, None))
 step6_change_detection = BanditConfiguration("Step 6 with Custom Algorithm", False, False, False,
-                                             NonStationaryConfig(30, 30, CumSum(10, 0.1, 2)))
+                                             NonStationaryConfig(30, 30, CumSum(10, 0.1, 0.2)))
 step7 = BanditConfiguration("Step 7", False, False, True, None, True)
 
 
@@ -222,8 +222,11 @@ class BanditLearner(Learner):
                     self._experiment_history[-1] = self._experiment_history[-1][:3] + (True,) + \
                                                    self._experiment_history[
                                                        -1][4:]
+                else:
+                    self._update()
                 self._experiment_history[-1] = self._experiment_history[-1][:4] + (non_stationary_result,) + \
-                                               self._experiment_history[-1][5:]
+                                                       self._experiment_history[-1][5:]
+
         else:
             self._update()
 
