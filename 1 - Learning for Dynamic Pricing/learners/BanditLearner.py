@@ -11,13 +11,19 @@ from parameter_estimators import *
 # TODO: Things we don't know, use the empirical mean
 # TODO: Things we know use the expectation of distribution.
 
+class NonStationaryConfig(NamedTuple):
+    normal_days: int
+    abrupt_days: int
+    change_detection_algorithm: Optional[ChangeDetectionAlgorithm]
+
+
 class BanditConfiguration(NamedTuple):
     name: str
     a_ratios_known: bool
     n_items_sold_known: bool
     graph_weights_known: bool
     # Stationary, sliding window size, or change detection algorithm
-    non_stationary: Union[None, int, ChangeDetectionAlgorithm] = None
+    non_stationary: Optional[NonStationaryConfig] = None
     context_generation: bool = False  # First is the amount of days
 
 
@@ -25,9 +31,10 @@ step3 = BanditConfiguration("Step 3", True, True, True)
 step4 = BanditConfiguration("Step 4", False, False, True)
 step5 = BanditConfiguration("Step 5", True, True, False)
 # Step 6 is there for comparing two algorithms, it is better to just say all is unknown
-step6_sliding_window = BanditConfiguration("Step 6 with Sliding Window", False, False, False, 10)
+step6_sliding_window = BanditConfiguration("Step 6 with Sliding Window", False, False, False,
+                                           NonStationaryConfig(30, 30, None))
 step6_change_detection = BanditConfiguration("Step 6 with Custom Algorithm", False, False, False,
-                                             CumSum(10, 0.1, 2))
+                                             NonStationaryConfig(30, 30, CumSum(10, 0.1, 2)))
 step7 = BanditConfiguration("Step 7", False, False, True, None, True)
 
 
@@ -52,13 +59,20 @@ class BanditLearner(Learner):
         if not hasattr(self, "_estimators"):
             self._estimators: List[ParameterEstimator] = []
         self._t = 0
+        self._sliding_window_slide_period: Optional[int] = None
+
+    def _shall_abrupt_change(self) -> bool:
+        if self.config.non_stationary is None:
+            return False
+        period = self.config.non_stationary.normal_days + self.config.non_stationary.abrupt_days
+        return (len(self._experiment_history) % period) >= self.config.non_stationary.normal_days
 
     def refresh_vars(self, products: List[Product], environment: Environment, config: SimulationConfig):
         super().refresh_vars(products, environment, config)
         self._experiment_history: List[ExperimentHistoryItem] = []
         self._reset_parameters()
-        if isinstance(self.config.non_stationary, ChangeDetectionAlgorithm):
-            self.config.non_stationary.reset()
+        if self.config.non_stationary is not None and self.config.non_stationary.change_detection_algorithm is not None:
+            self.config.non_stationary.change_detection_algorithm.reset()
         self._t = 0
 
         self._estimators = []
@@ -84,8 +98,8 @@ class BanditLearner(Learner):
             self._estimators.append(GraphWeightsEstimator())
 
     def update_experiment_days(self, days: int):
-        if isinstance(self.config.non_stationary, int):
-            self.config = self.config._replace(non_stationary=int(days ** 0.5))
+        if self.config.non_stationary is not None and self.config.non_stationary.change_detection_algorithm is None:
+            self._sliding_window_slide_period = int(days ** 0.5)
 
     def _select_price_indexes(self) -> List[int]:
         result = []
@@ -103,9 +117,10 @@ class BanditLearner(Learner):
         :param selected_price_indexes: List of price indexes that we select for this run, for each product
         """
         customers = []
+        abrupt_change = self._shall_abrupt_change()
         for customer_class in list(CustomerClass):
             customers.extend(
-                [Customer(customer_class) for _ in
+                [Customer(customer_class, is_abrupt=abrupt_change) for _ in
                  range(self._config.customer_counts[customer_class].get_sample_value())])
         total_reservation_prices = defaultdict(list)
         for customer in customers:
@@ -141,7 +156,10 @@ class BanditLearner(Learner):
         product_rewards = self._calculate_product_rewards(selected_price_indexes, customers)
         if persist:
             clairvoyant = self._clairvoyant_reward_calculate(self.clairvoyant_indexes)
-            self._experiment_history.append(ExperimentHistoryItem(sum(product_rewards), selected_price_indexes, product_rewards, False, None, clairvoyant, customers, {estimator.__class__.__name__: {} for estimator in self._estimators}, 0))
+            self._experiment_history.append(
+                ExperimentHistoryItem(sum(product_rewards), selected_price_indexes, product_rewards, False, None,
+                                      clairvoyant, customers,
+                                      {estimator.__class__.__name__: {} for estimator in self._estimators}, 0, self._shall_abrupt_change()))
             upper_bound = self._upper_bound()
             self._experiment_history[-1] = self._experiment_history[-1]._replace(upper_bound=upper_bound)
         else:
@@ -159,7 +177,8 @@ class BanditLearner(Learner):
             estimator.reset()
         for i in range(-n, 0, 1):
             self._t += 1
-            selected_price_indexes, product_rewards = self._experiment_history[i].selected_price_indexes, self._experiment_history[i].product_rewards
+            selected_price_indexes, product_rewards = self._experiment_history[i].selected_price_indexes, \
+                                                      self._experiment_history[i].product_rewards
             if self._t > 1:
                 last_customers = self._experiment_history[i - 1].customers
                 for estimator in self._estimators:
@@ -170,12 +189,14 @@ class BanditLearner(Learner):
 
     def _update(self):
         self._t += 1
-        selected_price_indexes, product_rewards = self._experiment_history[-1].selected_price_indexes, self._experiment_history[-1].product_rewards
+        selected_price_indexes, product_rewards = self._experiment_history[-1].selected_price_indexes, \
+                                                  self._experiment_history[-1].product_rewards
         if self._t > 1:
             for estimator in self._estimators:
                 product_rewards = estimator.modify(product_rewards)
 
-            self._experiment_history[-1] = self._experiment_history[-1]._replace(estimators={estimator.__class__.__name__: estimator._history[-1] for estimator in self._estimators})
+            self._experiment_history[-1] = self._experiment_history[-1]._replace(
+                estimators={estimator.__class__.__name__: estimator._history[-1] for estimator in self._estimators})
         self._update_learner_state(selected_price_indexes, product_rewards, self._t)
 
     def _update_parameter_estimators(self):
@@ -188,18 +209,21 @@ class BanditLearner(Learner):
         selected_price_indexes = self._select_price_indexes()
         self._new_day(selected_price_indexes)
         self._update_parameter_estimators()
-        if isinstance(self.config.non_stationary, int):
-            self._reset_and_rerun_for_last_n(self.config.non_stationary)
-        elif isinstance(self.config.non_stationary, ChangeDetectionAlgorithm):
-            non_stationary_result = self.config.non_stationary.update(self._experiment_history[-1].customers)
-            if self.config.non_stationary.has_changed():
-                self.config.non_stationary.reset()
-                self._reset_parameters()
-                self._reset_and_rerun_for_last_n(1)
-                self._experiment_history[-1] = self._experiment_history[-1][:3] + (True,) + self._experiment_history[
-                                                                                                -1][4:]
-            self._experiment_history[-1] = self._experiment_history[-1][:4] + (non_stationary_result,) + \
-                                           self._experiment_history[-1][5:]
+        if self.config.non_stationary is not None:
+            if self.config.non_stationary.change_detection_algorithm is None:
+                self._reset_and_rerun_for_last_n(self._sliding_window_slide_period)
+            else:
+                algorithm = self.config.non_stationary.change_detection_algorithm
+                non_stationary_result = algorithm.update(self._experiment_history[-1].customers)
+                if algorithm.has_changed():
+                    algorithm.reset()
+                    self._reset_parameters()
+                    self._reset_and_rerun_for_last_n(1)
+                    self._experiment_history[-1] = self._experiment_history[-1][:3] + (True,) + \
+                                                   self._experiment_history[
+                                                       -1][4:]
+                self._experiment_history[-1] = self._experiment_history[-1][:4] + (non_stationary_result,) + \
+                                               self._experiment_history[-1][5:]
         else:
             self._update()
 

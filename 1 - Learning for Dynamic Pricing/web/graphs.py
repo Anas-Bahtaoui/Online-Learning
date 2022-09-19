@@ -19,7 +19,7 @@ def apply_resolution(y, resolution):
 
 
 def render_rewards(name, rewards, change_detected_at: List[int], clairvoyant_rewards: List[float],
-                   absolute_clairvoyant: float, resolution: int, std_dev):
+                   absolute_clairvoyant: float, resolution: int, std_dev=None):
     x = list(range(1, len(rewards) + 1))
     try:
         plot = plotly.express.line(x=x, y=apply_resolution(rewards, resolution),
@@ -30,14 +30,15 @@ def render_rewards(name, rewards, change_detected_at: List[int], clairvoyant_rew
         plot = plotly.express.line(x=x, y=apply_resolution(rewards, resolution),
                                    labels={"x": "Iteration", "y": "Reward"},
                                    title=f"{name} Reward", )
-    lower = rewards - std_dev
-    upper = rewards + std_dev
-    plot.add_trace(
-        go.Scatter(x=x, y=apply_resolution(lower, resolution), fill=None, mode='lines',
-                   line={"color": "#000000"}, name="Lower bound"))
-    plot.add_trace(
-        go.Scatter(x=x, y=apply_resolution(upper, resolution), fill=None, mode='lines',
-                   line={"color": "#000000"}, name="Upper bound"))
+    if std_dev is not None:
+        lower = rewards - std_dev
+        upper = rewards + std_dev
+        plot.add_trace(
+            go.Scatter(x=x, y=apply_resolution(lower, resolution), fill=None, mode='lines',
+                       line={"color": "#000000"}, name="Lower bound"))
+        plot.add_trace(
+            go.Scatter(x=x, y=apply_resolution(upper, resolution), fill=None, mode='lines',
+                       line={"color": "#000000"}, name="Upper bound"))
     plot.add_trace(
         go.Scatter(x=x, y=apply_resolution(clairvoyant_rewards, resolution), fill=None,
                    mode='lines',
@@ -156,7 +157,8 @@ def render_change_detection_graph_graph(change_detection_history: List[ChangeHis
     return dcc.Graph(figure=fig)
 
 
-def render_customer_table(customers: List[dict], products: List[Product], selected_price_index: PriceIndexes):
+def render_customer_table(customers: List[dict], products: List[Product], selected_price_index: PriceIndexes,
+                          is_abrupt: bool):
     data = []
     tooltips = []
     columns = {
@@ -172,7 +174,7 @@ def render_customer_table(customers: List[dict], products: List[Product], select
         data.append(dict(
             name=customer["display_name"],
             age=customer["display_age"],
-            class_=str(customer["class"]),
+            class_=str(customer["class"]) + ("_ABRUPT" if is_abrupt else ""),
             entered_from=products[customer["products_clicked"][0]].name if customer["products_clicked"] else "(out)",
             profit=sum(
                 products[int(product_id)].candidate_prices[selected_price_index[int(product_id)]] * count[0] for
@@ -183,7 +185,7 @@ def render_customer_table(customers: List[dict], products: List[Product], select
                 for product in products},
         ))
         tooltips.append({product.id: dict(
-            value=f"""The customer's reservation price was: *{customer['products_bought'][str(product.id)][1]}* from distribution *{reservation_price_distribution_from_curves(namedtuple("temp", ["name"])(customer['class']), product.id, product.candidate_prices[selected_price_index[product.id]])}*.
+            value=f"""The customer's reservation price was: *{customer['products_bought'][str(product.id)][1]}* from distribution *{reservation_price_distribution_from_curves(namedtuple("temp", ["name"])(customer['class']), product.id, product.candidate_prices[selected_price_index[product.id]], is_abrupt)}*.
 Our offered price was: *{product.candidate_prices[selected_price_index[product.id]]}*
 """, type="markdown") for product in products})
     return dash_table.DataTable(
@@ -227,9 +229,12 @@ def render_for_learner(learner_name: str, learner_data: List[SimulationResult], 
     change_detected_at = list(
         experiment_aggregator(np.array([data.change_detected_at for data in learner_data])).astype(
             int))  # 1d int
-
+    rewards = experiment_aggregator(np.array([data.product_rewards for data in learner_data]))
     product_rewards = experiment_aggregator(np.array([data.product_rewards for data in learner_data]))  # 2d float
     price_indexes = experiment_aggregator(np.array([data.price_indexes for data in learner_data])).astype(int)  # 2d int
+    clairvoyants = experiment_aggregator(np.array([data.clairvoyants for data in learner_data]))
+    absolute_clairvoyant = experiment_aggregator(np.array([data.absolute_clairvoyant for data in learner_data]))
+
     products = learner_data[0].products
 
     graphs = [
@@ -245,16 +250,16 @@ def render_for_learner(learner_name: str, learner_data: List[SimulationResult], 
         #               resolution, sd_reg),
         # render_avg_regrets(learner_name, average_regrets, change_detected_at, clairvoyant, absolute_clairvoyant,
         #                   resolution),
-        render_selection_indexes(products, price_indexes, learner_name,
-                                 change_detected_at, resolution),
-        render_product_rewards_graph(products, product_rewards, learner_name,
-                                     change_detected_at, resolution),
+        render_rewards(learner_name, rewards, change_detected_at, clairvoyants, absolute_clairvoyant, resolution),
+        render_product_rewards_graph(products, product_rewards, learner_name, change_detected_at, resolution),
+        render_selection_indexes(products, price_indexes, learner_name, change_detected_at, resolution),
     ]
     if "Greedy" not in learner_name and i_experiment is not None:
         graphs.extend([
             dbc.FormText(f"Customers Day {day_cnt}:"),
             render_customer_table(learner_data[i_experiment].customers[day_cnt], products,
-                                  learner_data[i_experiment].price_indexes[day_cnt])
+                                  learner_data[i_experiment].price_indexes[day_cnt],
+                                  learner_data[i_experiment].is_abrupt[day_cnt])
         ])
 
     if learner_data[0].estimators is not None and learner_name.find("6") == -1:

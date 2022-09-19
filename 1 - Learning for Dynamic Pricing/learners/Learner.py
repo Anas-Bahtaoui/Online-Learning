@@ -75,6 +75,7 @@ class ExperimentHistoryItem(NamedTuple):
     customers: Optional[List["Customer"]]  # For some reason typing resolves the module, not the class
     estimators: Optional[Dict[str, ParameterHistoryEntry]]
     upper_bound: float
+    ran_on_abrupt_change: bool
 
 
 class Learner:

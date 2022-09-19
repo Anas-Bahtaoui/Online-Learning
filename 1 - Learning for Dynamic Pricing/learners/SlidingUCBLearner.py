@@ -29,6 +29,7 @@ class SlidingUCBLearner(BanditLearner):
         self.widths = [[np.inf for _ in product.candidate_prices] for product in self._products]
         self.rewards_per_arm_per_product = [[[] for _ in product.candidate_prices] for product in self._products]
     def update_experiment_days(self, days: int):
+        super().update_experiment_days(days)
         self._window_size = int(days ** 0.5)
 
     def _update_learner_state(self, selected_price_indexes_, product_rewards_, t_):

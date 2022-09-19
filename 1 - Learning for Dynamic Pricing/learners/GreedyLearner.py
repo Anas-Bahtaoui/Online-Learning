@@ -32,7 +32,7 @@ class GreedyLearner(Learner):
         clairvoyant = self._clairvoyant_reward_calculate(self.clairvoyant_indexes)
         self._experiment_history.append(
             ExperimentHistoryItem(self.current_reward, list(self.candidate_price_indexes), product_rewards, False, None,
-                                  clairvoyant, None, None, self._upper_bound()))
+                                  clairvoyant, None, None, self._upper_bound(), False))
         return shall_continue
 
     def __init__(self):
@@ -52,6 +52,7 @@ class GreedyLearner(Learner):
                 return 0
             product_price = product.candidate_prices[current_price_indexes[product.id]]
             # We don't have simulated users but use expected values directly
+            # Greedy never uses abrupt change graphs
             reservation_price_distribution = reservation_price_distribution_from_curves(class_, product.id,
                                                                                         product_price)
             purchase_ratio = reservation_price_distribution.calculate_ratio_of(product_price)

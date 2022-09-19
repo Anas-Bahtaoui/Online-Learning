@@ -12,6 +12,7 @@ class NewerGTSLearner(BanditLearner):
         return self._C * np.sqrt(n_arms * self.total_days * np.log(n_arms))
 
     def update_experiment_days(self, days: int):
+        super().update_experiment_days(days)
         self.total_days = days
 
     def _reset_parameters(self):

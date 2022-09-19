@@ -36,6 +36,8 @@ class SimulationResult(NamedTuple):
     products: List[Product]
     customers: Optional[List[List[dict]]]
     estimators: Optional[Dict[str, List[ParameterHistoryEntry]]]
+    change_happened_at: List[int]
+    is_abrupt: List[bool]
     change_detected_at: List[int]
     change_history: Optional[List[ChangeHistoryItem]]
     clairvoyants: List[float]
@@ -48,6 +50,8 @@ class SimulationResult(NamedTuple):
             "price_indexes": self.price_indexes,
             "product_rewards": self.product_rewards,
             "products": [product.serialize() for product in self.products],
+            "change_happened_at": self.change_happened_at,
+            "is_abrupt": self.is_abrupt,
             "change_detected_at": self.change_detected_at,
             "change_history": self.change_history,
             "absolute_clairvoyant": self.absolute_clairvoyant,
@@ -67,6 +71,8 @@ class SimulationResult(NamedTuple):
             products=[Product(*product.values()) for product in data["products"]],
             customers=data.get("customers"),
             estimators=data.get("estimators"),
+            change_happened_at=data["change_happened_at"],
+            is_abrupt=data["is_abrupt"],
             change_detected_at=data["change_detected_at"],
             change_history=data["change_history"],
             clairvoyants=data["clairvoyants"],
@@ -76,9 +82,10 @@ class SimulationResult(NamedTuple):
 
     @staticmethod
     def from_result(exps: List[ExperimentHistoryItem], products: List[Product], absolute_clairvoyant: float):
-        rewards, price_indexes, product_rewards, change_detected_at, change_history, clairvoyants, customers, estimators, upper_bounds = zip(
+        rewards, price_indexes, product_rewards, change_detected_at, change_history, clairvoyants, customers, estimators, upper_bounds, change_happened = zip(
             *exps)
         change_indexes = [ind for ind, value in enumerate(change_detected_at) if value]
+        happened_change_indexes = [ind for ind, value in enumerate(change_happened) if value]
         customers, estimators, change_history = list(customers), list(estimators), list(change_history)
         return SimulationResult(
             rewards=list(rewards),
@@ -87,6 +94,8 @@ class SimulationResult(NamedTuple):
             products=products,
             customers=[[customer.serialize() for customer in day] for day in customers] if customers[0] is not None else None,
             estimators=estimators if estimators[0] is not None else None,
+            change_happened_at=happened_change_indexes,
+            is_abrupt=change_happened,
             change_detected_at=change_indexes,
             change_history=change_history if change_history[0] is not None else [],
             clairvoyants=list(clairvoyants),
