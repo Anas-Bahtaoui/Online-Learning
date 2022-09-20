@@ -117,7 +117,7 @@ learners: List[Learner] = [
 ]
 
 for step in [
-    step3,
+    # step3,
     # step4,
     # step5,
     # step6_sliding_window,
