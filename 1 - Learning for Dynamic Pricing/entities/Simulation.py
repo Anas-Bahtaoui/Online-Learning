@@ -43,6 +43,7 @@ class Simulation:
 
     def run(self, days: int, experiment_count: int = 1, *, plot_graphs: bool):
         for learner in self.learners:
+            abs_clairvoyant, clairvoyant_indexes, abs_per_product = None, None, None
             np_random.reset_seed()
             n_experiment = experiment_count
             if "Greedy" in learner.name:
@@ -52,7 +53,9 @@ class Simulation:
                 learner.refresh_vars(self.products, self.environment, self.config)
                 self.environment.reset_day()
                 learner.reset()
-                learner.absolute_clairvoyant, learner.clairvoyant_indexes = self.run_clairvoyant(learner)
+                if abs_clairvoyant is None:
+                    abs_clairvoyant, clairvoyant_indexes, abs_per_product = self.run_clairvoyant(learner)
+                learner.absolute_clairvoyant, learner.clairvoyant_indexes, learner.clairvoyant_product_rewards = abs_clairvoyant, clairvoyant_indexes, abs_per_product
                 learner.run_experiment(days, plot_graphs=plot_graphs, current_n=experiment_index + 1)
                 self.experiments[learner.name].append((learner.absolute_clairvoyant, learner._experiment_history))
 
@@ -63,13 +66,16 @@ class Simulation:
         price_index_count = len(self.products[0].candidate_prices)
         max_reward = 0
         best_indexes = ()
-        all_price_indexes = list(product(range(price_index_count), repeat=product_count))[:1]
+        rewards_per_product = ()
+        all_price_indexes = list(product(range(price_index_count), repeat=product_count))
         with tqdm(total=len(all_price_indexes), leave=False) as pbar:
-            pbar.set_description(f"Clairvoyant")
+            pbar.set_description(f"Clairvoyant for {learner.name}")
             for price_indexes in all_price_indexes[:1]:
-                total_reward = calculate(list(price_indexes))
+                rewards = calculate(list(price_indexes))
+                total_reward = sum(rewards)
                 if total_reward > max_reward:
                     max_reward = total_reward
                     best_indexes = price_indexes
+                    rewards_per_product = rewards
                 pbar.update(1)
-        return max_reward, best_indexes
+        return max_reward, best_indexes, rewards_per_product

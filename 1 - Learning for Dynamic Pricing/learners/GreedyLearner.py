@@ -9,6 +9,9 @@ from entities import Product, ObservationProbability, CustomerClass, reservation
 
 
 class GreedyLearner(Learner):
+    def _upper_bound(self):
+        return self.absolute_clairvoyant
+
     def update_experiment_days(self, days: int):
         pass
 
@@ -28,7 +31,8 @@ class GreedyLearner(Learner):
         product_rewards = self._get_rewards_of_current_run()
         clairvoyant = self._clairvoyant_reward_calculate(self.clairvoyant_indexes)
         self._experiment_history.append(
-            ExperimentHistoryItem(self.current_reward, list(self.candidate_price_indexes), product_rewards, False, None, clairvoyant, None, None))
+            ExperimentHistoryItem(self.current_reward, list(self.candidate_price_indexes), product_rewards, False, None,
+                                  clairvoyant, None, None, self._upper_bound()))
         return shall_continue
 
     def __init__(self):
@@ -73,14 +77,15 @@ class GreedyLearner(Learner):
         # Probability that the customer sees a given product depends on the alpha distribution
         return round(emulate_path((), self._environment.get_expected_alpha(class_)[product.id + 1], product), 2)
 
-    def calculate_total_expected_reward(self, price_indexes: Tuple[int, ...]) -> float:
-        result = 0
+    def calculate_total_expected_reward(self, price_indexes: Tuple[int, ...]) -> List[float]:
+        result = []
         for product in self._products:
+            result.append(0)
             for class_ in list(CustomerClass):
-                result += self.calculate_reward_of_product(price_indexes[product.id], product, class_)
+                result[-1] += self.calculate_reward_of_product(price_indexes[product.id], product, class_)
         return result
 
-    def _clairvoyant_reward_calculate(self, price_indexes) -> float:
+    def _clairvoyant_reward_calculate(self, price_indexes) -> List[float]:
         return self.calculate_total_expected_reward(price_indexes)
 
     def calculate_potential_candidate(self, pulled_arm: int):
@@ -89,7 +94,7 @@ class GreedyLearner(Learner):
         if new_price_indexes[pulled_arm] == len(self._products[0].candidate_prices):
             return None
         self._environment.new_day()  # We have a new experiment, thus new day
-        reward = self.calculate_total_expected_reward(new_price_indexes)
+        reward = sum(self.calculate_total_expected_reward(new_price_indexes))
         if reward > self.current_reward:
             return reward, new_price_indexes
 

@@ -61,3 +61,6 @@ def Gaussian_TS_regret_UB(Time_horizon, variance, N_arms, info_gain, delta):
     # We already have them ^^
     B = 8 * np.log(Time_horizon ** 4 * N_arms / (6 * delta))
     bound = np.sqrt((8 / np.log(1 + 1 / variance ** 2)) * Time_horizon * B * info_gain)
+
+def GaussianTSUpper(n_arms, time_horizon, C ):
+    return C * np.sqrt(n_arms * time_horizon * np.log(n_arms))
