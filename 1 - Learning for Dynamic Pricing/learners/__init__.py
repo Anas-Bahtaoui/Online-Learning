@@ -5,3 +5,4 @@ from Learner import Learner
 from NewerGTSLearner import NewerGTSLearner
 #from SlidingUCBLearner import SlidingUCBLearner
 from BranchingLearner import BranchingLearner
+from NewBranchingLearner import NewBranchingLearner

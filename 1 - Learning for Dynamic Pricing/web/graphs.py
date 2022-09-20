@@ -112,7 +112,7 @@ def render_selection_indexes(products: List[Product], selected_price_indexes: Li
                     prices[k].append(product.candidate_prices[v[product.id]])
             for i, k in enumerate(price_indexes.keys(),start=1):
                 fig.add_trace(
-                    go.Scatter(x=x_iteration, y=apply_resolution(prices[k], resolution), name=f"{product.name} {k[0].value[:2]} {k[1].value[:2]}",
+                    go.Scatter(x=x, y=apply_resolution(prices[k], resolution), name=f"{product.name} {k[0].value[:2]} {k[1].value[:2]}",
                                line={"color": colors[(product.id + i) % len(colors)]}))
         else:
             prices = []
@@ -274,17 +274,17 @@ def render_for_learner(learner_name: str, learner_data: List[SimulationResult], 
                                   learner_data[i_experiment].price_indexes[day_cnt])
         ])
 
-    if learner_data[0].estimators is not None and learner_name.find("6") == -1:
-        for name in list(learner_data[0].estimators[0].keys()):
-            estimators = experiment_aggregator(
-                np.array([[est[name] for est in data.estimators][1:] for data in learner_data]))
-
-            graphs.extend(
-                [render_for_estimator(products, estimators[:, 0].T, name, "Incoming factor"),
-                 render_for_estimator(products, estimators[:, 1].T, name, "Resulting factor"),
-                 render_for_estimator(products, estimators[:, 2].T, name, "Parameters factor"),
-
-                 ])
+    # if learner_data[0].estimators is not None and learner_name.find("6") == -1:
+    #     for name in list(learner_data[0].estimators[0].keys()):
+    #         estimators = experiment_aggregator(
+    #             np.array([[est[name] for est in data.estimators][1:] for data in learner_data]))
+    #
+    #         graphs.extend(
+    #             [render_for_estimator(products, estimators[:, 0].T, name, "Incoming factor"),
+    #              render_for_estimator(products, estimators[:, 1].T, name, "Resulting factor"),
+    #              render_for_estimator(products, estimators[:, 2].T, name, "Parameters factor"),
+    #
+    #              ])
     if i_experiment and learner_data[i_experiment].change_history:
         graphs.append(render_change_detection_graph_graph(learner_data[i_experiment].change_history,
                                                           learner_data[i_experiment].change_detected_at))

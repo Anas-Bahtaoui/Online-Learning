@@ -118,7 +118,7 @@ learners: List[Learner] = [
 
 for step in [
     # step3,
-    # step4,
+    step4,
     # step5,
     # step6_sliding_window,
     # step6_change_detection,
@@ -127,8 +127,8 @@ for step in [
         learners.append(Learner(step))
 
 # learners.append(SlidingUCBLearner(step6_sliding_window._replace(non_stationary=None)))
-learners.append(BranchingLearner(step7._replace(name="Step 7 with UCB"), UCBLearner))
-learners.append(BranchingLearner(step7._replace(name="Step 7 with GTS"), NewerGTSLearner))
+learners.append(NewBranchingLearner(step7._replace(name="Step 7 with UCB"), UCBLearner))
+learners.append(NewBranchingLearner(step7._replace(name="Step 7 with GTS"), NewerGTSLearner))
 
 RUN_COUNT = 50
 if __name__ == '__main__':
