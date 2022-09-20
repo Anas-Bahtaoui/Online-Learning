@@ -40,9 +40,9 @@ def render_rewards(name, rewards, change_detected_at: List[int], clairvoyant_rew
             go.Scatter(x=x, y=apply_resolution(upper, resolution), fill=None, mode='lines',
                        line={"color": "#000000"}, name="Upper bound"))
     plot.add_trace(
-        go.Scatter(x=x, y=apply_resolution(clairvoyant_rewards, resolution), fill=None,
+        go.Scatter(x=x, y=apply_resolution(np.sum(clairvoyant_rewards, axis=1), resolution), fill=None,
                    mode='lines',
-                   line={"color": "darkblue"}, name="Clairvoyant reward"))
+                   line={"color": "green"}, name="Clairvoyant reward"))
     for detected_i in change_detected_at:
         plot.add_vline(detected_i)
     plot.add_hline(absolute_clairvoyant, name="Absolute Clairvoyant reward")
@@ -152,6 +152,7 @@ def render_change_detection_graph_graph(change_detection_history: List[ChangeHis
     fig.add_trace(go.Scatter(x=x, y=[item[0] for item in change_detection_history], name="gplus", mode='markers'))
     fig.add_trace(go.Scatter(x=x, y=[item[1] for item in change_detection_history], name="gminus", mode='markers'))
     fig.add_trace(go.Scatter(x=x, y=[item[2] for item in change_detection_history], name="sample", mode='markers'))
+    fig.add_trace(go.Scatter(x=x, y=[item[3] for item in change_detection_history], name="threshold", mode='markers'))
     for detected_i in change_detected_at:
         fig.add_vline(detected_i)
     return dcc.Graph(figure=fig)

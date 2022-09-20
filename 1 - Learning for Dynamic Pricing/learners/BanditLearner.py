@@ -100,6 +100,8 @@ class BanditLearner(Learner):
     def update_experiment_days(self, days: int):
         if self.config.non_stationary is not None and self.config.non_stationary.change_detection_algorithm is None:
             self._sliding_window_slide_period = int(days ** 0.5)
+        if self.config.non_stationary is not None and self.config.non_stationary.change_detection_algorithm is not None:
+            self.config.non_stationary.change_detection_algorithm.update_experiment_days(days)
 
     def _select_price_indexes(self) -> List[int]:
         result = []

@@ -42,6 +42,7 @@ class Simulation:
         self.experiments = {}
 
     def run(self, days: int, experiment_count: int = 1, *, plot_graphs: bool):
+        bandit_clairvoyant = None
         for learner in self.learners:
             abs_clairvoyant, clairvoyant_indexes, abs_per_product = None, None, None
             np_random.reset_seed()
@@ -53,8 +54,12 @@ class Simulation:
                 learner.refresh_vars(self.products, self.environment, self.config)
                 self.environment.reset_day()
                 learner.reset()
-                if abs_clairvoyant is None:
+                if "Greedy" in learner.name:
                     abs_clairvoyant, clairvoyant_indexes, abs_per_product = self.run_clairvoyant(learner)
+                else:
+                    if bandit_clairvoyant is None:
+                        bandit_clairvoyant = self.run_clairvoyant(learner)
+                    abs_clairvoyant, clairvoyant_indexes, abs_per_product = bandit_clairvoyant
                 learner.absolute_clairvoyant, learner.clairvoyant_indexes, learner.clairvoyant_product_rewards = abs_clairvoyant, clairvoyant_indexes, abs_per_product
                 learner.run_experiment(days, plot_graphs=plot_graphs, current_n=experiment_index + 1)
                 self.experiments[learner.name].append((learner.absolute_clairvoyant, learner._experiment_history))
