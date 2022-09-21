@@ -44,7 +44,6 @@ class Simulation:
     def run(self, days: int, experiment_count: int = 1, *, plot_graphs: bool):
         bandit_clairvoyant = None
         for learner in self.learners:
-            abs_clairvoyant, clairvoyant_indexes, abs_per_product = None, None, None
             np_random.reset_seed()
             n_experiment = experiment_count
             if "Greedy" in learner.name:
@@ -55,12 +54,14 @@ class Simulation:
                 self.environment.reset_day()
                 learner.reset()
                 if "Greedy" in learner.name:
-                    abs_clairvoyant, clairvoyant_indexes, abs_per_product = self.run_clairvoyant(learner)
+                    abs_clairvoyant, clairvoyant_indexes, abs_reward_per_product, abs_cr_per_product = self.run_clairvoyant(
+                        learner)
                 else:
                     if bandit_clairvoyant is None:
                         bandit_clairvoyant = self.run_clairvoyant(learner)
-                    abs_clairvoyant, clairvoyant_indexes, abs_per_product = bandit_clairvoyant
-                learner.absolute_clairvoyant, learner.clairvoyant_indexes, learner.clairvoyant_product_rewards = abs_clairvoyant, clairvoyant_indexes, abs_per_product
+                    abs_clairvoyant, clairvoyant_indexes, abs_reward_per_product, abs_cr_per_product = bandit_clairvoyant
+
+                learner.absolute_clairvoyant, learner.clairvoyant_indexes, learner.clairvoyant_product_rewards, learner.clairvoyant_crs = abs_clairvoyant, clairvoyant_indexes, abs_reward_per_product, abs_cr_per_product
                 learner.run_experiment(days, plot_graphs=plot_graphs, current_n=experiment_index + 1)
                 self.experiments[learner.name].append((learner.absolute_clairvoyant, learner._experiment_history))
 
@@ -72,15 +73,17 @@ class Simulation:
         max_reward = 0
         best_indexes = ()
         rewards_per_product = ()
+        crs_per_product = ()
         all_price_indexes = list(product(range(price_index_count), repeat=product_count))
         with tqdm(total=len(all_price_indexes), leave=False) as pbar:
             pbar.set_description(f"Clairvoyant for {learner.name}")
             for price_indexes in all_price_indexes:
-                rewards = calculate(list(price_indexes))
+                rewards, crs = calculate(list(price_indexes))
                 total_reward = sum(rewards)
                 if total_reward > max_reward:
                     max_reward = total_reward
                     best_indexes = price_indexes
                     rewards_per_product = rewards
+                    crs_per_product = crs
                 pbar.update(1)
-        return max_reward, best_indexes, rewards_per_product
+        return max_reward, best_indexes, rewards_per_product, crs_per_product

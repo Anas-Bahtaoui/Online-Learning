@@ -9,7 +9,7 @@ from dash import dcc, dash_table
 import dash_bootstrap_components as dbc
 from typing import List, Callable, Optional
 from Learner import PriceIndexes, ProductRewards
-from entities import Product, reservation_price_distribution_from_curves
+from entities import Product, conversion_rate_distribution_from_curves
 from change_detectors import ChangeHistoryItem
 from web.common import SimulationResult
 
@@ -39,10 +39,10 @@ def render_rewards(name, rewards, change_detected_at: List[int], clairvoyant_rew
         plot.add_trace(
             go.Scatter(x=x, y=apply_resolution(upper, resolution), fill=None, mode='lines',
                        line={"color": "#000000"}, name="Upper bound"))
-    plot.add_trace(
-        go.Scatter(x=x, y=apply_resolution(np.sum(clairvoyant_rewards, axis=1), resolution), fill=None,
-                   mode='lines',
-                   line={"color": "green"}, name="Clairvoyant reward"))
+    # plot.add_trace(
+    #     go.Scatter(x=x, y=apply_resolution(np.sum(clairvoyant_rewards, axis=1), resolution), fill=None,
+    #                mode='lines',
+    #                line={"color": "green"}, name="Clairvoyant reward"))
     for detected_i in change_detected_at:
         plot.add_vline(detected_i)
     plot.add_hline(absolute_clairvoyant, name="Absolute Clairvoyant reward")
@@ -63,10 +63,10 @@ def render_regrets(name, regrets, change_detected_at: List[int], clairvoyant_rew
     plot.add_trace(
         go.Scatter(x=x, y=apply_resolution(upper, resolution), fill=None, mode='lines',
                    line={"color": "#000000"}, name="Upper Bound"))
-    plot.add_trace(
-        go.Scatter(x=x, y=apply_resolution(clairvoyant_rewards, resolution), fill=None,
-                   mode='lines',
-                   line={"color": "darkblue"}, name="Clairvoyant regret"))
+    # plot.add_trace(
+    #     go.Scatter(x=x, y=apply_resolution(clairvoyant_rewards, resolution), fill=None,
+    #                mode='lines',
+    #                line={"color": "darkblue"}, name="Clairvoyant regret"))
     if ub is not None and "Greedy" not in name:
         plot.add_trace(
             go.Scatter(x=x, y=apply_resolution(ub, resolution), fill=None,
@@ -85,11 +85,11 @@ def render_avg_regrets(name, avg_regrets, change_detected_at: List[int], clairvo
     plot = plotly.express.line(x=x, y=apply_resolution(avg_regrets, resolution),
                                labels={"x": "Iteration", "y": "Average Regret"},
                                title=f"{name} Average Regret", )
-    plot.add_trace(
-        go.Scatter(x=x, y=apply_resolution(clairvoyant_rewards, resolution),
-                   fill=None,
-                   mode='lines',
-                   line={"color": "darkblue"}, name="Clairvoyant reward"))
+    # plot.add_trace(
+    #     go.Scatter(x=x, y=apply_resolution(clairvoyant_rewards, resolution),
+    #                fill=None,
+    #                mode='lines',
+    #                line={"color": "darkblue"}, name="Clairvoyant reward"))
     for detected_i in change_detected_at:
         plot.add_vline(detected_i)
     plot.add_hline(absolute_clairvoyant, name="Absolute Clairvoyant reward")
@@ -186,7 +186,7 @@ def render_customer_table(customers: List[dict], products: List[Product], select
                 for product in products},
         ))
         tooltips.append({product.id: dict(
-            value=f"""The customer's reservation price was: *{customer['products_bought'][str(product.id)][1]}* from distribution *{reservation_price_distribution_from_curves(namedtuple("temp", ["name"])(customer['class']), product.id, product.candidate_prices[selected_price_index[product.id]], is_abrupt)}*.
+            value=f"""The customer's reservation price was: *{customer['products_bought'][str(product.id)][1]}* from distribution *{conversion_rate_distribution_from_curves(namedtuple("temp", ["name"])(customer['class']), product.id, product.candidate_prices[selected_price_index[product.id]], is_abrupt)}*.
 Our offered price was: *{product.candidate_prices[selected_price_index[product.id]]}*
 """, type="markdown") for product in products})
     return dash_table.DataTable(

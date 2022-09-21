@@ -2,7 +2,7 @@ from collections import defaultdict
 from typing import Optional
 import numpy as np
 
-from Learner import Learner, ShallContinue, ExperimentHistoryItem
+from Learner import Learner, ShallContinue, ExperimentHistoryItem, Reward, CR
 from change_detectors import ChangeDetectionAlgorithm, CumSum
 from entities import Environment, SimulationConfig, np_random
 from parameter_estimators import *
@@ -51,6 +51,16 @@ class BanditLearner(Learner):
                                        customer.products_bought[product.id][0]
 
         return rewards
+
+    def _calculate_product_crs(self, customers: List["Customer"]) -> List[float]:
+        clicks = [0 for _ in self._products]
+        buys = [0 for _ in self._products]
+        for customer in customers:
+            for product in self._products:
+                clicks[product.id] += int(product.id in customer.products_clicked)
+                buys[product.id] += 1 if customer.products_bought[product.id][0] > 0 else 0
+
+        return [clicks[i] / buys[i] if buys[i] > 0 else 0 for i in range(len(self._products))]
 
     def __init__(self, config: BanditConfiguration):
         super().__init__()
@@ -117,6 +127,8 @@ class BanditLearner(Learner):
     def _new_day(self, selected_price_indexes: List[int], persist=True):
         """
         :param selected_price_indexes: List of price indexes that we select for this run, for each product
+        :param persist: If true, the results will be saved in the experiment history, otherwise product rewards and CRs will be returned
+        This is needed for clairvoyant to work
         """
         customers = []
         abrupt_change = self._shall_abrupt_change()
@@ -124,18 +136,21 @@ class BanditLearner(Learner):
             customers.extend(
                 [Customer(customer_class, is_abrupt=abrupt_change) for _ in
                  range(self._config.customer_counts[customer_class].get_sample_value())])
-        total_reservation_prices = defaultdict(list)
         for customer in customers:
             def run_on_product(product: Product):
                 if customer.is_product_clicked(product.id):
                     return
                 customer.click_product(product.id)
                 product_price = product.candidate_prices[selected_price_indexes[product.id]]
-                reservation_price = round(
-                    customer.get_reservation_price_of(product.id, product_price).get_sample_value(), 2)
-                customer.see_product(product.id, reservation_price)
-                if reservation_price < product_price:
-                    return reservation_price
+                cr = customer.get_conversion_rate_for(product.id, product_price).get_sample_value()
+                customer.see_product(product.id, cr)
+                if cr < 0 or np.isnan(cr):
+                    cr = 0
+                if cr > 1:
+                    cr = 1
+                will_buy = bool(np_random.binomial(1, cr))
+                if not will_buy:
+                    return
                 buy_count = self._config.purchase_amounts[customer.class_][product.id].get_sample_value()
                 customer.buy_product(product.id, buy_count)
                 first_p: Optional[ObservationProbability]
@@ -149,25 +164,27 @@ class BanditLearner(Learner):
                     customer_views_second_product = bool(np_random.binomial(1, second_p[1] * self._config.lambda_))
                     if customer_views_second_product:
                         run_on_product(second_p[0])
-                return reservation_price
 
             first_product = np_random.choice([None, *self._products],
                                              p=self._environment.get_current_alpha(customer.class_))
             if first_product is not None:
-                total_reservation_prices[(customer.class_, first_product.id)].append(run_on_product(first_product))
+                run_on_product(first_product)
         product_rewards = self._calculate_product_rewards(selected_price_indexes, customers)
+        product_crs = self._calculate_product_crs(customers)
         if persist:
-            clairvoyant = self._clairvoyant_reward_calculate(self.clairvoyant_indexes)
+            clairvoyant_rewards = self._clairvoyant_reward_calculate(self.clairvoyant_indexes)[0]
             self._experiment_history.append(
-                ExperimentHistoryItem(sum(product_rewards), selected_price_indexes, product_rewards, False, None,
-                                      clairvoyant, customers,
-                                      {estimator.__class__.__name__: {} for estimator in self._estimators}, 0, self._shall_abrupt_change()))
+                ExperimentHistoryItem(sum(product_rewards), selected_price_indexes, product_rewards, product_crs, False,
+                                      None,
+                                      sum(clairvoyant_rewards), customers,
+                                      {estimator.__class__.__name__: {} for estimator in self._estimators}, 0,
+                                      self._shall_abrupt_change()))
             upper_bound = self._upper_bound()
             self._experiment_history[-1] = self._experiment_history[-1]._replace(upper_bound=upper_bound)
         else:
-            return product_rewards
+            return product_rewards, product_crs
 
-    def _update_learner_state(self, selected_price_indexes, product_rewards, t):
+    def _update_learner_state(self, selected_price_indexes, product_crs, t):
         raise NotImplementedError()
 
     def _reset_and_rerun_for_last_n(self, n: int):
@@ -179,27 +196,27 @@ class BanditLearner(Learner):
             estimator.reset()
         for i in range(-n, 0, 1):
             self._t += 1
-            selected_price_indexes, product_rewards = self._experiment_history[i].selected_price_indexes, \
-                                                      self._experiment_history[i].product_rewards
+            selected_price_indexes, product_crs = self._experiment_history[i].selected_price_indexes, \
+                                                  self._experiment_history[i].product_crs
             if self._t > 1:
                 last_customers = self._experiment_history[i - 1].customers
                 for estimator in self._estimators:
                     for customer in last_customers:
                         estimator.update(customer)
-                    product_rewards = estimator.modify(product_rewards, register_history=False)
-            self._update_learner_state(selected_price_indexes, product_rewards, self._t)
+                    product_crs = estimator.modify(product_crs, register_history=False)
+            self._update_learner_state(selected_price_indexes, product_crs, self._t)
 
     def _update(self):
         self._t += 1
-        selected_price_indexes, product_rewards = self._experiment_history[-1].selected_price_indexes, \
-                                                  self._experiment_history[-1].product_rewards
+        selected_price_indexes, product_crs = self._experiment_history[-1].selected_price_indexes, \
+                                              self._experiment_history[-1].product_crs
         if self._t > 1:
             for estimator in self._estimators:
-                product_rewards = estimator.modify(product_rewards)
+                product_crs = estimator.modify(product_crs)
 
             self._experiment_history[-1] = self._experiment_history[-1]._replace(
                 estimators={estimator.__class__.__name__: estimator._history[-1] for estimator in self._estimators})
-        self._update_learner_state(selected_price_indexes, product_rewards, self._t)
+        self._update_learner_state(selected_price_indexes, product_crs, self._t)
 
     def _update_parameter_estimators(self):
         customers = self._experiment_history[-1].customers
@@ -227,7 +244,7 @@ class BanditLearner(Learner):
                 else:
                     self._update()
                 self._experiment_history[-1] = self._experiment_history[-1][:4] + (non_stationary_result,) + \
-                                                       self._experiment_history[-1][5:]
+                                               self._experiment_history[-1][5:]
 
         else:
             self._update()
@@ -238,7 +255,7 @@ class BanditLearner(Learner):
     def _reset_parameters(self):
         raise NotImplementedError()
 
-    def _clairvoyant_reward_calculate(self, price_indexes) -> List[float]:
+    def _clairvoyant_reward_calculate(self, price_indexes) -> Tuple[List[Reward], List[CR]]:
         return self._new_day(price_indexes, persist=False)
 
     """

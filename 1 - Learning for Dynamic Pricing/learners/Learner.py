@@ -16,6 +16,8 @@ ProductRewards = List[float]
 ChangeDetected = bool
 ChangeDetectorParams = Optional[Tuple]
 ClairvoyantReward = float
+CR = float
+ProductCRs = List[CR]
 
 
 def draw_reward_graph(rewards: List[Reward], name: str):
@@ -69,6 +71,7 @@ class ExperimentHistoryItem(NamedTuple):
     reward: Reward
     selected_price_indexes: PriceIndexes
     product_rewards: ProductRewards
+    product_crs: List[float]
     change_detected: ChangeDetected
     change_detector_params: ChangeDetectorParams
     clairvoyant_reward: ClairvoyantReward
@@ -86,6 +89,7 @@ class Learner:
     absolute_clairvoyant: Optional[float] = None
     clairvoyant_indexes: Optional[List[int]] = None
     clairvoyant_product_rewards: Optional[ProductRewards] = None
+    clairvoyant_crs: Optional[ProductCRs] = None
 
     def refresh_vars(self, products: List[Product], environment: Environment, config: SimulationConfig):
         self._products = products
@@ -93,6 +97,7 @@ class Learner:
         self._config = config
         self.absolute_clairvoyant = None
         self.clairvoyant_indexes = None
+        self.clairvoyant_crs = None
         self.clairvoyant_product_rewards = None
 
     def _upper_bound(self):
@@ -134,5 +139,5 @@ class Learner:
             product_rewards = [product_reward for _, _, product_reward, _, _ in self._experiment_history]
             draw_product_reward_graph(self._products, product_rewards, self.name)
 
-    def _clairvoyant_reward_calculate(self, price_indexes) -> float:
+    def _clairvoyant_reward_calculate(self, price_indexes) -> Tuple[List[Reward], List[CR]]:
         raise NotImplementedError()

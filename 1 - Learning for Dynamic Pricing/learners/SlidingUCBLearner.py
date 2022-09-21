@@ -24,27 +24,29 @@ class SlidingUCBLearner(BanditLearner):
     def __init__(self, config: BanditConfiguration):
         super().__init__(config)
         # TODO Add the sliding window to the init, but how?
+
     def _reset_ucb_params(self):
         self.means = [[0 for _ in product.candidate_prices] for product in self._products]
         self.widths = [[np.inf for _ in product.candidate_prices] for product in self._products]
-        self.rewards_per_arm_per_product = [[[] for _ in product.candidate_prices] for product in self._products]
+        self.crs_per_arm_per_product = [[[] for _ in product.candidate_prices] for product in self._products]
+
     def update_experiment_days(self, days: int):
         super().update_experiment_days(days)
         self._window_size = int(days ** 0.5)
 
-    def _update_learner_state(self, selected_price_indexes_, product_rewards_, t_):
-        self._cache.append((selected_price_indexes_, product_rewards_))
+    def _update_learner_state(self, selected_price_indexes_, product_crs_, t_):
+        self._cache.append((selected_price_indexes_, product_crs_))
         self._reset_ucb_params()
-        for ind, (selected_price_indexes, product_rewards) in enumerate(self._cache[-self._window_size:]):
-            t = ind + 1 # T starts from 1
-            for product_id, product_reward in enumerate(product_rewards):
+        for ind, (selected_price_indexes, product_crs) in enumerate(self._cache[-self._window_size:]):
+            t = ind + 1  # T starts from 1
+            for product_id, product_cr in enumerate(product_crs):
                 pulled_arm = selected_price_indexes[product_id]
 
-                self.rewards_per_arm_per_product[product_id][pulled_arm].append(product_reward)
+                self.crs_per_arm_per_product[product_id][pulled_arm].append(product_cr)
 
-                n = len(self.rewards_per_arm_per_product[product_id][pulled_arm])
+                n = len(self.crs_per_arm_per_product[product_id][pulled_arm])
                 if n > 0:
-                    self.means[product_id][pulled_arm] = np.mean(self.rewards_per_arm_per_product[product_id][pulled_arm])
+                    self.means[product_id][pulled_arm] = np.mean(self.crs_per_arm_per_product[product_id][pulled_arm])
                     self.widths[product_id][pulled_arm] = np.sqrt(2 * np.log(t + 1) / n)
                 else:
                     self.means[product_id][pulled_arm] = 0

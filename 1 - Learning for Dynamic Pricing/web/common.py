@@ -1,8 +1,8 @@
 from typing import NamedTuple, List, Optional, Dict
 
-from Learner import Reward, PriceIndexes, ProductRewards, Learner, ExperimentHistoryItem
+from Learner import Reward, PriceIndexes, ProductRewards, ExperimentHistoryItem
 from change_detectors import ChangeHistoryItem
-from entities import Product, Customer, Simulation
+from entities import Product
 from parameter_estimators import ParameterHistoryEntry
 
 
@@ -82,7 +82,7 @@ class SimulationResult(NamedTuple):
 
     @staticmethod
     def from_result(exps: List[ExperimentHistoryItem], products: List[Product], absolute_clairvoyant: float):
-        rewards, price_indexes, product_rewards, change_detected_at, change_history, clairvoyants, customers, estimators, upper_bounds, change_happened = zip(
+        rewards, price_indexes, product_rewards, product_crs, change_detected_at, change_history, clairvoyants, customers, estimators, upper_bounds, change_happened = zip(
             *exps)
         change_indexes = [ind for ind, value in enumerate(change_detected_at) if value]
         happened_change_indexes = [ind for ind, value in enumerate(change_happened) if value]
