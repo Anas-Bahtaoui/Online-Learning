@@ -88,15 +88,15 @@ fully_connected_secondaries = CustomerTypeBased(
 
 
 purchase_amounts: CustomerTypeBased[List[PIG]] = CustomerTypeBased(
-    professional=(Constant(2), Constant(1), Constant(3), Constant(3), Constant(1)),
-    young_beginner=(Constant(1), Constant(2), Constant(6), Constant(1), Constant(2)),
-    old_beginner=(Constant(2), Constant(2), Constant(8), Constant(2), Constant(3)),
+    professional=(Constant(5), Constant(1), Constant(3), Constant(3), Constant(8)),
+    young_beginner=(Constant(10), Constant(8), Constant(6), Constant(1), Constant(12)),
+    old_beginner=(Constant(2), Constant(15), Constant(8), Constant(2), Constant(25)),
 )
 
 customer_counts: CustomerTypeBased[PIG] = CustomerTypeBased(
-    professional=Constant(50),
-    young_beginner=Constant(100),
-    old_beginner=Constant(30),
+    professional=Constant(500),
+    young_beginner=Constant(1000),
+    old_beginner=Constant(300),
 )
 dirichlets: CustomerTypeBased[Dirichlet] = CustomerTypeBased(
     professional=Dirichlet([100, 90, 110, 200, 200, 90]),

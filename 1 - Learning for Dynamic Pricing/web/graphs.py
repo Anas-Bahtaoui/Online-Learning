@@ -267,7 +267,7 @@ def render_for_learner(learner_name: str, learner_data: List[SimulationResult], 
         render_product_rewards_graph(products, product_rewards, learner_name,
                                      change_detected_at, resolution),
     ]
-    if "Greedy" not in learner_name and i_experiment is not None:
+    if "Greedy" not in learner_name and i_experiment is not None and i_experiment < 150:
         graphs.extend([
             dbc.FormText(f"Customers Day {day_cnt}:"),
             render_customer_table(learner_data[i_experiment].customers[day_cnt], products,

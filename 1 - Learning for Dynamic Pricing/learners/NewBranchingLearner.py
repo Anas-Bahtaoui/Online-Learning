@@ -19,6 +19,7 @@ class NewBranchingLearner(BanditLearner):
         self._learner_factory = learner_factory
         self._reset_parameters()
 
+
     def _reset_parameters(self):
         def _make():
             new_learner = self._learner_factory(self.config._replace(context_generation=False))
@@ -105,7 +106,7 @@ class NewBranchingLearner(BanditLearner):
                 p_indexes = selected_price_indexes[(exp, age)]
                 s_customers = classes[(exp, age)]
                 self._learners[(exp, age)]._update_learner_state(p_indexes,
-                                                                 self._calculate_product_rewards(p_indexes,
+                                                                 _calculate_product_rewards(p_indexes,
                                                                                                  s_customers),
                                                                  t
                                                                  )
@@ -113,22 +114,22 @@ class NewBranchingLearner(BanditLearner):
             p_indexes = selected_price_indexes[(exp, Age.OLD)]
             s_customers = classes[(exp, Age.OLD)] + classes[(exp, Age.YOUNG)]
             self._learners[(exp, None)]._update_learner_state(p_indexes,
-                                                              self._calculate_product_rewards(p_indexes, s_customers),
+                                                              _calculate_product_rewards(p_indexes, s_customers),
                                                               t
                                                               )
         for age in list(Age):
             p_indexes = selected_price_indexes[(Experience.BEGINNER, age)]
             s_customers = classes[(Experience.BEGINNER, age)] + classes[(Experience.PROFESSIONAL, age)]
             self._learners[(None, age)]._update_learner_state(p_indexes,
-                                                              self._calculate_product_rewards(p_indexes, s_customers),
+                                                              _calculate_product_rewards(p_indexes, s_customers),
                                                               t
                                                               )
         p_indexes = selected_price_indexes[(Experience.PROFESSIONAL, Age.OLD)]
         self._learners[(None, None)]._update_learner_state(
             p_indexes,
-            self._calculate_product_rewards(p_indexes, customers), t)
+            _calculate_product_rewards(p_indexes, customers), t)
 
-        if t % 45 != 0:
+        if t % 30 != 0:
             return
         print()
         print("Entered detection, already running are", self._active_learners)
@@ -172,15 +173,19 @@ class NewBranchingLearner(BanditLearner):
             split_age = split_criteria(self._learners[(None, Age.OLD)], old_customers,
                                        self._learners[(None, Age.YOUNG)], young_customers)
             split_experience = split_criteria(self._learners[(Experience.PROFESSIONAL, None)], professional_customers,
-                                              self._learners[(Experience.BEGINNER, None)], beginner_customers)
+                                              self._learners[(Experience.BEGINNER, None)], beginner_customers) * 1000
             base_reward = get_base((None, None), customers)
             if split_age > base_reward or split_experience > base_reward:
                 if split_age > split_experience:
                     self._active_learners.add((None, Age.YOUNG))
                     self._active_learners.add((None, Age.OLD))
+                    self._learners[(None, Age.OLD)]._reset_for_current_time(self._t)
+                    self._learners[(None, Age.YOUNG)]._reset_for_current_time(self._t)
                 else:
                     self._active_learners.add((Experience.PROFESSIONAL, None))
                     self._active_learners.add((Experience.BEGINNER, None))
+                    self._learners[(Experience.PROFESSIONAL, None)]._reset_for_current_time(self._t)
+                    self._learners[(Experience.BEGINNER, None)]._reset_for_current_time(self._t)
         elif (None, Age.OLD) not in self._active_learners:
             # We already split from experience
             # We can either split age from professional or from beginner
@@ -202,14 +207,18 @@ class NewBranchingLearner(BanditLearner):
                     classes[(Experience.BEGINNER, Age.OLD)],
                     self._learners[(Experience.BEGINNER, Age.YOUNG)],
                     classes[(Experience.BEGINNER, Age.YOUNG)],
-                )
+                ) * 1000
                 if split_age_professional > base_pro and (
                         split_age_beginner < base_beg or split_age_professional - base_pro > split_age_beginner - base_beg):
                     self._active_learners.add((Experience.PROFESSIONAL, Age.YOUNG))
                     self._active_learners.add((Experience.PROFESSIONAL, Age.OLD))
+                    self._learners[(Experience.PROFESSIONAL, Age.OLD)]._reset_for_current_time(self._t)
+                    self._learners[(Experience.PROFESSIONAL, Age.YOUNG)]._reset_for_current_time(self._t)
                 elif split_age_beginner > base_beg:
                     self._active_learners.add((Experience.BEGINNER, Age.YOUNG))
                     self._active_learners.add((Experience.BEGINNER, Age.OLD))
+                    self._learners[(Experience.BEGINNER, Age.OLD)]._reset_for_current_time(self._t)
+                    self._learners[(Experience.BEGINNER, Age.YOUNG)]._reset_for_current_time(self._t)
 
             elif (Experience.PROFESSIONAL, Age.OLD) not in self._active_learners:
                 # We split age for beginner, not yet professional
@@ -234,6 +243,8 @@ class NewBranchingLearner(BanditLearner):
                 if split_age_beginner > base_beg:
                     self._active_learners.add((Experience.BEGINNER, Age.YOUNG))
                     self._active_learners.add((Experience.BEGINNER, Age.OLD))
+                    self._learners[(Experience.BEGINNER, Age.OLD)]._reset_for_current_time(self._t)
+                    self._learners[(Experience.BEGINNER, Age.YOUNG)]._reset_for_current_time(self._t)
 
             else:
                 pass  # Done it all
@@ -264,10 +275,14 @@ class NewBranchingLearner(BanditLearner):
                     # Split experience from old branch
                     self._active_learners.add((Experience.PROFESSIONAL, Age.OLD))
                     self._active_learners.add((Experience.BEGINNER, Age.OLD))
+                    self._learners[(Experience.PROFESSIONAL, Age.OLD)]._reset_for_current_time(self._t)
+                    self._learners[(Experience.BEGINNER, Age.OLD)]._reset_for_current_time(self._t)
                 elif split_experience_young > base_young:
                     # Split experience from young branch
                     self._active_learners.add((Experience.PROFESSIONAL, Age.YOUNG))
                     self._active_learners.add((Experience.BEGINNER, Age.YOUNG))
+                    self._learners[(Experience.PROFESSIONAL, Age.YOUNG)]._reset_for_current_time(self._t)
+                    self._learners[(Experience.BEGINNER, Age.YOUNG)]._reset_for_current_time(self._t)
 
             elif (Experience.PROFESSIONAL, Age.OLD) not in self._active_learners:
                 # We split experience from young but not old
@@ -293,6 +308,8 @@ class NewBranchingLearner(BanditLearner):
                     # Split experience from young branch
                     self._active_learners.add((Experience.PROFESSIONAL, Age.YOUNG))
                     self._active_learners.add((Experience.BEGINNER, Age.YOUNG))
+                    self._learners[(Experience.PROFESSIONAL, Age.YOUNG)]._reset_for_current_time(self._t)
+                    self._learners[(Experience.BEGINNER, Age.YOUNG)]._reset_for_current_time(self._t)
             else:
                 pass  # Done
         else:

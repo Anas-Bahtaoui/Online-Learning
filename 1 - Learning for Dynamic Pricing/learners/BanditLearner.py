@@ -29,7 +29,7 @@ step5 = BanditConfiguration("Step 5", True, True, False)
 step6_sliding_window = BanditConfiguration("Step 6 with Sliding Window", False, False, False, 10)
 step6_change_detection = BanditConfiguration("Step 6 with Custom Algorithm", False, False, False,
                                              CumSum(10, 0.1, 2))
-step7 = BanditConfiguration("Step 7", False, False, True, None, True)
+step7 = BanditConfiguration("Step 7", True, True, True, None, True)
 
 
 class BanditLearner(Learner):
@@ -223,6 +223,8 @@ class BanditLearner(Learner):
     def _clairvoyant_reward_calculate(self, price_indexes) -> List[float]:
         return self._new_day(price_indexes, persist=False)
 
+    def _reset_for_current_time(self, t):
+        raise NotImplementedError()
     """
     Might not work ...
     

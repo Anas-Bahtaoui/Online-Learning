@@ -40,3 +40,12 @@ class UCBLearner(BanditLearner):
                 self.widths[product_id][pulled_arm] = np.sqrt(2 * np.log(t + 1) / n)
             else:
                 self.widths[product_id][pulled_arm] = np.inf
+    def _reset_for_current_time(self, t):
+        for product_id in range(len(self.means)):
+            for pulled_arm in range(len(self.means[0])):
+                self.means[product_id][pulled_arm] = np.mean(self.rewards_per_arm_per_product[product_id][pulled_arm])
+                n = len(self.rewards_per_arm_per_product[product_id][pulled_arm])
+                if n > 0:
+                    self.widths[product_id][pulled_arm] = np.sqrt(2 * np.log(t + 1) / n)
+                else:
+                    self.widths[product_id][pulled_arm] = np.inf

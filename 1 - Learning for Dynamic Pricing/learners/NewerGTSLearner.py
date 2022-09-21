@@ -42,3 +42,20 @@ class NewerGTSLearner(BanditLearner):
 
             self.mu_0s[product_id][pulled_arm] = (tau_0 * mu_0 + np.sum(
                 self._rewards_per_arm[product_id][pulled_arm]) * self._precision) / (tau_0 + n_tested * self._precision)
+
+    def _reset_for_current_time(self, t):
+        n_products = len(self._config.product_configs)
+        n_arms = len(self._config.product_configs[0].prices)
+        self.mu_0s = [np.full(n_arms, 1) for _ in range(n_products)]
+        self.tau_0s = [np.full(n_arms, 1e-4) for _ in range(n_products)]
+        tau_0 = 1e-4
+        mu_0 = 1
+        for product_id in range(n_products):
+            for pulled_arm in range(n_arms):
+                n_samples = len(self._rewards_per_arm[pulled_arm])
+                n_tested = len(self._rewards_per_arm[product_id][pulled_arm])
+                if n_samples > 1:
+                    self.tau_0s[product_id][pulled_arm] = tau_0 + n_tested * self._precision
+                self.mu_0s[product_id][pulled_arm] = (tau_0 * mu_0 + np.sum(
+                    self._rewards_per_arm[product_id][pulled_arm]) * self._precision) / (
+                                                                 tau_0 + n_tested * self._precision)
