@@ -11,9 +11,9 @@ class NewerGTSLearner(BanditLearner):
         n_arms = len(self._rewards_per_arm[0])
         return self._C * np.sqrt(n_arms * self.total_days * np.log(n_arms))
 
-    def update_experiment_days(self, days: int):
-        super().update_experiment_days(days)
-        self.total_days = days
+    def update_experiment_days(self, time_horizon: int):
+        super().update_experiment_days(time_horizon)
+        self.total_days = time_horizon
 
     def _reset_parameters(self):
         n_products = len(self._config.product_configs)

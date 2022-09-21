@@ -32,10 +32,12 @@ step4 = BanditConfiguration("Step 4", False, False, True)
 step5 = BanditConfiguration("Step 5", True, True, False)
 # Step 6 is there for comparing two algorithms, it is better to just say all is unknown
 step6_sliding_window = BanditConfiguration("Step 6 with Sliding Window", False, False, False,
-                                           NonStationaryConfig(30, 30, None))
+                                           NonStationaryConfig(50, 50, None))
 step6_change_detection = BanditConfiguration("Step 6 with Custom Algorithm", False, False, False,
-                                             NonStationaryConfig(30, 30, CumSum(10, 0.1, 0.2)))
+                                             NonStationaryConfig(50, 50, CumSum(10, 0.1, 0.2)))
 step7 = BanditConfiguration("Step 7", False, False, True, None, True)
+
+periodic_clairvoyants = {}
 
 
 class BanditLearner(Learner):
@@ -60,12 +62,38 @@ class BanditLearner(Learner):
             self._estimators: List[ParameterEstimator] = []
         self._t = 0
         self._sliding_window_slide_period: Optional[int] = None
+        self._force_abrupt = False
+
+    def _rerun_clairvoyant_if_needed(self):
+        if self.config.non_stationary is None:
+            return
+        period = self.config.non_stationary.normal_days + self.config.non_stationary.abrupt_days
+        total_time = len(self._experiment_history)
+        if total_time < 3:
+            return
+        current_cycle = total_time // period
+        if total_time % period == self.config.non_stationary.normal_days:
+            key = (0, "abrupt")
+        elif total_time % period == 0:
+            key = (0, "normal")
+        else:
+            return
+        if key not in periodic_clairvoyants:
+            if key[1] == "abrupt":
+                self._force_abrupt = True
+            periodic_clairvoyants[key] = self.run_clairvoyant()
+            self._force_abrupt = False
+        self.absolute_clairvoyant, self.clairvoyant_indexes, self.clairvoyant_product_rewards = periodic_clairvoyants[
+            key]
 
     def _shall_abrupt_change(self) -> bool:
+        if self._force_abrupt:
+            return True
         if self.config.non_stationary is None:
             return False
         period = self.config.non_stationary.normal_days + self.config.non_stationary.abrupt_days
-        return (len(self._experiment_history) % period) >= self.config.non_stationary.normal_days
+        shall_abrupt = (len(self._experiment_history) % period) >= self.config.non_stationary.normal_days
+        return shall_abrupt
 
     def refresh_vars(self, products: List[Product], environment: Environment, config: SimulationConfig):
         super().refresh_vars(products, environment, config)
@@ -74,8 +102,10 @@ class BanditLearner(Learner):
         if self.config.non_stationary is not None and self.config.non_stationary.change_detection_algorithm is not None:
             self.config.non_stationary.change_detection_algorithm.reset()
         self._t = 0
-
         self._estimators = []
+        # if self.config.non_stationary is not None:
+        #     # No estimator if we are going nonstationary (step 6)
+        #     return
         if self.config.a_ratios_known:
             # Calculate Customer class independent alphas
 
@@ -97,11 +127,12 @@ class BanditLearner(Learner):
         else:
             self._estimators.append(GraphWeightsEstimator())
 
-    def update_experiment_days(self, days: int):
+    def update_experiment_days(self, time_horizon: int):
         if self.config.non_stationary is not None and self.config.non_stationary.change_detection_algorithm is None:
-            self._sliding_window_slide_period = int(days ** 0.5)
+            self._sliding_window_slide_period = int(time_horizon ** 0.5)
         if self.config.non_stationary is not None and self.config.non_stationary.change_detection_algorithm is not None:
-            self.config.non_stationary.change_detection_algorithm.update_experiment_days(days)
+            self._sliding_window_slide_period = int(time_horizon ** 0.5)
+            self.config.non_stationary.change_detection_algorithm.update_experiment_days(time_horizon)
 
     def _select_price_indexes(self) -> List[int]:
         result = []
@@ -157,11 +188,13 @@ class BanditLearner(Learner):
                 total_reservation_prices[(customer.class_, first_product.id)].append(run_on_product(first_product))
         product_rewards = self._calculate_product_rewards(selected_price_indexes, customers)
         if persist:
+            self._rerun_clairvoyant_if_needed()
             clairvoyant = self._clairvoyant_reward_calculate(self.clairvoyant_indexes)
             self._experiment_history.append(
                 ExperimentHistoryItem(sum(product_rewards), selected_price_indexes, product_rewards, False, None,
                                       clairvoyant, customers,
-                                      {estimator.__class__.__name__: {} for estimator in self._estimators}, 0, self._shall_abrupt_change()))
+                                      {estimator.__class__.__name__: {} for estimator in self._estimators}, 0,
+                                      self._shall_abrupt_change()))
             upper_bound = self._upper_bound()
             self._experiment_history[-1] = self._experiment_history[-1]._replace(upper_bound=upper_bound)
         else:
@@ -217,17 +250,15 @@ class BanditLearner(Learner):
             else:
                 algorithm = self.config.non_stationary.change_detection_algorithm
                 non_stationary_result = algorithm.update(self._experiment_history[-1].customers)
-                if algorithm.has_changed():
+                if algorithm.has_changed() or (self._t > 2 and self._t % 50 == 1):
                     algorithm.reset()
                     self._reset_parameters()
-                    self._reset_and_rerun_for_last_n(1)
-                    self._experiment_history[-1] = self._experiment_history[-1][:3] + (True,) + \
-                                                   self._experiment_history[
-                                                       -1][4:]
+                    self._reset_and_rerun_for_last_n(self._sliding_window_slide_period)
+                    self._experiment_history[-1] = self._experiment_history[-1]._replace(change_detected=True)
                 else:
                     self._update()
-                self._experiment_history[-1] = self._experiment_history[-1][:4] + (non_stationary_result,) + \
-                                                       self._experiment_history[-1][5:]
+                self._experiment_history[-1] = self._experiment_history[-1]._replace(
+                    change_detector_params=non_stationary_result)
 
         else:
             self._update()

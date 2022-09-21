@@ -29,9 +29,9 @@ class UCBLearner(BanditLearner):
     def __init__(self, config: BanditConfiguration):
         super().__init__(config)
 
-    def update_experiment_days(self, days: int):
-        super().update_experiment_days(days)
-        self.total_days = days
+    def update_experiment_days(self, time_horizon: int):
+        super().update_experiment_days(time_horizon)
+        self.total_days = time_horizon
 
     def _update_learner_state(self, selected_price_indexes, product_rewards, t):
         for product_id, product_reward in enumerate(product_rewards):

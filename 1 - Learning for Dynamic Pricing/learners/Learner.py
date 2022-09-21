@@ -134,5 +134,26 @@ class Learner:
             product_rewards = [product_reward for _, _, product_reward, _, _ in self._experiment_history]
             draw_product_reward_graph(self._products, product_rewards, self.name)
 
-    def _clairvoyant_reward_calculate(self, price_indexes) -> float:
+    def _clairvoyant_reward_calculate(self, price_indexes) -> List[float]:
         raise NotImplementedError()
+    def run_clairvoyant(self):
+        calculate = self._clairvoyant_reward_calculate
+        from itertools import product
+        product_count = len(self._products)
+        price_index_count = len(self._products[0].candidate_prices)
+        max_reward = 0
+        best_indexes = ()
+        rewards_per_product = ()
+        all_price_indexes = list(product(range(price_index_count), repeat=product_count))
+        with tqdm(total=len(all_price_indexes), leave=False) as pbar:
+            pbar.set_description(f"Clairvoyant for {self.name}")
+            for price_indexes in all_price_indexes:
+                rewards = calculate(list(price_indexes))
+                total_reward = sum(rewards)
+                if total_reward > max_reward:
+                    max_reward = total_reward
+                    best_indexes = price_indexes
+                    rewards_per_product = rewards
+                pbar.update(1)
+        self.absolute_clairvoyant, self.clairvoyant_indexes, self.clairvoyant_product_rewards = max_reward, best_indexes, rewards_per_product
+        return max_reward, best_indexes, rewards_per_product

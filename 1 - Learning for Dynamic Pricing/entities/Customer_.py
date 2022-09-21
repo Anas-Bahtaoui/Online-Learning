@@ -20,13 +20,16 @@ def reservation_price_distribution_from_curves(customer_class: CustomerClass, pr
                                                apply_change: bool = False) -> PIG:
     total_prices = 0
     prices_until_current = 0
-    for _price in range(1, 98):
-        res = read_conversion_probability(price,
-                                          f"DemandCurves/AbruptCurves/{'AC_' if apply_change else ''}{customer_class.name}_{product_id}.npy")
-        if _price <= price:
-            prices_until_current += res
-        total_prices += res
-    graph_result = 1 - prices_until_current / total_prices
+    #   for _price in range(1, 98):
+    #       res = read_conversion_probability(price,
+    #                                         f"DemandCurves/AbruptCurves/{'AC_' if apply_change else ''}{CustomerClass.OLD_BEGINNER.name}_{product_id}.npy")
+    #       if _price <= price:
+    #           prices_until_current += res
+    #       total_prices += res
+    res = read_conversion_probability(price,
+                                      f"DemandCurves/AbruptCurves/{'AC_' if apply_change else ''}{CustomerClass.OLD_BEGINNER.name}_{product_id}.npy")
+    # graph_result = 1 - prices_until_current / total_prices
+    graph_result = 1 - res
     std_norm = scipy.stats.norm.ppf(1 - graph_result)
     sigma = 2  # TODO: Do we really want to always set the variance to two?
     # We at first wanted to fit this into 2 variances to cover 97 percent of the interval, but the sigma directly being the variance doesn't mean anything.
@@ -79,7 +82,8 @@ class Customer:
         self.products_clicked: List[int] = products_clicked or []
         self.products_bought: Dict[int, List[float]] = products_bought or defaultdict(lambda: [0.0, 0.0])
         self.reservation_prices: List[Callable[[float], PIG]] = [
-            lambda price: reservation_price_distribution_from_curves(self.class_, product_id, price, is_abrupt) for product_id in
+            lambda price: reservation_price_distribution_from_curves(self.class_, product_id, price, is_abrupt) for
+            product_id in
             range(5)]
         self.display_name = display_name or faker.name()
         self.display_age = display_age or int(
